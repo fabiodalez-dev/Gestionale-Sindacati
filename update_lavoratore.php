@@ -4,7 +4,6 @@ checkLogin();
 
 // Inizializza variabili per messaggi di errore e successo
 $errors = [];
-$success = false;
 
 // Genera un token CSRF per il form
 generateCsrfToken();
@@ -214,8 +213,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = executeQuery($query, $params, $types);
 
         if ($stmt) {
-            // Aggiornamento riuscito
-            $success = true;
             // Reindirizza alla pagina del lavoratore con un messaggio di successo
             header("Location: lavoratore.php?id=$id&update_success=1");
             exit;
@@ -292,15 +289,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <a href="edit_lavoratore.php?id=<?php echo $id; ?>" class="btn btn-primary">Torna indietro</a>
                     <?php endif; ?>
 
-                    <?php if ($success): ?>
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            Lavoratore aggiornato con successo.
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Chiudi">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <a href="lavoratore.php?id=<?php echo $id; ?>" class="btn btn-primary">Visualizza Lavoratore</a>
-                    <?php endif; ?>
 
                     <!-- Modulo per aggiornare il lavoratore -->
                     <div class="card mb-4">

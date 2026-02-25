@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['note'])) {
     }
 
     // Recupera e sanitizza le note
-    $note = isset($_POST['note']) ? $_POST['note'] : '';
+    $note = $_POST['note'];
     $note_sanitized = sanitizeHTML($note); // Utilizza sanitizeHTML per permettere tag HTML
 
     // Prepara i parametri e i tipi per la query di aggiornamento

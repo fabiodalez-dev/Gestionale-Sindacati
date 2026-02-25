@@ -326,7 +326,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!empty($_POST)) {
         $lavoratore['nome'] = $_POST['nome'] ?? $lavoratore['nome'];
         $lavoratore['cognome'] = $_POST['cognome'] ?? $lavoratore['cognome'];
         $lavoratore['codice_fiscale'] = $_POST['codice_fiscale'] ?? $lavoratore['codice_fiscale'];

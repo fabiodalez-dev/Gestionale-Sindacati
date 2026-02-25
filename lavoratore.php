@@ -253,7 +253,7 @@ if (isset($_GET['id'])) {
                       <div class="row"><div class="col-auto">
 						  <?php
 // Recupera l'ID del lavoratore
-$lavoratore_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$lavoratore_id = intval($_GET['id']);
 
 // Controlla se il lavoratore è archiviato
 $is_archived = false;

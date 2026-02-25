@@ -35,7 +35,7 @@ $lavoratore = $result->fetch_assoc();
 foreach ($lavoratore as $key => $value) {
     if ($value === null || $value === '') {
         $lavoratore[$key] = '';
-    } elseif (strpos($key, 'data') !== false && $value !== '0000-00-00' && $value !== '') {
+    } elseif (strpos($key, 'data') !== false && $value !== '0000-00-00') {
         // Verifica che sia una data valida e formatta in dd-mm-YYYY
         $timestamp = strtotime($value);
         if ($timestamp !== false) {
@@ -88,6 +88,9 @@ if (!empty($via_numero) || !empty($citta_info)) {
 }
 
 $logo_path = $settings['logo'] ?? 'uploads/default_logo.png';
+// Usa path assoluto del filesystem per evitare che mPDF faccia richieste HTTP
+// (il PHP built-in server è single-threaded e si auto-bloccherebbe)
+$logo_path = __DIR__ . '/' . ltrim($logo_path, '/');
 
 // Genera i checkbox dinamici per il contratto
 $contratto_corrente = $lavoratore['contratto'] ?? '';
@@ -125,7 +128,7 @@ $html = '
 <div class="container">
   <div class="header">
     <div class="header-left">
-      <img src="/' . htmlspecialchars($logo_path) . '" style="width:100px;">
+      <img src="' . htmlspecialchars($logo_path) . '" style="width:100px;">
     </div>
     <div class="header-right">
       ' . htmlspecialchars($settings['nome_completo'] ?? '') . '

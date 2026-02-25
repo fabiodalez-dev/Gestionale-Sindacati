@@ -395,7 +395,7 @@ if (isset($_GET['datatables_ajax']) && $_GET['datatables_ajax'] == 1) {
     " . $baseQuery;
     
     // Ordinamento
-    if (!empty($orderColumn) && $orderColumn !== '') {
+    if (!empty($orderColumn)) {
         $dataQuery .= " ORDER BY " . $orderColumn . " " . $orderDirection;
     } else {
         $dataQuery .= " ORDER BY l.cognome ASC, l.nome ASC";
@@ -475,7 +475,7 @@ if (isset($_GET['datatables_ajax']) && $_GET['datatables_ajax'] == 1) {
             $ruolo = '';
             if ($row['ruolo'] === 'RSU' || $row['ruolo'] === 'RSA' || $row['ruolo'] === 'RLS') {
                 $ruolo = '<span class="badge badge-primary">' . sanitizeForHTML($row['ruolo']) . '</span>';
-            } elseif ($row['ruolo'] && $row['ruolo'] !== 'NESSUNO' && $row['ruolo'] !== '') {
+            } elseif ($row['ruolo'] && $row['ruolo'] !== 'NESSUNO') {
                 $ruolo = '<span class="badge badge-secondary">' . sanitizeForHTML($row['ruolo']) . '</span>';
             } else {
                 $ruolo = '<span class="text-muted">-</span>';

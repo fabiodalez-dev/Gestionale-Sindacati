@@ -44,7 +44,7 @@ function aggiornaStatoIscrizioni($mysqli) {
 
         // Controlla se il lavoratore ha altre iscrizioni attive
         // Con la UNIQUE constraint, questa verifica può essere semplificata
-        $check_query = "SELECT id 
+        $check_query = "SELECT i.id
                         FROM iscrizioni i
                         JOIN lavoratori l ON i.lavoratore_id = l.id
                         WHERE i.lavoratore_id = ? 

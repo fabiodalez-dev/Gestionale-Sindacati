@@ -47,10 +47,7 @@ function csrfInputField() {
 
 // Definizione del percorso base
 $base_url = '/';
-// Assicurati che il percorso termini con una slash
-if (substr($base_url, -1) !== '/') {
-    $base_url .= '/';
-}
+// $base_url è già '/' — nessun controllo necessario
 // Rimozione di eventuali backslash su Windows
 $base_url = str_replace('\\', '/', $base_url);
 
@@ -439,7 +436,7 @@ function buildTypesString($params) {
  * @return string La stringa da visualizzare
  */
 function displayField($value) {
-    if (!empty($value) && $value !== '0') {
+    if (!empty($value)) {
         return sanitizeForHTML($value);
     } else {
         return ''; // O "Non specificato" se preferisci
@@ -731,8 +728,8 @@ function encryptPassword($password) {
 function decryptPassword($encrypted_password) {
     $encryption_key = base64_decode(GENERAL_ENCRYPTION_KEY); // Decodifica la chiave se è base64
     $cipher = "aes-256-cbc";
-    $data = base64_decode($encrypted_password);
-    if ($data === false) {
+    $data = base64_decode($encrypted_password, true);
+    if (!is_string($data)) {
         return '';
     }
     $ivlen = openssl_cipher_iv_length($cipher);

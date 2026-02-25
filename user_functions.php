@@ -17,7 +17,7 @@ if (!function_exists('createUser')) {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         $query = "INSERT INTO users (username, email, password, role, sede_id) VALUES (?, ?, ?, ?, ?)";
         // Se $sede_id è vuoto, passiamo NULL
-        $sede_id = ($sede_id === '' || $sede_id === null) ? null : intval($sede_id);
+        $sede_id = ($sede_id === null) ? null : intval($sede_id);
         return executeQuery($query, [$username, $email, $hashedPassword, $role, $sede_id], 'ssssi') !== false;
     }
 }
@@ -45,7 +45,7 @@ if (!function_exists('updateUser')) {
     function updateUser($id, $username, $email, $role, $password = null, $sede_id = null) {
         global $mysqli;
         // Se $sede_id è vuoto, passiamo NULL
-        $sede_id = ($sede_id === '' || $sede_id === null) ? null : intval($sede_id);
+        $sede_id = ($sede_id === null) ? null : intval($sede_id);
 
         if ($password) {
             // Se viene fornita una nuova password, hashala e includila nell'aggiornamento

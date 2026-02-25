@@ -2,7 +2,7 @@
 // aziende.php - Versione Corretta e Migliorata con DataTables
 
 // Configurazione per debugging (disabilitare in produzione)
-$debug_mode = false; // Cambiare a true solo per debug
+$debug_mode = (bool)(getenv('APP_DEBUG') ?: false);
 if (!$debug_mode) {
     ini_set('display_errors', 0);
     ini_set('display_startup_errors', 0);

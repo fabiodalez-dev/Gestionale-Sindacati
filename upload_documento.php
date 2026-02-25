@@ -58,11 +58,9 @@ $dest_path = $uploadFileDir . $newFileName;
         $error = "Nessun file selezionato o errore durante il caricamento.";
     }
 
-    if (isset($error)) {
-        // Restituisci una risposta JSON con l'errore
-        echo json_encode(['error' => $error]);
-        exit;
-    }
+    // Restituisci una risposta JSON con l'errore
+    echo json_encode(['error' => $error]);
+    exit;
 } else {
     echo "Richiesta non valida.";
 }
