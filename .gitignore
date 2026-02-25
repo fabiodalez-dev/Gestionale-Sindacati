@@ -1,0 +1,30 @@
+# Sessioni
+sessions/
+
+# Upload utenti
+uploads/
+
+# Backup database
+backup/
+
+# File compressi interni
+adl.zip
+*.zip
+
+# Bootstrap theme (pesante, da installare separatamente)
+startbootstrap-sb-admin-2-gh-pages*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test/debug
+test_*.php
+debug_*.php
+temp_*.php

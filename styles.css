@@ -1,0 +1,75 @@
+body {
+  color: #222;
+}
+.bg-primary {
+    background-color: #c71514 !important;
+}
+.btn-primary {
+    color: #fff;
+    background-color: #c71514;
+    border-color: #c71514;
+}
+.btn-danger {
+    color: #fff;
+    background-color: #4c4c4c;
+    border-color: #4c4c4c;
+}
+select {
+    width: 100% !important;
+    height: calc(1.5em + .75rem + 2px) !important;
+    border: 1px solid #d1d3e2;
+    border-radius: .35rem;
+}
+button#resetBtn {
+    margin-left: 20px;
+}
+.col-12.d-flex {
+    margin-top: 1rem;
+}
+.fc .fc-daygrid-event-harness-abs {
+
+    max-width: 100% !important;
+}
+a#resetBtn {
+    margin: 0 1rem;
+}
+.bg-gradient-primary {
+    background-color: #b10303;
+    background-image: linear-gradient(176deg, #c81414 10%, #ac0707 100%);
+    background-size: cover;
+}
+
+@media (max-width: 768px) {
+    .fc .fc-toolbar {
+        display: block !important;
+    }
+    table.fc-col-header {
+    width: 100% !important;
+}
+.fc-daygrid-body.fc-daygrid-body-unbalanced {
+    width: 100% ! IMPORTANT;
+}
+table.fc-scrollgrid-sync-table {
+    width: 100% !important;
+    height: auto;
+}
+}
+#wrapper #content-wrapper {
+    background-color: #f7f7f7;
+
+}
+.topbar .nav-item .nav-link {
+
+    display: inline-flex;
+    list-style: none !important;
+}
+
+.table {
+  color: #222;
+}
+.table-hover tbody tr {
+  color: #222;
+}
+table td, .table th {
+  vertical-align: middle !important;
+}

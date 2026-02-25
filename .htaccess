@@ -1,0 +1,14 @@
+RewriteEngine On
+
+# Imposta la codifica UTF-8
+AddDefaultCharset UTF-8
+AddCharset UTF-8 .html .css .js .xml .json .rss .atom
+
+# Reindirizza solo la root del sito a login.php con un URL assoluto
+RewriteCond %{REQUEST_URI} ^/$
+RewriteRule ^$ /login.php [L,R=302]
+
+# Protegge il file config.php impedendone l'accesso diretto
+<Files "config.php">
+    Require all denied
+</Files>
