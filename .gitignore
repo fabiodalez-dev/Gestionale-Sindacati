@@ -13,8 +13,7 @@ backup/
 # File compressi
 *.zip
 
-# Dipendenze (installare con composer/npm)
-vendor/
+# Dipendenze npm (installare con npm install)
 node_modules/
 theme/node_modules/
 
