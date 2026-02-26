@@ -368,7 +368,7 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
 
                     <!-- Visualizzazione dello Stato dell'Iscrizione -->
 <?php if ($subscription): ?>
-    <div class="mb-3 d-flex align-items-center">
+    <div class="mb-3 d-flex align-items-center flex-wrap" style="gap: 0.5rem;">
         <i class="fas fa-circle status-dot <?php echo $dot_class; ?>"></i>
         <span><?php echo $status; ?></span>
         <!-- Tag "Archiviato" -->
@@ -376,16 +376,16 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
             <span class="badge badge-archiviato">Archiviato</span>
         <?php endif; ?>
         <!-- Pulsante Modifica Dati -->
-        <a href="edit_lavoratore.php?id=<?php echo sanitizeForHTML($lavoratore_id); ?>" class="btn btn-sm btn-primary ml-3">
+        <a href="edit_lavoratore.php?id=<?php echo sanitizeForHTML($lavoratore_id); ?>" class="btn btn-sm btn-primary">
             <i class="fas fa-edit"></i> Modifica Dati
         </a>
         <!-- Pulsante Modifica Iscrizione -->
-        <a href="modifica_iscrizione.php?id=<?php echo sanitizeForHTML($subscription['id']); ?>" class="btn btn-sm btn-primary ml-3">
+        <a href="modifica_iscrizione.php?id=<?php echo sanitizeForHTML($subscription['id']); ?>" class="btn btn-sm btn-primary">
             <i class="fas fa-edit"></i> Modifica Iscrizione
         </a>
         <!-- Pulsante Archivia o Ripristina Lavoratore -->
         <?php if ($lavoratore['archiviato'] == 0): ?>
-            <form method="POST" action="archive_lavoratore.php" class="ml-3">
+            <form method="POST" action="archive_lavoratore.php">
                 <input type="hidden" name="id" value="<?php echo sanitizeForHTML($lavoratore_id); ?>">
                 <?php csrfInputField(); ?>
                 <button type="submit" class="btn btn-sm btn-warning">
@@ -393,7 +393,7 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
                 </button>
             </form>
         <?php else: ?>
-            <form method="POST" action="unarchive_lavoratore.php" class="ml-3">
+            <form method="POST" action="unarchive_lavoratore.php">
                 <input type="hidden" name="id" value="<?php echo sanitizeForHTML($lavoratore_id); ?>">
                 <?php csrfInputField(); ?>
                 <button type="submit" class="btn btn-sm btn-success">
@@ -402,7 +402,7 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
             </form>
         <?php endif; ?>
         <!-- Pulsante per gestire le Vertenze -->
-        <form method="POST" action="toggle_vertenze.php" class="ml-3">
+        <form method="POST" action="toggle_vertenze.php">
             <input type="hidden" name="id" value="<?php echo sanitizeForHTML($lavoratore_id); ?>">
             <?php csrfInputField(); ?>
             <?php if ($lavoratore['vertenze'] == 1): ?>
@@ -417,7 +417,7 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
         </form>
     </div>
 <?php else: ?>
-    <div class="mb-3 d-flex align-items-center">
+    <div class="mb-3 d-flex align-items-center flex-wrap" style="gap: 0.5rem;">
         <i class="fas fa-circle status-dot text-secondary"></i>
         <span>Nessuna iscrizione attiva</span>
         <!-- Tag "Archiviato" -->
@@ -425,12 +425,12 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
             <span class="badge badge-archiviato">Archiviato</span>
         <?php endif; ?>
         <!-- Pulsante Modifica Dati -->
-        <a href="edit_lavoratore.php?id=<?php echo sanitizeForHTML($lavoratore_id); ?>" class="btn btn-sm btn-primary ml-3">
+        <a href="edit_lavoratore.php?id=<?php echo sanitizeForHTML($lavoratore_id); ?>" class="btn btn-sm btn-primary">
             <i class="fas fa-edit"></i> Modifica Dati
         </a>
         <!-- Pulsante Archivia o Ripristina Lavoratore -->
         <?php if ($lavoratore['archiviato'] == 0): ?>
-            <form method="POST" action="archive_lavoratore.php" class="ml-3">
+            <form method="POST" action="archive_lavoratore.php">
                 <input type="hidden" name="id" value="<?php echo sanitizeForHTML($lavoratore_id); ?>">
                 <?php csrfInputField(); ?>
                 <button type="submit" class="btn btn-sm btn-warning">
@@ -438,7 +438,7 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
                 </button>
             </form>
         <?php else: ?>
-            <form method="POST" action="unarchive_lavoratore.php" class="ml-3">
+            <form method="POST" action="unarchive_lavoratore.php">
                 <input type="hidden" name="id" value="<?php echo sanitizeForHTML($lavoratore_id); ?>">
                 <?php csrfInputField(); ?>
                 <button type="submit" class="btn btn-sm btn-success">
@@ -447,7 +447,7 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
             </form>
         <?php endif; ?>
         <!-- Pulsante per gestire le Vertenze -->
-        <form method="POST" action="toggle_vertenze.php" class="ml-3">
+        <form method="POST" action="toggle_vertenze.php">
             <input type="hidden" name="id" value="<?php echo sanitizeForHTML($lavoratore_id); ?>">
             <?php csrfInputField(); ?>
             <?php if ($lavoratore['vertenze'] == 1): ?>

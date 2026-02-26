@@ -6,7 +6,7 @@
         <i class="fa fa-bars"></i>
     </button>
 
-    <!-- Barra di Ricerca con Autocomplete -->
+    <!-- Barra di Ricerca con Autocomplete (desktop) -->
     <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search" id="topbarSearchForm">
         <div class="input-group">
             <input type="text" id="topbarSearch" class="form-control bg-light border-0 small ui-autocomplete-input" placeholder="Cerca lavoratore o lavoratrice..." aria-label="Search" aria-describedby="basic-addon2" autocomplete="off">
@@ -28,6 +28,12 @@
 
     <!-- Navbar -->
     <ul class="navbar-nav ml-auto">
+        <!-- Pulsante ricerca mobile -->
+        <li class="nav-item d-sm-none">
+            <a class="nav-link" href="#" role="button" id="mobileSearchToggle" aria-label="Cerca">
+                <i class="fas fa-search"></i>
+            </a>
+        </li>
         <!-- Manuale -->
         <li class="nav-item">
             <a class="nav-link" href="manuale.php" role="button">
@@ -89,6 +95,25 @@
 
 </nav>
 
+<!-- Overlay sidebar mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Modal ricerca mobile -->
+<div class="mobile-search-overlay" id="mobileSearchOverlay">
+    <div class="mobile-search-box">
+        <form id="mobileSearchForm">
+            <div class="input-group">
+                <input type="text" id="mobileSearchInput" class="form-control" placeholder="Cerca lavoratore o lavoratrice..." autocomplete="off" autofocus>
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit" style="border-radius: 0 var(--radius) var(--radius) 0;">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Hook per inserire script personalizzati nella topbar -->
 <?php doHook('topbar_custom_scripts'); ?>
 
@@ -102,10 +127,51 @@
 <!-- JavaScript Personalizzato -->
 <script>
 $(document).ready(function() {
-    // Mobile sidebar toggle
+    // Mobile sidebar toggle with overlay
+    var sidebarOverlay = $('#sidebarOverlay');
+
     if (window.matchMedia("(max-width: 767.98px)").matches) {
         $(".sidebar").addClass("toggled");
     }
+
+    // SB Admin 2 toggles the class BEFORE our handler runs,
+    // so when sidebar is open (no 'toggled' class), show overlay
+    $('#sidebarToggleTop').on('click', function() {
+        var sidebar = $(".sidebar");
+        if (!sidebar.hasClass("toggled")) {
+            sidebarOverlay.addClass('active');
+        } else {
+            sidebarOverlay.removeClass('active');
+        }
+    });
+
+    sidebarOverlay.on('click', function() {
+        $(".sidebar").addClass("toggled");
+        sidebarOverlay.removeClass('active');
+    });
+
+    // Mobile search
+    var mobileSearchOverlay = $('#mobileSearchOverlay');
+
+    $('#mobileSearchToggle').on('click', function(e) {
+        e.preventDefault();
+        mobileSearchOverlay.addClass('active');
+        setTimeout(function() { $('#mobileSearchInput').focus(); }, 100);
+    });
+
+    mobileSearchOverlay.on('click', function(e) {
+        if (e.target === this) {
+            mobileSearchOverlay.removeClass('active');
+        }
+    });
+
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape') {
+            mobileSearchOverlay.removeClass('active');
+            sidebarOverlay.removeClass('active');
+            $(".sidebar").addClass("toggled");
+        }
+    });
 
     function searchInLavoratori(query) {
         if (query.trim() !== '') {
@@ -113,30 +179,36 @@ $(document).ready(function() {
         }
     }
 
-    // Autocomplete
-    $("#topbarSearch").autocomplete({
-        source: function(request, response) {
-            $.ajax({
-                url: '<?php echo $base_url; ?>search_lavoratori.php',
-                type: 'GET',
-                dataType: 'json',
-                data: { term: request.term },
-                success: function(data) {
-                    response($.map(data, function(item) {
-                        return { label: item.label, value: item.value };
-                    }));
-                },
-                error: function() { response([]); }
-            });
-        },
-        minLength: 2,
-        select: function(event, ui) {
-            if (ui.item && ui.item.value) {
-                window.location.href = '<?php echo $base_url; ?>lavoratore.php?id=' + ui.item.value;
+    // Autocomplete function factory
+    function setupAutocomplete(selector) {
+        $(selector).autocomplete({
+            source: function(request, response) {
+                $.ajax({
+                    url: '<?php echo $base_url; ?>search_lavoratori.php',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: { term: request.term },
+                    success: function(data) {
+                        response($.map(data, function(item) {
+                            return { label: item.label, value: item.value };
+                        }));
+                    },
+                    error: function() { response([]); }
+                });
+            },
+            minLength: 2,
+            select: function(event, ui) {
+                if (ui.item && ui.item.value) {
+                    window.location.href = '<?php echo $base_url; ?>lavoratore.php?id=' + ui.item.value;
+                }
+                return false;
             }
-            return false;
-        }
-    });
+        });
+    }
+
+    // Setup autocomplete on both desktop and mobile inputs
+    setupAutocomplete("#topbarSearch");
+    setupAutocomplete("#mobileSearchInput");
 
     $("#topbarSearchForm").on('submit', function(e) {
         e.preventDefault();
@@ -144,6 +216,11 @@ $(document).ready(function() {
     });
     $("#topbarSearchButton").on('click', function() {
         searchInLavoratori($("#topbarSearch").val());
+    });
+
+    $("#mobileSearchForm").on('submit', function(e) {
+        e.preventDefault();
+        searchInLavoratori($("#mobileSearchInput").val());
     });
 
     // ── Notification System ──

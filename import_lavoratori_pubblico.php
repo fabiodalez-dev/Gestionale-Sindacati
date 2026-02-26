@@ -2,19 +2,6 @@
 require 'config.php';
 checkLogin();
 
-// Configurazione del database
-$host = 'localhost';
-$db   = 'fabiodal_adl';
-$user = 'fabiodal_adl_user';
-$pass = 'Zd10)uwziWlK';
-
-// Connessione al database
-$mysqli = new mysqli($host, $user, $pass, $db);
-if ($mysqli->connect_errno) {
-    die("Errore di connessione al database: " . $mysqli->connect_error);
-}
-$mysqli->set_charset("utf8mb4");
-
 // Gestione dell'upload del file
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === UPLOAD_ERR_OK) {
@@ -170,6 +157,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- Bootstrap CSS -->
     <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <!-- Custom Styles -->
+    <link href="<?php echo $base_url; ?>styles.css?v=2.0" rel="stylesheet">
 </head>
 <body>
     <div class="container mt-5">

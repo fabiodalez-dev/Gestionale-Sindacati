@@ -1,17 +1,6 @@
 <?php
-// Configurazione della connessione al database
-$host = 'localhost';
-$db = 'fabiodal_adl';  // Sostituire con il nome del database
-$user = 'fabiodal_adl_user';     // Sostituire con il nome utente del database
-$pass = 'Zd10)uwziWlK';     // Sostituire con la password del database
-
-// Connessione al database
-$mysqli = new mysqli($host, $user, $pass, $db);
-
-// Verifica della connessione
-if ($mysqli->connect_error) {
-    die("Connessione fallita: " . $mysqli->connect_error);
-}
+// Installer legacy - usa config.php per le credenziali DB
+require_once 'config.php';
 
 // Inizio transazione
 $mysqli->begin_transaction();
@@ -165,7 +154,7 @@ executeQuery($query);
 // Aggiunta dell'utente admin predefinito
 $admin_username = 'admin';
 $admin_email = 'admin@example.com';
-$admin_password = password_hash('Zd10)uwziWlK', PASSWORD_DEFAULT); // Hash della password
+$admin_password = password_hash('ChangeMe123!', PASSWORD_DEFAULT); // Cambiare dopo il primo login
 
 // Verifica che l'utente admin non esista già
 $stmt = $mysqli->prepare("SELECT * FROM users WHERE username = ? OR email = ?");

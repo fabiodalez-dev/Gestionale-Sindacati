@@ -170,9 +170,10 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
 
                 <!-- Calendario -->
                 <div class="card mb-5" style="border:none; border-radius:0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
-                    <div class="card-header d-flex justify-content-between align-items-center" style="background:#fff; border-radius:0.75rem 0.75rem 0 0; border-bottom:1px solid #f0f0f0;">
+                    <div class="card-header" style="background:#fff; border-radius:0.75rem 0.75rem 0 0; border-bottom:1px solid #f0f0f0;">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center" style="gap: 0.5rem;">
                         <span style="font-weight:600; font-size: 1.1rem;"><i class="fas fa-calendar-alt mr-2"></i>Calendario Generale</span>
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center calendar-ics-section" style="flex-wrap: wrap; gap: 0.5rem;">
                             <div class="input-group input-group-sm" style="max-width: 420px;">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text" style="background:#f8f9fa; border-color:#dee2e6; font-size:0.75rem;">
@@ -186,7 +187,7 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                 ?>
                                 <input type="text" id="icsUrlInput" class="form-control form-control-sm"
                                        value="<?php echo sanitizeForHTML($ics_absolute_url); ?>"
-                                       readonly style="font-size:0.75rem; background:#f8f9fa; cursor:text; min-width:280px;">
+                                       readonly style="font-size:0.75rem; background:#f8f9fa; cursor:text;">
                                 <div class="input-group-append">
                                     <button class="btn btn-sm btn-outline-secondary" type="button" id="copyIcsBtn" title="Copia URL ICS">
                                         <i class="fas fa-copy"></i>
@@ -194,9 +195,10 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                 </div>
                             </div>
                             <a href="<?php echo sanitizeForHTML($ics_absolute_url); ?>"
-                               class="btn btn-sm btn-outline-secondary ml-2" download="calendar.ics" title="Scarica file ICS">
+                               class="btn btn-sm btn-outline-secondary" download="calendar.ics" title="Scarica file ICS">
                                 <i class="fas fa-download"></i>
                             </a>
+                        </div>
                         </div>
                     </div>
                     <div class="card-body p-3">
@@ -234,29 +236,29 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                 </div>
 
                 <!-- Filtri globali -->
-                <div class="filter-bar mb-4 d-flex flex-wrap align-items-center gap-3">
-                    <div class="d-flex align-items-center mr-3">
+                <div class="filter-bar mb-4 d-flex flex-wrap align-items-center gap-3 dashboard-filters">
+                    <div class="d-flex align-items-center mr-md-3">
                         <label class="mb-0 mr-2 font-weight-bold" style="font-size:0.85rem; white-space:nowrap;">
                             <i class="fas fa-filter"></i> Sede:
                         </label>
-                        <select id="filterSede" class="form-control form-control-sm" style="width:200px; border-radius:0.5rem;">
+                        <select id="filterSede" class="form-control form-control-sm" style="max-width:200px; border-radius:0.5rem;">
                             <option value="0">Tutte le sedi</option>
                             <?php foreach ($sedi as $s): ?>
                                 <option value="<?php echo intval($s['id']); ?>"><?php echo sanitizeForHTML($s['nome']); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="d-flex align-items-center mr-3">
+                    <div class="d-flex align-items-center mr-md-3">
                         <label class="mb-0 mr-2 font-weight-bold" style="font-size:0.85rem; white-space:nowrap;">Iscrizione:</label>
-                        <select id="filterIscritto" class="form-control form-control-sm" style="width:160px; border-radius:0.5rem;">
+                        <select id="filterIscritto" class="form-control form-control-sm" style="max-width:160px; border-radius:0.5rem;">
                             <option value="">Tutti</option>
                             <option value="1">Solo Iscritti</option>
                             <option value="0">Solo Non Iscritti</option>
                         </select>
                     </div>
-                    <button id="btnApplyFilter" class="btn btn-sm btn-primary mr-2">Applica Filtri</button>
+                    <button id="btnApplyFilter" class="btn btn-sm btn-primary">Applica Filtri</button>
                     <button id="btnResetFilter" class="btn btn-sm btn-outline-secondary">Reset</button>
-                    <span id="filterStatus" class="ml-auto text-muted" style="font-size:0.8rem;"></span>
+                    <span id="filterStatus" class="text-muted" style="font-size:0.8rem;"></span>
                 </div>
 
                 <!-- KPI Cards -->

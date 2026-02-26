@@ -1,3 +1,6 @@
+# Ambiente e credenziali
+.env
+
 # Sessioni
 sessions/
 
@@ -7,9 +10,18 @@ uploads/
 # Backup database
 backup/
 
-# File compressi interni
-adl.zip
+# File compressi
 *.zip
+
+# Dipendenze (installare con composer/npm)
+vendor/
+node_modules/
+theme/node_modules/
+
+# Loghi e immagini proprietarie
+images/logo.png
+uploads/logo.png
+favicon.ico
 
 # Bootstrap theme (pesante, da installare separatamente)
 startbootstrap-sb-admin-2-gh-pages*
@@ -28,3 +40,13 @@ Thumbs.db
 test_*.php
 debug_*.php
 temp_*.php
+
+# CGI
+cgi-bin/
+
+# Log
+*.log
+error_log
+
+# Memory/note locali
+zip.md

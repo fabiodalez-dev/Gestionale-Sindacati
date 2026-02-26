@@ -1,21 +1,10 @@
 <?php
-ob_start(); // Avvia il buffering dell'output
+require 'config.php';
+checkLogin();
 
 require __DIR__ . '/vendor/autoload.php'; // Autoload di Composer per MPDF
 
 use Mpdf\Mpdf;
-
-// Dati di connessione al database
-$host = 'localhost';
-$db = 'fabiodal_adl';               // Nome del database
-$user = 'fabiodal_adl_user';        // Nome utente del database
-$pass = 'Zd10)uwziWlK';             // Password del database
-
-// Connessione al database
-$mysqli = new mysqli($host, $user, $pass, $db);
-if ($mysqli->connect_error) {
-    die("Connessione fallita: " . $mysqli->connect_error);
-}
 
 // Verifica se un lavoratore è stato selezionato per generare il PDF
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lavoratore_id'])) {

@@ -823,6 +823,9 @@ generateCsrfToken();
                             <i class="fas fa-users"></i> Gestione Lavoratori
                         </h1>
                         <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary shadow-sm" data-toggle="modal" data-target="#importModal">
+                                <i class="fas fa-file-import"></i> Importa
+                            </button>
                             <a href="add_lavoratore.php" class="btn btn-success shadow-sm">
                                 <i class="fas fa-plus"></i> Aggiungi Lavoratore
                             </a>
@@ -1748,6 +1751,222 @@ generateCsrfToken();
             // Inizializzazione
             toggleBulkActionButtons();
         });
+    </script>
+
+    <!-- Modal Importazione Lavoratori -->
+    <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="importModalLabel">
+                        <i class="fas fa-file-import"></i> Importa Lavoratori da File
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Chiudi">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Step 1: Selezione file -->
+                    <div id="importStep1">
+                        <div class="mb-3">
+                            <p class="text-muted mb-2">Formati supportati: <strong>CSV</strong>, <strong>XLS</strong>, <strong>XLSX</strong></p>
+                            <p class="text-muted small">
+                                Il file deve avere un header nella prima riga. Le colonne vengono mappate automaticamente
+                                (es: "cognome", "nome", "codice fiscale", "telefono", "azienda", "settore"...).
+                            </p>
+                            <a href="templates/esempio_import_lavoratori.csv" download class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-download"></i> Scarica file di esempio (.csv)
+                            </a>
+                        </div>
+                        <div class="custom-file mb-3">
+                            <input type="file" class="custom-file-input" id="importFileInput" accept=".csv,.xls,.xlsx">
+                            <label class="custom-file-label" for="importFileInput" data-browse="Sfoglia">Scegli file...</label>
+                        </div>
+                        <div id="importFileInfo" class="d-none mb-3">
+                            <div class="alert alert-info mb-0 py-2">
+                                <i class="fas fa-file-alt"></i>
+                                <span id="importFileName"></span>
+                                <span class="badge badge-secondary ml-2" id="importFileSize"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Progresso -->
+                    <div id="importStep2" class="d-none">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary mb-3" role="status">
+                                <span class="sr-only">Importazione in corso...</span>
+                            </div>
+                            <p class="text-muted">Importazione in corso, attendere...</p>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Risultati -->
+                    <div id="importStep3" class="d-none">
+                        <div id="importResultIcon" class="text-center mb-3"></div>
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <div class="border rounded p-2">
+                                    <div class="h4 mb-0 text-success" id="importInserted">0</div>
+                                    <small class="text-muted">Inseriti</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="border rounded p-2">
+                                    <div class="h4 mb-0 text-warning" id="importSkipped">0</div>
+                                    <small class="text-muted">Saltati</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="border rounded p-2">
+                                    <div class="h4 mb-0 text-primary" id="importTotal">0</div>
+                                    <small class="text-muted">Totale righe</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Campi mappati -->
+                        <div id="importMappedFieldsContainer" class="d-none mb-3">
+                            <h6 class="font-weight-bold text-primary"><i class="fas fa-columns"></i> Colonne mappate:</h6>
+                            <div id="importMappedFields" class="small"></div>
+                        </div>
+
+                        <!-- Errori/avvisi -->
+                        <div id="importErrorsContainer" class="d-none mb-3">
+                            <h6 class="font-weight-bold text-danger"><i class="fas fa-exclamation-triangle"></i> Dettagli:</h6>
+                            <div id="importErrors" class="small" style="max-height: 200px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="importCloseBtn">Chiudi</button>
+                    <button type="button" class="btn btn-primary" id="importStartBtn" disabled>
+                        <i class="fas fa-upload"></i> Avvia Importazione
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    $(function() {
+        var $fileInput = $('#importFileInput');
+        var $startBtn = $('#importStartBtn');
+        var $closeBtn = $('#importCloseBtn');
+
+        // Aggiorna label del file selezionato
+        $fileInput.on('change', function() {
+            var file = this.files[0];
+            if (file) {
+                $(this).next('.custom-file-label').text(file.name);
+                var sizeKB = (file.size / 1024).toFixed(1);
+                var sizeLabel = sizeKB > 1024 ? (sizeKB / 1024).toFixed(1) + ' MB' : sizeKB + ' KB';
+                $('#importFileName').text(file.name);
+                $('#importFileSize').text(sizeLabel);
+                $('#importFileInfo').removeClass('d-none');
+                $startBtn.prop('disabled', false);
+            } else {
+                $(this).next('.custom-file-label').text('Scegli file...');
+                $('#importFileInfo').addClass('d-none');
+                $startBtn.prop('disabled', true);
+            }
+        });
+
+        // Reset modale alla chiusura
+        $('#importModal').on('hidden.bs.modal', function() {
+            $fileInput.val('').next('.custom-file-label').text('Scegli file...');
+            $('#importFileInfo').addClass('d-none');
+            $startBtn.prop('disabled', true).show();
+            $('#importStep1').removeClass('d-none');
+            $('#importStep2, #importStep3').addClass('d-none');
+        });
+
+        // Avvia importazione
+        $startBtn.on('click', function() {
+            var file = $fileInput[0].files[0];
+            if (!file) return;
+
+            // Mostra progresso
+            $('#importStep1').addClass('d-none');
+            $('#importStep2').removeClass('d-none');
+            $startBtn.hide();
+            $closeBtn.prop('disabled', true);
+
+            var formData = new FormData();
+            formData.append('import_file', file);
+            formData.append('csrf_token', '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>');
+
+            $.ajax({
+                url: 'import_lavoratori_ajax.php',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                timeout: 120000,
+                success: function(resp) {
+                    $('#importStep2').addClass('d-none');
+                    $('#importStep3').removeClass('d-none');
+                    $closeBtn.prop('disabled', false);
+
+                    if (resp.success) {
+                        var icon = resp.inserted > 0
+                            ? '<i class="fas fa-check-circle text-success fa-3x"></i><p class="mt-2 font-weight-bold text-success">Importazione completata</p>'
+                            : '<i class="fas fa-info-circle text-warning fa-3x"></i><p class="mt-2 font-weight-bold text-warning">Nessun nuovo lavoratore inserito</p>';
+                        $('#importResultIcon').html(icon);
+                        $('#importInserted').text(resp.inserted);
+                        $('#importSkipped').text(resp.skipped);
+                        $('#importTotal').text(resp.total_rows);
+
+                        // Campi mappati
+                        if (resp.mapped_fields && resp.mapped_fields.length > 0) {
+                            var badges = resp.mapped_fields.map(function(f) {
+                                return '<span class="badge badge-light border mr-1 mb-1">' + $('<span>').text(f).html() + '</span>';
+                            }).join('');
+                            $('#importMappedFields').html(badges);
+                            $('#importMappedFieldsContainer').removeClass('d-none');
+                        }
+
+                        // Errori
+                        if (resp.errors && resp.errors.length > 0) {
+                            var errHtml = resp.errors.map(function(e) {
+                                return '<div class="text-danger small"><i class="fas fa-exclamation-circle"></i> ' + $('<span>').text(e).html() + '</div>';
+                            }).join('');
+                            $('#importErrors').html(errHtml);
+                            $('#importErrorsContainer').removeClass('d-none');
+                        }
+
+                        // Ricarica tabella se ci sono inserimenti
+                        if (resp.inserted > 0 && typeof table !== 'undefined') {
+                            table.ajax.reload(null, false);
+                        }
+                    } else {
+                        $('#importResultIcon').html(
+                            '<i class="fas fa-times-circle text-danger fa-3x"></i>' +
+                            '<p class="mt-2 font-weight-bold text-danger">' + $('<span>').text(resp.error || 'Errore sconosciuto').html() + '</p>'
+                        );
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#importStep2').addClass('d-none');
+                    $('#importStep3').removeClass('d-none');
+                    $closeBtn.prop('disabled', false);
+
+                    var msg = 'Errore di connessione.';
+                    if (status === 'timeout') msg = 'Timeout: il file potrebbe essere troppo grande.';
+                    else if (xhr.responseJSON && xhr.responseJSON.error) msg = xhr.responseJSON.error;
+
+                    $('#importResultIcon').html(
+                        '<i class="fas fa-times-circle text-danger fa-3x"></i>' +
+                        '<p class="mt-2 font-weight-bold text-danger">' + $('<span>').text(msg).html() + '</p>'
+                    );
+                }
+            });
+        });
+    });
     </script>
 </body>
 </html>
