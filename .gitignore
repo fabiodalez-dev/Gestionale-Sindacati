@@ -1,0 +1,51 @@
+# Ambiente e credenziali
+.env
+
+# Sessioni
+sessions/
+
+# Upload utenti
+uploads/
+
+# Backup database
+backup/
+
+# File compressi
+*.zip
+
+# Dipendenze npm (installare con npm install)
+node_modules/
+theme/node_modules/
+
+# Loghi e immagini proprietarie
+images/logo.png
+uploads/logo.png
+favicon.ico
+
+# Bootstrap theme (pesante, da installare separatamente)
+startbootstrap-sb-admin-2-gh-pages*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test/debug
+test_*.php
+debug_*.php
+temp_*.php
+
+# CGI
+cgi-bin/
+
+# Log
+*.log
+error_log
+
+# Memory/note locali
+zip.md

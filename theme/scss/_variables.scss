@@ -1,0 +1,78 @@
+// ADL CRM — Modern Minimal Theme
+// Override Bootstrap default variables here
+// Do not edit any of the files in /vendor/bootstrap/scss/!
+
+// Color Variables — Neutral grayscale palette
+$white: #ffffff !default;
+$gray-100: #f9fafb !default;
+$gray-200: #f3f4f6 !default;
+$gray-300: #e5e7eb !default;
+$gray-400: #d1d5db !default;
+$gray-500: #9ca3af !default;
+$gray-600: #6b7280 !default;
+$gray-700: #374151 !default;
+$gray-800: #1f2937 !default;
+$gray-900: #111827 !default;
+$black: #000000 !default;
+
+// Bootstrap semantic colors — muted, professional
+$blue: #000000 !default;     // Primary = black
+$indigo: #4f46e5 !default;
+$purple: #7c3aed !default;
+$pink: #ec4899 !default;
+$red: #dc2626 !default;       // Danger
+$orange: #ea580c !default;
+$yellow: #d97706 !default;    // Warning
+$green: #16a34a !default;     // Success
+$teal: #0d9488 !default;
+$cyan: #0891b2 !default;      // Info
+
+// Custom Colors
+$brand-google: #ea4335 !default;
+$brand-facebook: #3b5998 !default;
+
+// Set Contrast Threshold
+$yiq-contrasted-threshold: 195 !default;
+
+// Typography — Inter for modern, clean readability
+$body-color: $black !default;
+
+$font-family-sans-serif: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", 'Noto Color Emoji' !default;
+
+$font-weight-light: 300 !default;
+$font-weight-base: 400 !default;
+$headings-font-weight: 600 !default;
+
+// Shadows — Soft, diffuse (Apple/Stripe style)
+$box-shadow-sm: 0 1px 2px 0 rgba($black, .05) !default;
+$box-shadow: 0 1px 3px 0 rgba($black, .08), 0 1px 2px -1px rgba($black, .06) !default;
+$box-shadow-lg: 0 4px 6px -1px rgba($black, .07), 0 2px 4px -2px rgba($black, .05) !default;
+
+// Borders Radius — Slightly more rounded for modern feel
+$border-radius: 0.5rem !default;
+$border-color: $gray-300 !default;
+
+// Spacing Variables
+$topbar-base-height: 4.375rem !default;
+$sidebar-base-width: 15rem !default;
+$sidebar-collapsed-width: 6.5rem !default;
+
+// Card — Clean, borderless with soft shadow
+$card-cap-bg: $white !default;
+$card-border-color: transparent !default;
+
+// Adjust column spacing for symmetry
+$spacer: 1rem !default;
+$grid-gutter-width: $spacer * 1.5 !default;
+
+// Transitions
+$transition-collapse: height .15s ease !default;
+
+// Dropdowns
+$dropdown-font-size: 0.85rem !default;
+$dropdown-border-color: $gray-300 !default;
+
+// Images
+$login-image: 'https://source.unsplash.com/K4mSJ7kc0As/600x800' !default;
+$register-image: 'https://source.unsplash.com/Mv9hjnEUHR4/600x800' !default;
+$password-image: 'https://source.unsplash.com/oWTW-jNGl9I/600x800' !default;

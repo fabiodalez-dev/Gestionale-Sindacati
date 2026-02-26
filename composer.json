@@ -1,0 +1,9 @@
+{
+    "require": {
+        "mpdf/mpdf": "^8.2",
+        "phpmailer/phpmailer": "^6.9",
+        "webklex/php-imap": "^5.5",
+        "ezyang/htmlpurifier": "^4.18",
+        "phpoffice/phpspreadsheet": "^5.4"
+    }
+}

@@ -1,0 +1,3 @@
+cognome;nome;codice fiscale;telefono;email;citta;provincia;indirizzo;cap;paese nascita;data nascita;data iscrizione;sesso;azienda;settore;ccnl;contratto;orario;ruolo;note
+Rossi;Marco;RSSMRC85M01H501Z;3331234567;marco.rossi@email.it;Padova;PD;Via Roma 10;35100;Italia;15/03/1985;01/01/2024;M;Logistica Nord Srl;privato;CCNL Logistica;indeterminato;full time;NESSUNO;
+Bianchi;Laura;BNCLRA90A41F205X;3339876543;laura.bianchi@email.it;Padova;PD;Via Dante 5;35100;Italia;01/01/1990;15/03/2024;F;Pulizie Veneto Spa;pubblico;CCNL Multiservizi;determinato;part time;RSU;Delegata sindacale

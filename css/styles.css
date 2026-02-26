@@ -1,0 +1,56 @@
+body {
+    font-family: Outfit, sans-serif;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.header-left,
+.header-right {
+    width: 48%;
+}
+
+.logo {
+    width: 100px;
+    margin-bottom: 10px;
+}
+
+.contact-info,
+.header-right {
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.static-text {
+    margin-bottom: 20px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.worker-data {
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 12px;
+    margin-bottom: 20px;
+}
+
+.worker-data-item {
+    width: 48%;
+    margin-bottom: 10px;
+}
+
+.signature-section {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 50px;
+    font-size: 12px;
+}
+
+.signature-left,
+.signature-right {
+    text-align: center;
+    width: 48%;
+}
