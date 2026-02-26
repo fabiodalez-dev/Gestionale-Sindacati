@@ -154,7 +154,7 @@ body {
   padding: 0.6rem 1rem;
   margin: 1px 0.5rem;
   border-radius: var(--radius);
-  transition: all var(--duration) var(--ease);
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
 
 .sidebar .nav-item .nav-link:hover {

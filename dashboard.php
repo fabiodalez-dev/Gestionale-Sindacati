@@ -96,10 +96,56 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
         .chart-container { position: relative; height: 350px; }
         .chart-container-lg { position: relative; height: 400px; }
         .chart-container-xl { position: relative; height: 500px; }
-        .stat-card { border-radius: 0.75rem; transition: transform 0.15s ease, box-shadow 0.15s ease; }
-        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08) !important; }
-        .stat-number { font-size: 2rem; font-weight: 700; line-height: 1; }
-        .stat-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; }
+        .stat-card {
+            border-radius: 1rem;
+            border: none;
+            overflow: hidden;
+            transition: transform 0.2s cubic-bezier(.4,0,.2,1), box-shadow 0.2s cubic-bezier(.4,0,.2,1);
+            position: relative;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.1) !important;
+        }
+        .stat-card:hover::before { opacity: 1; }
+        .stat-card--dark::before { background: #1e293b; }
+        .stat-card--green::before { background: #22c55e; }
+        .stat-card--red::before { background: #ef4444; }
+        .stat-card--blue::before { background: #3b82f6; }
+        .stat-card .stat-icon-wrap {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }
+        .stat-card--dark .stat-icon-wrap { background: #f1f5f9; color: #1e293b; }
+        .stat-card--green .stat-icon-wrap { background: #dcfce7; color: #16a34a; }
+        .stat-card--red .stat-icon-wrap { background: #fee2e2; color: #dc2626; }
+        .stat-card--blue .stat-icon-wrap { background: #dbeafe; color: #2563eb; }
+        .stat-number {
+            font-size: 1.85rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            color: #0f172a;
+        }
+        .stat-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
         .filter-bar { background: #fff; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); padding: 1rem 1.25rem; }
         .chart-card { border: none; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
         .chart-card .card-header { background: #fff; border-bottom: 1px solid #f0f0f0; font-weight: 600; font-size: 0.9rem; padding: 1rem 1.25rem; border-radius: 0.75rem 0.75rem 0 0 !important; }
@@ -264,46 +310,54 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                 <!-- KPI Cards -->
                 <div class="row mb-4" id="kpiRow">
                     <div class="col-12 col-sm-6 col-lg-3 mb-3">
-                        <div class="card stat-card shadow-sm h-100 border-0" style="border-left:4px solid #000 !important;">
-                            <div class="card-body d-flex align-items-center justify-content-between">
-                                <div>
-                                    <div class="stat-label text-dark">Totale Lavoratori</div>
-                                    <div class="stat-number" id="kpiTotal">-</div>
+                        <div class="card stat-card stat-card--dark shadow-sm h-100">
+                            <div class="card-body py-3 px-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="stat-icon-wrap mr-3">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div class="stat-label mb-0">Totale Lavoratori</div>
                                 </div>
-                                <i class="fas fa-users fa-2x" style="opacity:0.15;"></i>
+                                <div class="stat-number" id="kpiTotal">-</div>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-3 mb-3">
-                        <div class="card stat-card shadow-sm h-100 border-0" style="border-left:4px solid #22c55e !important;">
-                            <div class="card-body d-flex align-items-center justify-content-between">
-                                <div>
-                                    <div class="stat-label" style="color:#22c55e;">Iscritti</div>
-                                    <div class="stat-number" id="kpiIscritti" style="color:#22c55e;">-</div>
+                        <div class="card stat-card stat-card--green shadow-sm h-100">
+                            <div class="card-body py-3 px-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="stat-icon-wrap mr-3">
+                                        <i class="fas fa-user-check"></i>
+                                    </div>
+                                    <div class="stat-label mb-0">Iscritti</div>
                                 </div>
-                                <i class="fas fa-user-check fa-2x" style="opacity:0.15;"></i>
+                                <div class="stat-number" id="kpiIscritti" style="color:#16a34a;">-</div>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-3 mb-3">
-                        <div class="card stat-card shadow-sm h-100 border-0" style="border-left:4px solid #ef4444 !important;">
-                            <div class="card-body d-flex align-items-center justify-content-between">
-                                <div>
-                                    <div class="stat-label" style="color:#ef4444;">Non Iscritti</div>
-                                    <div class="stat-number" id="kpiNonIscritti" style="color:#ef4444;">-</div>
+                        <div class="card stat-card stat-card--red shadow-sm h-100">
+                            <div class="card-body py-3 px-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="stat-icon-wrap mr-3">
+                                        <i class="fas fa-user-times"></i>
+                                    </div>
+                                    <div class="stat-label mb-0">Non Iscritti</div>
                                 </div>
-                                <i class="fas fa-user-times fa-2x" style="opacity:0.15;"></i>
+                                <div class="stat-number" id="kpiNonIscritti" style="color:#dc2626;">-</div>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-3 mb-3">
-                        <div class="card stat-card shadow-sm h-100 border-0" style="border-left:4px solid #3b82f6 !important;">
-                            <div class="card-body d-flex align-items-center justify-content-between">
-                                <div>
-                                    <div class="stat-label" style="color:#3b82f6;">Tasso Iscrizione</div>
-                                    <div class="stat-number" id="kpiRate" style="color:#3b82f6;">-</div>
+                        <div class="card stat-card stat-card--blue shadow-sm h-100">
+                            <div class="card-body py-3 px-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="stat-icon-wrap mr-3">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <div class="stat-label mb-0">Tasso Iscrizione</div>
                                 </div>
-                                <i class="fas fa-percentage fa-2x" style="opacity:0.15;"></i>
+                                <div class="stat-number" id="kpiRate" style="color:#2563eb;">-</div>
                             </div>
                         </div>
                     </div>

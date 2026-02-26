@@ -124,8 +124,8 @@ generateCsrfToken();
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/gsap/gsap.min.js"></script>
     <script>
-    gsap.fromTo('.card', { opacity: 0, y: 30, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.4)', delay: 0.1 });
-    gsap.fromTo('.text-center.mb-4 img', { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5, delay: 0 });
+    gsap.fromTo('.text-center.mb-4 img', { opacity: 0 }, { opacity: 1, duration: 0.3, delay: 0 });
+    gsap.fromTo('.card', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out', delay: 0.05 });
     </script>
 </body>
 </html>

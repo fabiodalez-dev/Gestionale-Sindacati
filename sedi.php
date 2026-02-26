@@ -109,11 +109,53 @@ if ($statsStmt) {
     
     <!-- Custom CSS -->
     <style>
-        .stats-card {
-            transition: transform 0.2s;
+        .stat-card {
+            border-radius: 1rem;
+            border: none;
+            overflow: hidden;
+            transition: transform 0.2s cubic-bezier(.4,0,.2,1), box-shadow 0.2s cubic-bezier(.4,0,.2,1);
+            position: relative;
         }
-        .stats-card:hover {
-            transform: translateY(-5px);
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.1) !important;
+        }
+        .stat-card:hover::before { opacity: 1; }
+        .stat-card--blue::before { background: #3b82f6; }
+        .stat-card--green::before { background: #22c55e; }
+        .stat-card--cyan::before { background: #06b6d4; }
+        .stat-card .stat-icon-wrap {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }
+        .stat-card--blue .stat-icon-wrap { background: #dbeafe; color: #2563eb; }
+        .stat-card--green .stat-icon-wrap { background: #dcfce7; color: #16a34a; }
+        .stat-card--cyan .stat-icon-wrap { background: #cffafe; color: #0891b2; }
+        .stat-card .stat-number {
+            font-size: 1.85rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            color: #0f172a;
+        }
+        .stat-card .stat-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #94a3b8;
+            margin-bottom: 0;
         }
         .sede-name {
             font-weight: 600;
@@ -200,65 +242,45 @@ if ($statsStmt) {
                         </div>
                     </div>
 
-                    <!-- Statistiche generali (SOLO 3 CARD, senza "Senza sede") -->
+                    <!-- Statistiche generali -->
                     <?php if (!empty($stats)): ?>
                     <div class="row mb-4">
-                        <div class="col-xl-4 col-md-6 mb-4">
-                            <div class="card border-left-primary shadow h-100 py-2 stats-card">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                Totale Sedi
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                <?php echo number_format($stats['totale_sedi']); ?>
-                                            </div>
+                        <div class="col-xl-4 col-md-6 mb-3">
+                            <div class="card stat-card stat-card--blue shadow-sm h-100">
+                                <div class="card-body py-3 px-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="stat-icon-wrap mr-3">
+                                            <i class="fas fa-building"></i>
                                         </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-building fa-2x text-gray-300"></i>
-                                        </div>
+                                        <div class="stat-label">Totale Sedi</div>
                                     </div>
+                                    <div class="stat-number"><?php echo number_format($stats['totale_sedi']); ?></div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="col-xl-4 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2 stats-card">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Lavoratori Attivi
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                <?php echo number_format($stats['lavoratori_attivi']); ?>
-                                            </div>
+                        <div class="col-xl-4 col-md-6 mb-3">
+                            <div class="card stat-card stat-card--green shadow-sm h-100">
+                                <div class="card-body py-3 px-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="stat-icon-wrap mr-3">
+                                            <i class="fas fa-users"></i>
                                         </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-users fa-2x text-gray-300"></i>
-                                        </div>
+                                        <div class="stat-label">Lavoratori Attivi</div>
                                     </div>
+                                    <div class="stat-number"><?php echo number_format($stats['lavoratori_attivi']); ?></div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="col-xl-4 col-md-6 mb-4">
-                            <div class="card border-left-info shadow h-100 py-2 stats-card">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                                Totale Lavoratori
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                <?php echo number_format($stats['totale_lavoratori']); ?>
-                                            </div>
+                        <div class="col-xl-4 col-md-6 mb-3">
+                            <div class="card stat-card stat-card--cyan shadow-sm h-100">
+                                <div class="card-body py-3 px-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="stat-icon-wrap mr-3">
+                                            <i class="fas fa-user-friends"></i>
                                         </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-user-friends fa-2x text-gray-300"></i>
-                                        </div>
+                                        <div class="stat-label">Totale Lavoratori</div>
                                     </div>
+                                    <div class="stat-number"><?php echo number_format($stats['totale_lavoratori']); ?></div>
                                 </div>
                             </div>
                         </div>

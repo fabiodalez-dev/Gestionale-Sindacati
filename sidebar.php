@@ -79,6 +79,13 @@ if ($conn_check && $conn_check->num_rows > 0) {
             <span>Gestione Sedi</span></a>
     </li>
 
+    <!-- Nav Item - Gestione CCNL -->
+    <li class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'gestione_ccnl.php' ? 'active' : ''; ?>">
+        <a class="nav-link" href="<?php echo $base_url; ?>gestione_ccnl.php">
+            <i class="fas fa-fw fa-file-contract"></i>
+            <span>Gestione CCNL</span></a>
+    </li>
+
     <?php if ($_SESSION['user_role'] === 'admin'): ?>
         <!-- Nav Item - Gestione Utenti -->
         <li class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'gestione_utenti.php' ? 'active' : ''; ?>">

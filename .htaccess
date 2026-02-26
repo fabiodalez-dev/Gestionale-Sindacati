@@ -12,3 +12,26 @@ RewriteRule ^$ /login.php [L,R=302]
 <Files "config.php">
     Require all denied
 </Files>
+
+# Protegge il file .env (credenziali database)
+<Files ".env">
+    Require all denied
+</Files>
+
+# Protegge i file di log
+<FilesMatch "\.(log)$">
+    Require all denied
+</FilesMatch>
+<Files "error_log">
+    Require all denied
+</Files>
+
+# Protegge i file lock e di configurazione composer/npm
+<FilesMatch "^(composer\.json|composer\.lock|package\.json|package-lock\.json)$">
+    Require all denied
+</FilesMatch>
+
+# Protegge zip.md e altri file markdown
+<FilesMatch "\.(md)$">
+    Require all denied
+</FilesMatch>

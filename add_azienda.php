@@ -199,9 +199,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
     <!-- Custom CSS -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
-    <!-- jQuery UI (per aggiungere/rimuovere unità operative) -->
+    <!-- jQuery UI CSS -->
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
-    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
     <style>
         /* Eventuali stili personalizzati */
         .remove-unita-operativa-btn {
@@ -384,6 +383,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
+
+    <!-- jQuery UI (per aggiungere/rimuovere unità operative) -->
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
 
     <!-- Bootstrap core JavaScript-->
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

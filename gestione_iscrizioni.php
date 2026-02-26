@@ -322,6 +322,8 @@ if ($result_lavoratori) {
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
     <!-- jQuery UI CSS -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
     <!-- Custom CSS (se necessario) -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
 </head>
@@ -622,6 +624,10 @@ if ($result_lavoratori) {
 
     <!-- SB Admin 2 JS -->
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
+
+    <!-- DataTables JS -->
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/jquery.dataTables.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
     <!-- Inizializzazione DataTables e Autocomplete -->
     <script>

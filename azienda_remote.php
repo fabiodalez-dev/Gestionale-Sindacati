@@ -156,27 +156,6 @@ generateCsrfToken();
                         </div>
                     </div>
 
-                    <?php if (!empty($lavoratori)): ?>
-                    <div class="card mt-4">
-                        <div class="card-header">Lavoratori (<?php echo count($lavoratori); ?>)</div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead><tr><th>#</th><th>Cognome</th><th>Nome</th></tr></thead>
-                                    <tbody>
-                                        <?php foreach ($lavoratori as $i => $lav): ?>
-                                        <tr>
-                                            <td><?php echo $i + 1; ?></td>
-                                            <td><?php echo sanitizeForHTML($lav['cognome'] ?? ''); ?></td>
-                                            <td><?php echo sanitizeForHTML($lav['nome'] ?? ''); ?></td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endif; ?>
 
                     <?php if (!empty($unita_operative)): ?>
                     <div class="card mt-4 mb-4">

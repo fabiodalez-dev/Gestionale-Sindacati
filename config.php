@@ -221,6 +221,7 @@ function getSetting($key) {
  * @return bool True se l'operazione ha avuto successo, False altrimenti
  */
 function setSetting($key, $value) {
+    $value = $value ?? '';
     // Verifica se l'impostazione esiste già
     $stmt = executeQuery("SELECT id FROM settings WHERE setting_key = ?", [$key], 's');
     if ($stmt === false) {

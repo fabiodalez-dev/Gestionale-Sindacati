@@ -1,0 +1,2 @@
+# Blocca l'accesso diretto ai file di migrazione SQL.
+Require all denied

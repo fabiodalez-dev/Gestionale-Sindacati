@@ -1,5 +1,6 @@
 <?php
 require 'config.php';
+
 checkLogin();
 checkUserRole('admin');
 
@@ -402,8 +403,22 @@ generateCsrfToken();
                                 <div class="card-body">
                                     <p class="text-muted mb-3">
                                         Le chiavi API permettono ad altri CRM di accedere ai dati di questo gestionale.
-                                        Condividi una chiave con l'amministratore del CRM remoto.
+                                        Condividi una chiave e l'endpoint con l'amministratore del CRM remoto.
                                     </p>
+                                    <div class="alert alert-info d-flex align-items-center mb-3">
+                                        <i class="fas fa-link mr-2"></i>
+                                        <div>
+                                            <strong>Endpoint API:</strong>
+                                            <code id="apiEndpointUrl"><?php
+                                                $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                                                $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                                                echo sanitizeForHTML($protocol . '://' . $host . $base_url . 'api.php');
+                                            ?></code>
+                                            <button class="btn btn-sm btn-outline-secondary ml-2" onclick="navigator.clipboard.writeText(document.getElementById('apiEndpointUrl').textContent.trim()).then(function(){Swal.fire({icon:'success',title:'Copiato!',timer:1500,showConfirmButton:false})});" title="Copia endpoint">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div id="apiKeysList">
                                         <?php if (empty($api_keys)): ?>
                                             <p class="text-muted text-center py-4">Nessuna chiave API creata.</p>
