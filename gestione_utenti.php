@@ -161,15 +161,13 @@ if ($stmt) {
     <!-- Meta viewport per la responsività -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
     <!-- FontAwesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
     <!-- jQuery UI CSS per l'autocomplete (se necessario) -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
     <style>
         /* Stili personalizzati per migliorare la visibilità su dispositivi mobili */
         @media (max-width: 767.98px) {
@@ -226,7 +224,7 @@ if ($stmt) {
 
                     <!-- Form di Creazione Utente -->
                     <div class="card mb-4">
-                        <div class="card-header bg-primary text-white">
+                        <div class="card-header">
                             Crea Nuovo Utente
                         </div>
                         <div class="card-body">
@@ -273,7 +271,7 @@ if ($stmt) {
 
                     <!-- Tabella degli Utenti per Desktop -->
                     <div class="card d-none d-md-block">
-                        <div class="card-header bg-primary text-white">
+                        <div class="card-header">
                             Lista Utenti
                         </div>
                         <div class="card-body">
@@ -309,26 +307,27 @@ if ($stmt) {
                                                 <td><?php echo sanitizeForHTML($user['created_at']); ?></td>
                                                 <td>
                                                     <!-- Pulsante per Modificare -->
-                                                    <button class="btn btn-sm btn-primary edit-btn" 
-                                                        data-id="<?php echo $user['id']; ?>" 
-                                                        data-username="<?php echo sanitizeForHTML($user['username']); ?>" 
-                                                        data-email="<?php echo sanitizeForHTML($user['email']); ?>" 
+                                                    <div class="d-flex align-items-center gap-2">
+                                                    <button class="table-action-icon edit-btn"
+                                                        data-id="<?php echo $user['id']; ?>"
+                                                        data-username="<?php echo sanitizeForHTML($user['username']); ?>"
+                                                        data-email="<?php echo sanitizeForHTML($user['email']); ?>"
                                                         data-role="<?php echo sanitizeForHTML($user['role']); ?>"
-                                                        data-sede_id="<?php echo isset($user['sede_id']) ? $user['sede_id'] : ''; ?>">
-                                                        <i class="fas fa-edit"></i> Modifica
+                                                        data-sede_id="<?php echo isset($user['sede_id']) ? $user['sede_id'] : ''; ?>"
+                                                        title="Modifica">
+                                                        <i class="fas fa-edit"></i>
                                                     </button>
-
-                                                    <!-- Pulsante per Eliminare -->
                                                     <?php if ($user['id'] != $_SESSION['user_id']): ?>
                                                         <form method="POST" action="gestione_utenti.php" style="display:inline-block;" onsubmit="return confirm('Sei sicuro di voler eliminare questo utente?');">
                                                             <input type="hidden" name="action" value="delete">
                                                             <?php csrfInputField(); ?>
                                                             <input type="hidden" name="id" value="<?php echo $user['id']; ?>">
-                                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                                <i class="fas fa-trash-alt"></i> Elimina
+                                                            <button type="submit" class="table-action-icon" title="Elimina">
+                                                                <i class="fas fa-trash-alt"></i>
                                                             </button>
                                                         </form>
                                                     <?php endif; ?>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -345,7 +344,7 @@ if ($stmt) {
 
                     <!-- Lista degli Utenti in Formato Card per Mobile -->
                     <div class="card d-block d-md-none">
-                        <div class="card-header bg-primary text-white">
+                        <div class="card-header">
                             Lista Utenti
                         </div>
                         <div class="card-body">
@@ -371,25 +370,27 @@ if ($stmt) {
                                                 ?>
                                             </p>
                                             <p class="card-text"><strong>Creato il:</strong> <?php echo sanitizeForHTML($user['created_at']); ?></p>
-                                            <button class="btn btn-sm btn-primary edit-btn" 
-                                                data-id="<?php echo $user['id']; ?>" 
-                                                data-username="<?php echo sanitizeForHTML($user['username']); ?>" 
-                                                data-email="<?php echo sanitizeForHTML($user['email']); ?>" 
+                                            <div class="d-flex align-items-center gap-2">
+                                            <button class="table-action-icon edit-btn"
+                                                data-id="<?php echo $user['id']; ?>"
+                                                data-username="<?php echo sanitizeForHTML($user['username']); ?>"
+                                                data-email="<?php echo sanitizeForHTML($user['email']); ?>"
                                                 data-role="<?php echo sanitizeForHTML($user['role']); ?>"
-                                                data-sede_id="<?php echo isset($user['sede_id']) ? $user['sede_id'] : ''; ?>">
-                                                <i class="fas fa-edit"></i> Modifica
+                                                data-sede_id="<?php echo isset($user['sede_id']) ? $user['sede_id'] : ''; ?>"
+                                                title="Modifica">
+                                                <i class="fas fa-edit"></i>
                                             </button>
-
                                             <?php if ($user['id'] != $_SESSION['user_id']): ?>
                                                 <form method="POST" action="gestione_utenti.php" style="display:inline-block;" onsubmit="return confirm('Sei sicuro di voler eliminare questo utente?');">
                                                     <input type="hidden" name="action" value="delete">
                                                     <?php csrfInputField(); ?>
                                                     <input type="hidden" name="id" value="<?php echo $user['id']; ?>">
-                                                    <button type="submit" class="btn btn-sm btn-danger">
-                                                        <i class="fas fa-trash-alt"></i> Elimina
+                                                    <button type="submit" class="table-action-icon" title="Elimina">
+                                                        <i class="fas fa-trash-alt"></i>
                                                     </button>
                                                 </form>
                                             <?php endif; ?>
+                                            </div>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -471,16 +472,13 @@ if ($stmt) {
     </div>
 
     <!-- Bootstrap core JavaScript-->
-    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery/jquery.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <!-- Core plugin JavaScript-->
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
     <!-- SB Admin 2 JavaScript-->
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
     <!-- jQuery UI per l'autocomplete (se necessario) -->
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-    <!-- FontAwesome JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
     <script>
         $(document).ready(function(){
             // Gestione del pulsante Modifica

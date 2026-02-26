@@ -1,31 +1,31 @@
+// ADL CRM — Modern Minimal Theme
 // Override Bootstrap default variables here
 // Do not edit any of the files in /vendor/bootstrap/scss/!
 
-// Color Variables
-// Bootstrap Color Overrides
+// Color Variables — Neutral grayscale palette
+$white: #ffffff !default;
+$gray-100: #f9fafb !default;
+$gray-200: #f3f4f6 !default;
+$gray-300: #e5e7eb !default;
+$gray-400: #d1d5db !default;
+$gray-500: #9ca3af !default;
+$gray-600: #6b7280 !default;
+$gray-700: #374151 !default;
+$gray-800: #1f2937 !default;
+$gray-900: #111827 !default;
+$black: #000000 !default;
 
-$white: #fff !default;
-$gray-100: #f8f9fc !default;
-$gray-200: #eaecf4 !default;
-$gray-300: #dddfeb !default;
-$gray-400: #d1d3e2 !default;
-$gray-500: #b7b9cc !default;
-$gray-600: #858796 !default;
-$gray-700: #6e707e !default;
-$gray-800: #5a5c69 !default;
-$gray-900: #3a3b45 !default;
-$black: #000 !default;
-
-$blue: #4e73df !default;
-$indigo: #6610f2 !default;
-$purple: #6f42c1 !default;
-$pink: #e83e8c !default;
-$red: #e74a3b !default;
-$orange: #fd7e14 !default;
-$yellow: #f6c23e !default;
-$green: #1cc88a !default;
-$teal: #20c9a6 !default;
-$cyan: #36b9cc !default;
+// Bootstrap semantic colors — muted, professional
+$blue: #000000 !default;     // Primary = black
+$indigo: #4f46e5 !default;
+$purple: #7c3aed !default;
+$pink: #ec4899 !default;
+$red: #dc2626 !default;       // Danger
+$orange: #ea580c !default;
+$yellow: #d97706 !default;    // Warning
+$green: #16a34a !default;     // Success
+$teal: #0d9488 !default;
+$cyan: #0891b2 !default;      // Info
 
 // Custom Colors
 $brand-google: #ea4335 !default;
@@ -34,35 +34,32 @@ $brand-facebook: #3b5998 !default;
 // Set Contrast Threshold
 $yiq-contrasted-threshold: 195 !default;
 
-// Typography
-$body-color: $gray-600 !default;
+// Typography — Inter for modern, clean readability
+$body-color: $black !default;
 
-$font-family-sans-serif: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", 'Noto Color Emoji' !default;
+$font-family-sans-serif: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", 'Noto Color Emoji' !default;
 
 $font-weight-light: 300 !default;
-// $font-weight-base: 400;
-$headings-font-weight: 400 !default;
+$font-weight-base: 400 !default;
+$headings-font-weight: 600 !default;
 
-// Shadows
-$box-shadow-sm: 0 0.125rem 0.25rem 0 rgba($gray-900, .2) !default;
-$box-shadow: 0 0.15rem 1.75rem 0 rgba($gray-900, .15) !default;
-// $box-shadow-lg: 0 1rem 3rem rgba($black, .175) !default;
+// Shadows — Soft, diffuse (Apple/Stripe style)
+$box-shadow-sm: 0 1px 2px 0 rgba($black, .05) !default;
+$box-shadow: 0 1px 3px 0 rgba($black, .08), 0 1px 2px -1px rgba($black, .06) !default;
+$box-shadow-lg: 0 4px 6px -1px rgba($black, .07), 0 2px 4px -2px rgba($black, .05) !default;
 
-// Borders Radius
-$border-radius: 0.35rem !default;
-$border-color: darken($gray-200, 2%) !default;
+// Borders Radius — Slightly more rounded for modern feel
+$border-radius: 0.5rem !default;
+$border-color: $gray-300 !default;
 
 // Spacing Variables
-// Change below variable if the height of the navbar changes
 $topbar-base-height: 4.375rem !default;
-// Change below variable to change the width of the sidenav
-$sidebar-base-width: 14rem !default;
-// Change below variable to change the width of the sidenav when collapsed
+$sidebar-base-width: 15rem !default;
 $sidebar-collapsed-width: 6.5rem !default;
 
-// Card
-$card-cap-bg: $gray-100 !default;
-$card-border-color: $border-color !default;
+// Card — Clean, borderless with soft shadow
+$card-cap-bg: $white !default;
+$card-border-color: transparent !default;
 
 // Adjust column spacing for symmetry
 $spacer: 1rem !default;
@@ -73,7 +70,7 @@ $transition-collapse: height .15s ease !default;
 
 // Dropdowns
 $dropdown-font-size: 0.85rem !default;
-$dropdown-border-color: $border-color !default;
+$dropdown-border-color: $gray-300 !default;
 
 // Images
 $login-image: 'https://source.unsplash.com/K4mSJ7kc0As/600x800' !default;

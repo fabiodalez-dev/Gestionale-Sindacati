@@ -1,5 +1,5 @@
 <!-- Topbar -->
-<nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+<nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top">
 
     <!-- Bottone per togglare la sidebar su dispositivi mobili -->
     <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3" aria-label="Apri Sidebar">
@@ -21,39 +21,39 @@
     <!-- Hook per inserire contenuti personalizzati nella topbar -->
     <?php doHook('topbar_custom_content'); ?>
 
-    <!-- jQuery UI CSS -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-	<link rel="stylesheet" href="styles.css">
-    <!-- SweetAlert2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <!-- jQuery UI CSS (local) -->
+    <link rel="stylesheet" href="<?php echo $base_url; ?>theme/vendor/jquery-ui/jquery-ui.min.css">
+    <!-- SweetAlert2 CSS (local) -->
+    <link href="<?php echo $base_url; ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
 
     <!-- Navbar -->
     <ul class="navbar-nav ml-auto">
-		                <!-- Manuale -->
-
- <li class="nav-item">
-	 <a class="nav-link" href="manuale.php" id="manuale" role="button"
-               >
-                <i class="fas  fa-book-open"></i>
-                <!-- Contatore - Messaggi -->
-            </a></li>
-        <!-- Nav Item - Messaggi (opzionale, puoi rimuoverlo se non necessario) -->
-        <li class="nav-item dropdown no-arrow mx-1">
-            <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button"
-               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="fas fa-envelope fa-fw"></i>
-                <!-- Contatore - Messaggi -->
-                <span class="badge badge-danger badge-counter">7</span>
+        <!-- Manuale -->
+        <li class="nav-item">
+            <a class="nav-link" href="manuale.php" role="button">
+                <i class="fas fa-book-open"></i>
             </a>
-            <!-- Dropdown - Messaggi -->
+        </li>
+
+        <!-- Nav Item - Notifiche Calendario -->
+        <li class="nav-item dropdown no-arrow mx-1">
+            <a class="nav-link dropdown-toggle" href="#" id="notificationsDropdown" role="button"
+               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-bell fa-fw"></i>
+                <span class="badge badge-danger badge-counter" id="notifBadge" style="display:none;">0</span>
+            </a>
+            <!-- Dropdown - Notifiche -->
             <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                 aria-labelledby="messagesDropdown">
-                <h6 class="dropdown-header">
-                    Centro Messaggi
+                 aria-labelledby="notificationsDropdown" style="width: 380px; max-height: 420px; overflow-y: auto;">
+                <h6 class="dropdown-header" style="background: var(--slate-900, #0f172a); color: #fff; border: none;">
+                    <i class="fas fa-calendar-alt mr-1"></i> Eventi Calendario
                 </h6>
-                <!-- Esempio di messaggio -->
-                <!-- ... -->
-                <a class="dropdown-item text-center small text-gray-500" href="#">Leggi Tutti i Messaggi</a>
+                <div id="notifContainer">
+                    <div class="text-center py-3 text-muted small">Caricamento...</div>
+                </div>
+                <a class="dropdown-item text-center small" href="<?php echo $base_url; ?>dashboard.php#calendar" style="font-weight: 500; color: var(--accent, #3b82f6);">
+                    Vai al Calendario Completo
+                </a>
             </div>
         </li>
 
@@ -93,77 +93,152 @@
 <?php doHook('topbar_custom_scripts'); ?>
 
 <!-- jQuery prima di jQuery UI -->
-<script src="/theme/vendor/jquery/jquery.min.js"></script>
-<!-- jQuery UI JavaScript -->
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-<!-- SweetAlert2 JavaScript -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="<?php echo $base_url; ?>theme/vendor/jquery/jquery.min.js"></script>
+<!-- jQuery UI (local) -->
+<script src="<?php echo $base_url; ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
+<!-- SweetAlert2 (local) -->
+<script src="<?php echo $base_url; ?>theme/vendor/sweetalert2/sweetalert2.min.js"></script>
 
 <!-- JavaScript Personalizzato -->
 <script>
-    $(document).ready(function() {
-        // Funzione per verificare se l'utente è su un dispositivo mobile
-        function isMobile() {
-            return window.matchMedia("(max-width: 767.98px)").matches;
-        }
+$(document).ready(function() {
+    // Mobile sidebar toggle
+    if (window.matchMedia("(max-width: 767.98px)").matches) {
+        $(".sidebar").addClass("toggled");
+    }
 
-        // Aggiungi la classe 'toggled' alla sidebar se è un dispositivo mobile all'apertura della pagina
-        if (isMobile()) {
-            $(".sidebar").addClass("toggled");
+    function searchInLavoratori(query) {
+        if (query.trim() !== '') {
+            window.location.href = '<?php echo $base_url; ?>lavoratori.php?search=' + encodeURIComponent(query.trim());
         }
+    }
 
-        // Funzione per navigare a lavoratori.php con il filtro di ricerca
-        function searchInLavoratori(query) {
-            if (query.trim() !== '') {
-                window.location.href = '<?php echo $base_url; ?>lavoratori.php?search=' + encodeURIComponent(query.trim());
+    // Autocomplete
+    $("#topbarSearch").autocomplete({
+        source: function(request, response) {
+            $.ajax({
+                url: '<?php echo $base_url; ?>search_lavoratori.php',
+                type: 'GET',
+                dataType: 'json',
+                data: { term: request.term },
+                success: function(data) {
+                    response($.map(data, function(item) {
+                        return { label: item.label, value: item.value };
+                    }));
+                },
+                error: function() { response([]); }
+            });
+        },
+        minLength: 2,
+        select: function(event, ui) {
+            if (ui.item && ui.item.value) {
+                window.location.href = '<?php echo $base_url; ?>lavoratore.php?id=' + ui.item.value;
             }
+            return false;
         }
-
-        // Autocomplete per la barra di ricerca
-        $("#topbarSearch").autocomplete({
-            source: function(request, response) {
-                $.ajax({
-                    url: '<?php echo $base_url; ?>search_lavoratori.php',
-                    type: 'GET',
-                    dataType: 'json',
-                    data: {
-                        term: request.term
-                    },
-                    success: function(data) {
-                        response($.map(data, function(item) {
-                            return {
-                                label: item.label,
-                                value: item.value,
-                                searchLabel: item.label
-                            };
-                        }));
-                    },
-                    error: function(xhr, status, error) {
-                        console.error("Errore nella richiesta AJAX:", status, error);
-                        response([]);
-                    }
-                });
-            },
-            minLength: 2,
-            select: function(event, ui) {
-                // Quando si seleziona un risultato, naviga alla scheda del lavoratore
-                if (ui.item && ui.item.value) {
-                    window.location.href = '<?php echo $base_url; ?>lavoratore.php?id=' + ui.item.value;
-                }
-                return false;
-            }
-        });
-
-        // Enter nel campo di ricerca → vai a lavoratori.php con filtro
-        $("#topbarSearchForm").on('submit', function(e) {
-            e.preventDefault();
-            searchInLavoratori($("#topbarSearch").val());
-        });
-
-        // Click sul pulsante di ricerca → vai a lavoratori.php con filtro
-        $("#topbarSearchButton").on('click', function() {
-            searchInLavoratori($("#topbarSearch").val());
-        });
     });
+
+    $("#topbarSearchForm").on('submit', function(e) {
+        e.preventDefault();
+        searchInLavoratori($("#topbarSearch").val());
+    });
+    $("#topbarSearchButton").on('click', function() {
+        searchInLavoratori($("#topbarSearch").val());
+    });
+
+    // ── Notification System ──
+    function loadNotifications() {
+        $.ajax({
+            url: '<?php echo $base_url; ?>fetch_notifications.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                if (!data.success) return;
+
+                var badge = $('#notifBadge');
+                var container = $('#notifContainer');
+
+                // Update badge
+                if (data.total_count > 0) {
+                    badge.text(data.total_count).show();
+                } else {
+                    badge.hide();
+                }
+
+                // Build notification list
+                var html = '';
+
+                if (data.notifications.length === 0) {
+                    html = '<div class="text-center py-3"><span class="text-muted small">Nessun evento nei prossimi giorni</span></div>';
+                } else {
+                    var lastCategory = '';
+                    data.notifications.forEach(function(n) {
+                        // Category header
+                        if (n.category !== lastCategory) {
+                            lastCategory = n.category;
+                            var catLabel = '';
+                            var catIcon = '';
+                            if (n.category === 'today') {
+                                catLabel = 'Oggi';
+                                catIcon = 'fa-calendar-day';
+                            } else if (n.category === 'upcoming') {
+                                catLabel = 'Prossimi giorni';
+                                catIcon = 'fa-calendar-plus';
+                            } else {
+                                catLabel = 'Recenti';
+                                catIcon = 'fa-history';
+                            }
+                            html += '<div style="padding: 0.4rem 1rem; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; background: #f8fafc;">';
+                            html += '<i class="fas ' + catIcon + ' mr-1"></i>' + catLabel;
+                            html += '</div>';
+                        }
+
+                        // Build link
+                        var link = '#';
+                        if (n.lavoratore_id) {
+                            link = '<?php echo $base_url; ?>lavoratore.php?id=' + n.lavoratore_id;
+                        } else if (n.azienda_id) {
+                            link = '<?php echo $base_url; ?>azienda.php?id=' + n.azienda_id;
+                        } else {
+                            link = '<?php echo $base_url; ?>dashboard.php';
+                        }
+
+                        var isToday = (n.category === 'today');
+
+                        html += '<a class="dropdown-item d-flex align-items-start py-2" href="' + link + '" style="white-space: normal; border-left: 3px solid ' + (isToday ? '#3b82f6' : 'transparent') + ';">';
+                        html += '<div class="mr-2 mt-1" style="min-width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; background: ' + (isToday ? '#dbeafe' : '#f1f5f9') + '; color: ' + (isToday ? '#2563eb' : '#64748b') + ';">';
+                        html += '<i class="fas fa-calendar"></i>';
+                        html += '</div>';
+                        html += '<div style="flex: 1; min-width: 0;">';
+                        html += '<div style="font-size: 0.82rem; font-weight: ' + (isToday ? '600' : '500') + '; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + escapeHtml(n.title) + '</div>';
+                        if (n.subtitle) {
+                            html += '<div style="font-size: 0.72rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + escapeHtml(n.subtitle) + '</div>';
+                        }
+                        html += '<div style="font-size: 0.7rem; color: #94a3b8; margin-top: 1px;">' + n.date + ' · ' + n.time + '</div>';
+                        html += '</div>';
+                        html += '</a>';
+                    });
+                }
+
+                container.html(html);
+            },
+            error: function() {
+                $('#notifContainer').html('<div class="text-center py-3 text-muted small">Errore nel caricamento</div>');
+            }
+        });
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    // Load on page load
+    loadNotifications();
+
+    // Refresh every 5 minutes
+    setInterval(loadNotifications, 5 * 60 * 1000);
+});
 </script>
 <!-- End of Topbar -->

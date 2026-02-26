@@ -129,12 +129,10 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- Font Awesome -->
     <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <!-- Bootstrap CSS -->
-    <link href="<?php echo $base_url; ?>theme/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <!-- SB Admin 2 CSS -->
-    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css" rel="stylesheet">
+    <!-- SB Admin 2 CSS (includes Bootstrap) -->
+    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
     <!-- Custom CSS (se necessario) -->
-    <link href="<?php echo $base_url; ?>styles.css" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>styles.css?v=2.0" rel="stylesheet">
     <style>
         /* Stili personalizzati */
         .hidden-editor {
@@ -287,7 +285,6 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
     </a>
 
     <!-- Bootstrap core JavaScript-->
-    <script src="<?php echo $base_url; ?>theme/vendor/jquery/jquery.min.js"></script>
     <script src="<?php echo $base_url; ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <!-- Core plugin JavaScript-->

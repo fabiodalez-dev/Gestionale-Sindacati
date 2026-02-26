@@ -208,7 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Font Awesome -->
     <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- Bootstrap CSS -->
-    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
 </head>
 <body>
     <div class="container mt-5">

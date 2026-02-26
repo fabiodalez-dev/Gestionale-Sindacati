@@ -9,6 +9,31 @@ ob_start();
 //ini_set('display_startup_errors', 1);
 //error_reporting(E_ALL);
 
+// Carica le variabili dal file .env
+function loadEnv($path) {
+    if (!file_exists($path)) {
+        return;
+    }
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#') {
+            continue;
+        }
+        $pos = strpos($line, '=');
+        if ($pos === false) {
+            continue;
+        }
+        $key = trim(substr($line, 0, $pos));
+        $value = trim(substr($line, $pos + 1));
+        if (!isset($_ENV[$key]) && getenv($key) === false) {
+            $_ENV[$key] = $value;
+            putenv("$key=$value");
+        }
+    }
+}
+loadEnv(__DIR__ . '/.env');
+
 // Definizione delle funzioni di utilità
 function sanitizeForHTML($data) {
     return htmlspecialchars($data ?? '', ENT_QUOTES, 'UTF-8');
@@ -553,7 +578,7 @@ function getSettings(array $keys) {
 }
 
 // Definizione della chiave di crittografia generale per i plugin
-define('GENERAL_ENCRYPTION_KEY', getenv('GENERAL_ENCRYPTION_KEY') ?: 'Z0MHmscNKs2mTaFEn4dbNhsYE18fZQetltBB4TrHM2k=');
+define('GENERAL_ENCRYPTION_KEY', $_ENV['GENERAL_ENCRYPTION_KEY'] ?? getenv('GENERAL_ENCRYPTION_KEY') ?: 'Z0MHmscNKs2mTaFEn4dbNhsYE18fZQetltBB4TrHM2k=');
 
 /**
  * ===========================
@@ -751,11 +776,11 @@ function decryptPassword($encrypted_password) {
     return openssl_decrypt($ciphertext, $cipher, $encryption_key, 0, $iv);
 }
 
-// Connessione al database con gestione degli errori
-$host = '127.0.0.1';
-$db = 'adlcobas_padova';               // Nome del database
-$user = 'root';                        // Nome utente del database
-$pass = 'Fa310reds?';                  // Password del database
+// Connessione al database con gestione degli errori (credenziali da .env)
+$host = $_ENV['DB_HOST'] ?? '127.0.0.1';
+$db   = $_ENV['DB_NAME'] ?? 'adlcobas_padova';
+$user = $_ENV['DB_USER'] ?? 'root';
+$pass = $_ENV['DB_PASS'] ?? '';
 
 $mysqli = new mysqli($host, $user, $pass, $db);
 

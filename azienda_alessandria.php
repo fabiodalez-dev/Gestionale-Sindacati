@@ -139,20 +139,18 @@ generateCsrfToken();
     <!-- Meta viewport per la responsività -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <!-- jQuery UI CSS per l'autocomplete (se necessario) -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
     <!-- Custom CSS (se necessario) -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
     <!-- FullCalendar CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/main.min.css">
     <!-- SweetAlert2 per notifiche -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-	<script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/min/moment.min.js"></script>
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
+	<script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/moment.min.js"></script>
     <style>
         /* Eventuali stili personalizzati */
         #calendar {
@@ -322,7 +320,7 @@ generateCsrfToken();
 
                     <!-- Informazioni Azienda -->
                     <div class="card mt-4">
-                        <div class="card-header bg-primary text-white">
+                        <div class="card-header">
                             Informazioni Azienda
                         </div>
                         <div class="card-body">
@@ -440,7 +438,6 @@ generateCsrfToken();
 
     <!-- Modali e script -->
     <!-- Bootstrap core JavaScript-->
-    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery/jquery.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <!-- Core plugin JavaScript-->
@@ -450,15 +447,15 @@ generateCsrfToken();
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
 
     <!-- jQuery UI per l'autocomplete -->
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
     <!-- TinyMCE -->
     <script src="<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
     <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.js"></script>
     <!-- FullCalendar JS -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/main.min.js"></script>
     <!-- FullCalendar Locale -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/locales-all.min.js"></script>
 
     <!-- Inizializzazione di TinyMCE -->
     <script>

@@ -190,20 +190,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
     <!-- FontAwesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SweetAlert2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
     <!-- TinyMCE -->
     <script src="<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
     <!-- jQuery UI (per aggiungere/rimuovere unità operative) -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    <!-- Assicurati di caricare jQuery prima di jQuery UI -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
     <style>
         /* Eventuali stili personalizzati */
         .remove-unita-operativa-btn {
@@ -254,8 +252,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <!-- Form per inserire una nuova azienda -->
                     <div class="card shadow mb-4">
-                        <div class="card-header py-3 bg-primary">
-                            <h6 class="m-0 font-weight-bold text-white">Dettagli Azienda</h6>
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold">Dettagli Azienda</h6>
                         </div>
                         <div class="card-body">
                             <form method="POST" id="aggiungiAziendaForm" class="row g-3">
@@ -397,7 +395,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
 
     <!-- SweetAlert2 per i messaggi -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.js"></script>
 
     <!-- Inizializzazione di TinyMCE -->
     <script>

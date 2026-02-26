@@ -189,124 +189,44 @@ generateCsrfToken();
     <!-- Meta viewport per la responsività -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-    <!-- jQuery UI CSS per l'autocomplete (se necessario) -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    <!-- Custom CSS (se necessario) -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css" rel="stylesheet">
+    <!-- jQuery UI CSS -->
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
+    <!-- Custom CSS -->
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
     <!-- FullCalendar CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
-    <!-- SweetAlert2 per notifiche -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-	<script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/min/moment.min.js"></script>
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/common.min.css">
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/daygrid.min.css">
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/timegrid.min.css">
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/list.min.css">
+    <!-- SweetAlert2 -->
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/moment.min.js"></script>
     <style>
-        /* Eventuali stili personalizzati */
-        #calendar {
-            max-width: 100%;
-            margin: 0 auto;
-        }
-        .fc-event {
-            cursor: pointer;
-        }
-        /* Assicurati che i canvas dei grafici siano responsivi */
-        canvas {
-            width: 100% !important;
-            height: auto !important;
-        }
-        /* Per migliorare la visualizzazione su mobile */
-        .form-inline .form-group {
-            display: block;
-            width: 100%;
-            margin-bottom: 1rem;
-        }
-        .form-inline .form-group label,
-        .form-inline .form-group input,
-        .form-inline .form-group select,
-        .form-inline .form-group button {
-            width: 100%;
-        }
-		/* Stili eventi calendario migliorati */
-        .fc-event {
-            overflow: hidden !important;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            padding: 2px 4px !important;
-            background-color: #C31212 !important; /* colore del progetto */
-            color: #fff !important; /* testo bianco visibile */
-            border-radius: 3px;
-            font-size: 0.8rem;
-        }
-		.fc-daygrid-event-harness {
-            padding-bottom: 20px;
-        }
+        #calendar { max-width: 100%; margin: 0 auto; }
+        .fc-event { cursor: pointer; overflow: hidden !important; text-overflow: ellipsis; white-space: nowrap; padding: 2px 6px !important; border-radius: 4px; font-size: 0.8rem; }
+        .fc-daygrid-event-harness { padding-bottom: 20px; }
+        canvas { width: 100% !important; height: auto !important; }
+        .chart-container { position: relative; height: 300px; margin-bottom: 2rem; }
+        .chart-small { height: 250px; }
 
-        /* Stili per i grafici delle sedi con colore del progetto */
-        .chart-container {
-            position: relative;
-            height: 300px;
-            margin-bottom: 2rem;
-        }
-        
-        .chart-small {
-            height: 250px;
-        }
-        
         .stats-card {
-    background: linear-gradient(180deg, #C31212 54%, #a50f0f 100%);
-			color: white;
-            border-radius: 10px;
+            background: var(--slate-900, #0f172a);
+            color: #fff;
+            border-radius: 12px;
             padding: 1.5rem;
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(15,23,42,0.15);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        
-        .stats-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(15,23,42,0.2);
         }
-        
-        .stats-label {
-            font-size: 1rem;
-            opacity: 0.9;
-        }
-
-        /* Personalizzazione colori header cards */
-        .bg-info {
-            background-color: #C31212 !important;
-        }
-
-        .bg-primary {
-            background-color: #C31212 !important;
-        }
-
-        .text-primary {
-            color: #C31212 !important;
-        }
-
-        .btn-primary {
-            background-color: #C31212;
-            border-color: #C31212;
-        }
-
-        .btn-primary:hover {
-            background-color: #8B0C0C;
-            border-color: #8B0C0C;
-        }
-
-        .btn-success {
-            background-color: #C31212;
-            border-color: #C31212;
-        }
-
-        .btn-success:hover {
-            background-color: #8B0C0C;
-            border-color: #8B0C0C;
-        }
+        .stats-number { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: -0.02em; }
+        .stats-label { font-size: 0.85rem; opacity: 0.7; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
     </style>
 </head>
 <body id="page-top">
@@ -434,12 +354,12 @@ generateCsrfToken();
                         </div>
                     <?php endif; ?>
 
-                    <!-- **SEZIONE: Grafici Distribuzione Sedi** -->
+                    <!-- Grafici Distribuzione Sedi -->
                     <?php if (!empty($sedi_data) || $lavoratori_senza_sede > 0): ?>
                     <div class="card mt-4 mb-4">
-                        <div class="card-header bg-info text-white">
+                        <div class="card-header">
                             <h6 class="m-0 font-weight-bold">
-                                <i class="fas fa-map-marker-alt"></i> Distribuzione Lavoratori per Sede
+                                <i class="fas fa-map-marker-alt mr-2"></i>Distribuzione Lavoratori per Sede
                             </h6>
                         </div>
                         <div class="card-body">
@@ -474,7 +394,7 @@ generateCsrfToken();
                             <div class="row">
                                 <!-- Grafico a Torta - Distribuzione per Sede -->
                                 <div class="col-lg-6 col-md-12 mb-4">
-                                    <h6 class="font-weight-bold text-primary mb-3">Distribuzione per Sede</h6>
+                                    <h6 class="font-weight-bold text-gray-800 mb-3">Distribuzione per Sede</h6>
                                     <div class="chart-container">
                                         <canvas id="sediPieChart"></canvas>
                                     </div>
@@ -482,7 +402,7 @@ generateCsrfToken();
 
                                 <!-- Grafico a Barre - Lavoratori per Sede -->
                                 <div class="col-lg-6 col-md-12 mb-4">
-                                    <h6 class="font-weight-bold text-primary mb-3">Lavoratori per Sede</h6>
+                                    <h6 class="font-weight-bold text-gray-800 mb-3">Lavoratori per Sede</h6>
                                     <div class="chart-container">
                                         <canvas id="sediBarChart"></canvas>
                                     </div>
@@ -492,7 +412,7 @@ generateCsrfToken();
                             <!-- Tabella dettagliata -->
                             <div class="row">
                                 <div class="col-12">
-                                    <h6 class="font-weight-bold text-primary mb-3">Dettaglio Sedi</h6>
+                                    <h6 class="font-weight-bold text-gray-800 mb-3">Dettaglio Sedi</h6>
                                     <div class="table-responsive">
                                         <table class="table table-bordered table-hover">
                                             <thead class="thead-light">
@@ -548,7 +468,7 @@ generateCsrfToken();
 
                     <!-- Informazioni Azienda -->
 <div class="card mt-4">
-  <div class="card-header bg-primary text-white">
+  <div class="card-header">
     <i class="fas fa-building"></i> Informazioni Azienda
   </div>
   <div class="card-body">
@@ -657,7 +577,7 @@ generateCsrfToken();
 
                     <!-- Sezione Unità Operative -->
                     <div class="card mt-4">
-                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <div class="card-header d-flex justify-content-between align-items-center">
                             <span>Unità Operative</span>
                             <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#aggiungiUnitaOperativaModal">
                                 <i class="fas fa-plus"></i> Aggiungi Unità Operativa
@@ -767,7 +687,7 @@ generateCsrfToken();
 
                     <!-- Form per Modificare le Note -->
                     <div class="card mt-4">
-                        <div class="card-header bg-primary text-white">
+                        <div class="card-header">
                             Modifica Note
                         </div>
                         <div class="card-body">
@@ -786,7 +706,7 @@ generateCsrfToken();
                     <!-- Sezione Caricamento Documenti -->
                     <h3 class="mt-5">Carica Documenti</h3>
                     <div class="card mb-4">
-                        <div class="card-header bg-primary text-white">
+                        <div class="card-header">
                             Carica Nuovo Documento
                         </div>
                         <div class="card-body">
@@ -812,7 +732,7 @@ generateCsrfToken();
 <h3 class="mt-5">Documenti Caricati</h3>
 <?php if ($documenti->num_rows > 0): ?>
     <div class="card">
-        <div class="card-header bg-primary text-white">
+        <div class="card-header">
             Lista Documenti
         </div>
         <div class="card-body">
@@ -1035,7 +955,6 @@ generateCsrfToken();
 
     <!-- Modali e script -->
     <!-- Bootstrap core JavaScript-->
-    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery/jquery.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <!-- Core plugin JavaScript-->
@@ -1044,18 +963,21 @@ generateCsrfToken();
     <!-- SB Admin 2 JavaScript-->
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
 
-    <!-- jQuery UI per l'autocomplete -->
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <!-- jQuery UI -->
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
     <!-- TinyMCE -->
     <script src="<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
     <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.js"></script>
     <!-- FullCalendar JS -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-    <!-- FullCalendar Locale -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js"></script>
-    <!-- Chart.js per i grafici -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/core.global.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/daygrid.global.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/timegrid.global.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/list.global.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/interaction.global.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/locales-all.global.min.js"></script>
+    <!-- Chart.js -->
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/chartjs4/chart.umd.js"></script>
 
     <!-- **Script per i grafici delle sedi con colore del progetto** -->
     <script>
@@ -1063,19 +985,12 @@ generateCsrfToken();
         const sediLabels = <?php echo json_encode($sedi_labels); ?>;
         const sediCounts = <?php echo json_encode($sedi_counts); ?>;
         
-        // Colori basati sul colore del progetto #C31212
-        const projectColor = '#C31212';
+        // Colori design system (slate/blue palette)
+        const projectColor = '#0f172a';
         const colors = [
-            '#C31212', // Colore principale del progetto
-            '#D73030', // Variazione più chiara 
-            '#A30F0F', // Variazione più scura
-            '#E84545', // Variazione ancora più chiara
-            '#8B0C0C', // Variazione molto scura
-            '#F05757', // Variazione rosa chiaro
-            '#750909', // Variazione molto molto scura
-            '#FF6B6B', // Variazione rosso chiaro
-            '#C62828', // Variazione material red
-            '#B71C1C'  // Variazione deep red
+            '#0f172a', '#1e293b', '#334155', '#475569',
+            '#3b82f6', '#2563eb', '#1d4ed8', '#60a5fa',
+            '#64748b', '#94a3b8'
         ];
 
         // Grafico a Torta - Distribuzione per Sede

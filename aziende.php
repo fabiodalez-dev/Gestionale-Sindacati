@@ -303,12 +303,12 @@ if ($length != -1) {
                     $lavoratori .= '</div>';
                     
                     // Azioni
-                    $azioni = '<div class="btn-group-vertical btn-group-sm">'
-                            . '<a href="edit_azienda.php?id=' . intval($row['id']) . '" class="btn btn-primary btn-sm mb-1">'
-                            . '<i class="fas fa-edit"></i> Modifica</a>'
+                    $azioni = '<div class="d-flex align-items-center gap-2">'
+                            . '<a href="edit_azienda.php?id=' . intval($row['id']) . '" class="table-action-icon" title="Modifica">'
+                            . '<i class="fas fa-edit"></i></a>'
                             . '<a href="delete_azienda.php?id=' . intval($row['id']) . '" '
-                            . 'class="btn btn-danger btn-sm" onclick="return confirm(\'Sei sicuro di voler eliminare questa azienda?\');">'
-                            . '<i class="fas fa-trash"></i> Elimina</a>'
+                            . 'class="table-action-icon" title="Elimina" onclick="return confirm(\'Sei sicuro di voler eliminare questa azienda?\');">'
+                            . '<i class="fas fa-trash"></i></a>'
                             . '</div>';
                     
                     // Costruzione riga dati
@@ -374,25 +374,22 @@ generateCsrfToken();
     <!-- Font Awesome -->
     <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
     <!-- Bootstrap CSS -->
-    <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/css/sb-admin-2.min.css" rel="stylesheet">
-    
+    <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+
     <!-- DataTables CSS -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css">
-    
+    <link rel="stylesheet" type="text/css" href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/datatables/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/datatables/extensions/responsive/responsive.bootstrap4.min.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/datatables/extensions/buttons/buttons.bootstrap4.min.css">
+
     <!-- jQuery UI CSS per l'autocomplete -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    
+    <link rel="stylesheet" href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
+
     <!-- SweetAlert2 -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
     
     <!-- Custom Styles -->
-    <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>styles.css" rel="stylesheet">
+    <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>styles.css?v=2.0" rel="stylesheet">
     
     <style>
         /* Stili migliorati per l'usabilità */
@@ -821,30 +818,29 @@ generateCsrfToken();
     </a>
 
     <!-- Scripts -->
-    <script src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/jquery/jquery.min.js"></script>
-    
+
     <!-- jQuery UI PRIMA di altri script per evitare conflitti -->
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
     
     <script src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
     <script src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/js/sb-admin-2.min.js"></script>
     
     <!-- DataTables Scripts -->
-    <script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-    
+    <script type="text/javascript" src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/datatables/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+    <script type="text/javascript" src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/datatables/extensions/responsive/dataTables.responsive.min.js"></script>
+    <script type="text/javascript" src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/datatables/extensions/responsive/responsive.bootstrap4.min.js"></script>
+    <script type="text/javascript" src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/datatables/extensions/buttons/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/datatables/extensions/buttons/buttons.bootstrap4.min.js"></script>
+    <script type="text/javascript" src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/jszip/jszip.min.js"></script>
+    <script type="text/javascript" src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/pdfmake/pdfmake.min.js"></script>
+    <script type="text/javascript" src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/pdfmake/vfs_fonts.js"></script>
+    <script type="text/javascript" src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/datatables/extensions/buttons/buttons.html5.min.js"></script>
+    <script type="text/javascript" src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/datatables/extensions/buttons/buttons.print.min.js"></script>
+
     <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/sweetalert2/sweetalert2.min.js"></script>
 
     <script>
         $(document).ready(function() {
@@ -980,7 +976,7 @@ generateCsrfToken();
                     }
                 },
                 language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/it-IT.json',
+                    url: '<?php echo htmlspecialchars($base_url, ENT_QUOTES, "UTF-8"); ?>theme/vendor/datatables/i18n-it-IT.json',
                     processing: '<div class="d-flex justify-content-center align-items-center">' +
                                '<div class="spinner-border text-primary" role="status">' +
                                '<span class="sr-only">Caricamento...</span></div>' +

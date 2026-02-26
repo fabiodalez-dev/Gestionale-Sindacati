@@ -1,17 +1,30 @@
 <?php
-$settings = getSettings(['logo']);
-$logo_path = $settings['logo'] ?? 'uploads/default_logo.png'; // Usa un logo predefinito se 'logo' non è impostato 
+$settings = getSettings(['logo', 'nome_app']);
+$logo_path = $settings['logo'] ?? 'uploads/default_logo.png';
+$nome_app = $settings['nome_app'] ?? 'Padova';
+
+// Recupera connessioni attive per la sidebar (se la tabella esiste)
+$active_connections = [];
+$conn_check = $mysqli->query("SHOW TABLES LIKE 'api_connections'");
+if ($conn_check && $conn_check->num_rows > 0) {
+    $conn_stmt = executeQuery("SELECT id, name FROM api_connections WHERE is_active = 1 ORDER BY name ASC", [], '');
+    if ($conn_stmt) {
+        $conn_result = $conn_stmt->get_result();
+        while ($row = $conn_result->fetch_assoc()) {
+            $active_connections[] = $row;
+        }
+    }
+}
 ?>
 <!-- Sidebar -->
-<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+<ul class="navbar-nav sidebar sidebar-light accordion" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<?php echo $base_url; ?>dashboard.php">
         <div class="sidebar-brand-icon">
             <img src="<?php echo sanitizeForHTML($base_url . $logo_path); ?>" alt="logo ADL" width="90" height="auto">
-			<h2 style="color:white; font-size:1rem;">Padova</h2>
+			<h2 style="color:#000; font-size:1rem; font-weight:700;"><?php echo sanitizeForHTML($nome_app); ?></h2>
         </div>
-         <!-- <div class="sidebar-brand-text mx-3">ADL COBAS</div>-->
     </a>
 
     <!-- Divider -->
@@ -60,7 +73,7 @@ $logo_path = $settings['logo'] ?? 'uploads/default_logo.png'; // Usa un logo pre
             <span>Gestione Iscrizioni</span></a>
     </li>
 	<!-- Nav Item - Gestione sedi -->
-    <li class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'gestione_iscrizioni.php' ? 'active' : ''; ?>">
+    <li class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'sedi.php' ? 'active' : ''; ?>">
         <a class="nav-link" href="<?php echo $base_url; ?>sedi.php">
             <i class="fas fa-fw fa-globe"></i>
             <span>Gestione Sedi</span></a>
@@ -79,24 +92,46 @@ $logo_path = $settings['logo'] ?? 'uploads/default_logo.png'; // Usa un logo pre
                 <i class="fas fa-fw fa-lock"></i>
                 <span>Gestione Backup</span></a>
         </li>
-      
+
         <!-- Nav Item - Plugin Manager -->
         <li class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'plugin_manager.php' ? 'active' : ''; ?>">
             <a class="nav-link" href="<?php echo $base_url; ?>plugin_manager.php">
                 <i class="fas fa-fw fa-puzzle-piece"></i>
                 <span>Gestione Plugin</span></a>
         </li>
-	<!-- Aziende Emilia Romagna-->
-        <li class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'plugin_manager.php' ? 'active' : ''; ?>">
-            <a class="nav-link" href="<?php echo $base_url; ?>aziende_emiliaromagna.php">
-                <i class="fas fa-fw fa-globe"></i>
-                <span>Aziende Emilia Romagna</span></a>
+
+        <!-- Connessioni Remote Dinamiche -->
+        <?php if (!empty($active_connections)): ?>
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">CRM Collegati</div>
+            <?php foreach ($active_connections as $remote_conn): ?>
+                <?php
+                $is_active_page = (basename($_SERVER['PHP_SELF']) === 'aziende_remote.php' || basename($_SERVER['PHP_SELF']) === 'azienda_remote.php')
+                                  && intval($_GET['conn_id'] ?? 0) === intval($remote_conn['id']);
+                ?>
+                <li class="nav-item <?php echo $is_active_page ? 'active' : ''; ?>">
+                    <a class="nav-link" href="<?php echo $base_url; ?>aziende_remote.php?conn_id=<?php echo intval($remote_conn['id']); ?>">
+                        <i class="fas fa-fw fa-globe"></i>
+                        <span>Aziende <?php echo sanitizeForHTML($remote_conn['name']); ?></span></a>
+                </li>
+            <?php endforeach; ?>
+        <?php endif; ?>
+
+        <hr class="sidebar-divider">
+        <div class="sidebar-heading">Amministrazione</div>
+
+        <!-- Nav Item - Impostazioni -->
+        <li class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'settings.php' ? 'active' : ''; ?>">
+            <a class="nav-link" href="<?php echo $base_url; ?>settings.php">
+                <i class="fas fa-fw fa-cog"></i>
+                <span>Impostazioni</span></a>
         </li>
-	<!-- Nav Item - Plugin Manager -->
-        <li class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'plugin_manager.php' ? 'active' : ''; ?>">
-            <a class="nav-link" href="<?php echo $base_url; ?>aziende_alessandria.php">
-                <i class="fas fa-fw fa-globe"></i>
-                <span>Aziende Alessandria</span></a>
+
+        <!-- Nav Item - Migrazioni -->
+        <li class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'migrate.php' ? 'active' : ''; ?>">
+            <a class="nav-link" href="<?php echo $base_url; ?>migrate.php">
+                <i class="fas fa-fw fa-database"></i>
+                <span>Migrazioni DB</span></a>
         </li>
     <?php endif; ?>
 

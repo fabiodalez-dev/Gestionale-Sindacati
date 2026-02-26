@@ -56,7 +56,7 @@ while ($row = $result->fetch_assoc()) {
     }
     
     // Assegna il colore in base al tipo di evento
-    $color = $is_company_event ? '#3788d8' : '#f7b731'; // Blu per aziendali, Giallo per individuali
+    $color = $is_company_event ? '#0f172a' : '#3b82f6'; // Slate scuro per aziendali, Blu accent per individuali
 
     $events[] = [
         'id' => $row['id'],

@@ -483,12 +483,12 @@ if (isset($_GET['datatables_ajax']) && $_GET['datatables_ajax'] == 1) {
             
             $statusBadge = '<span class="badge badge-' . $statusClass . '">' . $status . '</span>';
             
-            $azioni = '<div class="btn-group-vertical btn-group-sm">'
-                    . '<a href="edit_lavoratore.php?id=' . sanitizeForHTML($row['id']) . '" class="btn btn-primary btn-sm mb-1">'
-                    . '<i class="fas fa-edit"></i> Modifica</a>'
+            $azioni = '<div class="d-flex align-items-center gap-2">'
+                    . '<a href="edit_lavoratore.php?id=' . sanitizeForHTML($row['id']) . '" class="table-action-icon" title="Modifica">'
+                    . '<i class="fas fa-edit"></i></a>'
                     . '<a href="delete_lavoratore.php?id=' . sanitizeForHTML($row['id']) . '&csrf_token=' . $_SESSION['csrf_token'] . '" '
-                    . 'class="btn btn-danger btn-sm" onclick="return confirm(\'Sei sicuro di voler eliminare questo lavoratore?\');">'
-                    . '<i class="fas fa-trash"></i> Elimina</a>'
+                    . 'class="table-action-icon" title="Elimina" onclick="return confirm(\'Sei sicuro di voler eliminare questo lavoratore?\');">'
+                    . '<i class="fas fa-trash"></i></a>'
                     . '</div>';
             
             // ORDINE COLONNE: checkbox, COGNOME, NOME, resto...
@@ -548,23 +548,20 @@ generateCsrfToken();
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
     <!-- Bootstrap CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css" rel="stylesheet">
-    
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+
     <!-- DataTables CSS -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap4.min.css">
-    
+    <link rel="stylesheet" type="text/css" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/extensions/responsive/responsive.bootstrap4.min.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/extensions/buttons/buttons.bootstrap4.min.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/extensions/select/select.bootstrap4.min.css">
+
     <!-- SweetAlert2 -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
     
     <!-- Custom Styles -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
     <style>
         .table th {
             vertical-align: middle;
@@ -663,9 +660,10 @@ generateCsrfToken();
                 font-size: 0.875rem;
             }
             
-            .btn-group-vertical .btn {
+            .table-action-icon {
+                width: 1.75rem;
+                height: 1.75rem;
                 font-size: 0.75rem;
-                padding: 0.25rem 0.5rem;
             }
         }
         
@@ -675,10 +673,6 @@ generateCsrfToken();
             text-align: center;
         }
         
-        .btn-group-vertical .btn {
-            border-radius: .25rem;
-            margin-bottom: 2px;
-        }
         
         .dataTables_processing {
             background: rgba(255, 255, 255, 0.9);
@@ -724,10 +718,10 @@ generateCsrfToken();
                 min-width: 0;
             }
 
-            .btn-group-vertical .btn {
+            .table-action-icon {
+                width: 2rem;
+                height: 2rem;
                 font-size: 0.85rem;
-                padding: 0.5rem;
-                width: 100%;
             }
 
             .badge {
@@ -1122,28 +1116,27 @@ generateCsrfToken();
     </a>
 
     <!-- Scripts -->
-    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery/jquery.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
-    
+
     <!-- DataTables Scripts -->
-    <script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
-    
+    <script type="text/javascript" src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+    <script type="text/javascript" src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/extensions/responsive/dataTables.responsive.min.js"></script>
+    <script type="text/javascript" src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/extensions/responsive/responsive.bootstrap4.min.js"></script>
+    <script type="text/javascript" src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/extensions/buttons/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/extensions/buttons/buttons.bootstrap4.min.js"></script>
+    <script type="text/javascript" src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jszip/jszip.min.js"></script>
+    <script type="text/javascript" src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/pdfmake/pdfmake.min.js"></script>
+    <script type="text/javascript" src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/pdfmake/vfs_fonts.js"></script>
+    <script type="text/javascript" src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/extensions/buttons/buttons.html5.min.js"></script>
+    <script type="text/javascript" src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/extensions/buttons/buttons.print.min.js"></script>
+    <script type="text/javascript" src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/extensions/select/dataTables.select.min.js"></script>
+
     <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.js"></script>
 
     <script>
         $(document).ready(function() {
@@ -1369,7 +1362,7 @@ generateCsrfToken();
                     }
                 },
                 language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/it-IT.json'
+                    url: '<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/i18n-it-IT.json'
                 },
                 dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
                      "<'row'<'col-sm-12'B>>" +

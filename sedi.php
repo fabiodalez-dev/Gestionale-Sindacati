@@ -98,14 +98,12 @@ if ($statsStmt) {
     
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;600;700;800;900&display=swap" rel="stylesheet">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
     <!-- DataTables CSS -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/extensions/responsive/responsive.bootstrap4.min.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/extensions/buttons/buttons.bootstrap4.min.css">
     
     <!-- Custom CSS -->
     <style>
@@ -404,17 +402,17 @@ if ($statsStmt) {
                                                         <?php endif; ?>
                                                     </td>
                                                     <td class="text-center">
-                                                        <div class="btn-group-vertical btn-group-sm">
-                                                            <a href="edit_sede.php?id=<?php echo sanitizeForHTML($sede['id']); ?>" 
-                                                               class="btn btn-primary btn-sm mb-1" 
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <a href="edit_sede.php?id=<?php echo sanitizeForHTML($sede['id']); ?>"
+                                                               class="table-action-icon"
                                                                title="Modifica sede">
-                                                                <i class="fas fa-edit"></i> Modifica
+                                                                <i class="fas fa-edit"></i>
                                                             </a>
-                                                            <a href="delete_sede.php?id=<?php echo sanitizeForHTML($sede['id']); ?>&csrf_token=<?php echo $_SESSION['csrf_token']; ?>" 
-                                                               class="btn btn-danger btn-sm" 
-                                                               onclick="return confirm('Sei sicuro di voler eliminare questa sede? I lavoratori associati perderanno il riferimento alla sede.');" 
+                                                            <a href="delete_sede.php?id=<?php echo sanitizeForHTML($sede['id']); ?>&csrf_token=<?php echo $_SESSION['csrf_token']; ?>"
+                                                               class="table-action-icon"
+                                                               onclick="return confirm('Sei sicuro di voler eliminare questa sede? I lavoratori associati perderanno il riferimento alla sede.');"
                                                                title="Elimina sede">
-                                                                <i class="fas fa-trash"></i> Elimina
+                                                                <i class="fas fa-trash"></i>
                                                             </a>
                                                         </div>
                                                     </td>
@@ -515,7 +513,6 @@ if ($statsStmt) {
     </a>
 
     <!-- Scripts -->
-    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery/jquery.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>

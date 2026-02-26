@@ -199,11 +199,11 @@ $new_available_plugins = array_diff($available_plugin_dirs, $installed_plugin_na
     <meta charset="UTF-8">
     <title>Plugin Manager - CRM Admin</title>
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
     <!-- FontAwesome -->
     <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- Custom CSS -->
-    <link href="<?php echo $base_url; ?>styles.css" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>styles.css?v=2.0" rel="stylesheet">
 </head>
 <body id="page-top">
 
@@ -424,7 +424,6 @@ $new_available_plugins = array_diff($available_plugin_dirs, $installed_plugin_na
     </div>
 
     <!-- Bootstrap core JavaScript-->
-    <script src="<?php echo $base_url; ?>theme/vendor/jquery/jquery.min.js"></script>
     <script src="<?php echo $base_url; ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <!-- Core plugin JavaScript-->

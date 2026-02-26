@@ -227,16 +227,14 @@ if ($isAjax) {
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
     <!-- jQuery UI CSS -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
     <!-- SweetAlert2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
     <style>
         @media (max-width: 767.98px) { .desktop-table { display: none; } }
         @media (min-width: 768px) { .mobile-cards { display: none; } }
@@ -263,7 +261,7 @@ if ($isAjax) {
 
                     <!-- Form di Ricerca -->
                     <div class="card mb-4">
-                        <div class="card-header bg-primary text-white">Ricerca Aziende</div>
+                        <div class="card-header">Ricerca Aziende</div>
                         <div class="card-body">
                             <form id="filterForm" class="row g-3">
                                 <div class="col-md-4">
@@ -289,7 +287,7 @@ if ($isAjax) {
                     <!-- Vista Desktop -->
                     <div class="desktop-table">
                         <div class="card">
-                            <div class="card-header bg-primary text-white">Lista Aziende</div>
+                            <div class="card-header">Lista Aziende</div>
                             <div class="card-body">
                                 <div class="table-responsive">
                                     <table class="table table-striped table-hover">
@@ -350,12 +348,11 @@ if ($isAjax) {
     </a>
 
     <!-- jQuery, Bootstrap e SweetAlert2 -->
-    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery/jquery.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.js"></script>
     <script>
     $(document).ready(function(){
         function updateList(page = 1) {

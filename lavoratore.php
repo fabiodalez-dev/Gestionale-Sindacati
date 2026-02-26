@@ -10,9 +10,10 @@ if (isset($_GET['id'])) {
     $lavoratore_id = intval($_GET['id']);
 
     // Recupera i dati del lavoratore e le informazioni associate
-    $query = "SELECT l.*, a.nome_azienda, a.id AS azienda_id 
-              FROM lavoratori l 
-              LEFT JOIN aziende a ON l.azienda_id = a.id 
+    $query = "SELECT l.*, a.nome_azienda, a.id AS azienda_id, u.nome_unita_operativa
+              FROM lavoratori l
+              LEFT JOIN aziende a ON l.azienda_id = a.id
+              LEFT JOIN unita_operativa u ON l.unita_operativa_id = u.id
               WHERE l.id = ?";
     $stmt = executeQuery($query, [$lavoratore_id], 'i');
     if ($stmt === false) {
@@ -146,26 +147,22 @@ if (isset($_GET['id'])) {
     <!-- Meta viewport per la responsività -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-    <!-- jQuery UI CSS per l'autocomplete -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    <!-- Custom CSS (se necessario) -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css" rel="stylesheet">
+    <!-- jQuery UI CSS -->
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
+    <!-- Custom CSS -->
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
     <!-- FullCalendar CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/common.min.css">
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/daygrid.min.css">
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/timegrid.min.css">
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/list.min.css">
     <!-- SweetAlert2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
     <!-- Dropzone CSS -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css"
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/dropzone/dropzone.css">
     <style>
         /* Eventuali stili personalizzati aggiuntivi */
         #calendar {
@@ -620,6 +617,10 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
     </div>
     <div class="row">
       <div class="col-12 col-md-6 mb-2">
+        <strong>Unità Operativa:</strong>
+        <p><?php echo !empty($lavoratore['nome_unita_operativa']) ? sanitizeForHTML($lavoratore['nome_unita_operativa']) : '-'; ?></p>
+      </div>
+      <div class="col-12 col-md-6 mb-2">
         <strong>Vertenze:</strong>
         <p><?php echo ($lavoratore['vertenze'] == 1) ? 'Sì' : 'No'; ?></p>
       </div>
@@ -902,7 +903,6 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
 		</style>
     <!-- Modali e script -->
     <!-- Bootstrap core JavaScript-->
-    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery/jquery.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <!-- Core plugin JavaScript-->
@@ -911,28 +911,23 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
     <!-- SB Admin 2 JavaScript-->
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
 
-    <!-- jQuery UI per l'autocomplete -->
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-
-    <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    <!-- jQuery UI -->
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.js"></script>
     <!-- TinyMCE -->
     <script src="<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce/tinymce.min.js"></script>
-
-    <!-- Moment.js per FullCalendar -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    
+    <!-- Moment.js -->
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/moment.min.js"></script>
     <!-- FullCalendar JS -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js"></script>
-    
-    <!-- Dropzone JS -->
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    ></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/core.global.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/daygrid.global.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/timegrid.global.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/list.global.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/interaction.global.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/locales-all.global.min.js"></script>
+    <!-- Dropzone -->
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/dropzone/dropzone-min.js"></script>
 
 
     <script>
