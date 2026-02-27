@@ -1,11 +1,6 @@
 <?php
 // manuale.php
 
-// Abilita la visualizzazione degli errori per lo sviluppo
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 require_once 'config.php';
 checkLogin();
 generateCsrfToken();
@@ -17,8 +12,8 @@ generateCsrfToken();
     <title>Manuale Utente - Gestionale ADL</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.4" rel="stylesheet">
     <style>
         h2, h3 { scroll-margin-top: 90px; }
         .toc a { display: block; margin-bottom: 5px; }

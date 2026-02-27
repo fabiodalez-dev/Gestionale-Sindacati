@@ -169,6 +169,52 @@ $genereMap = [
     'F' => 'Donna', 'FEMMINA' => 'Donna', 'DONNA' => 'Donna', 'FEMALE' => 'Donna',
 ];
 
+// ── Pre-load aziende lookup map (eliminates per-row SELECT on aziende) ──
+$aziende_map = [];
+$res_aziende = $mysqli->query("SELECT id, nome_azienda FROM aziende");
+if ($res_aziende) {
+    while ($az_row = $res_aziende->fetch_assoc()) {
+        $aziende_map[strtolower(trim($az_row['nome_azienda']))] = (int)$az_row['id'];
+    }
+    $res_aziende->free();
+}
+
+// ── Pre-load existing lavoratori for duplicate detection (eliminates per-row SELECT on lavoratori) ──
+$existing_lavoratori = [];
+$res_lav = $mysqli->query("SELECT nome, cognome, azienda_id FROM lavoratori");
+if ($res_lav) {
+    while ($lav_row = $res_lav->fetch_assoc()) {
+        $dup_key = strtolower(trim($lav_row['nome'])) . '|' . strtolower(trim($lav_row['cognome'])) . '|' . ($lav_row['azienda_id'] ?? 'NULL');
+        $existing_lavoratori[$dup_key] = true;
+    }
+    $res_lav->free();
+}
+
+// ── Prepare INSERT statement once outside the loop ──
+$stmt_insert = $mysqli->prepare("INSERT INTO lavoratori (
+    nome, cognome, codice_fiscale, telefono, email,
+    indirizzo_via, indirizzo_cap, indirizzo_citta, indirizzo_provincia,
+    paese_nascita, data_nascita, data_iscrizione, settore, genere,
+    azienda_id, ccnl, contratto, orario_contratto, ruolo, note
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+if (!$stmt_insert) {
+    echo json_encode(['success' => false, 'error' => 'Errore preparazione query di inserimento: ' . $mysqli->error]);
+    exit;
+}
+
+// ── Prepare INSERT statement for new aziende ──
+$stmt_az_insert = $mysqli->prepare("INSERT INTO aziende (nome_azienda) VALUES (?)");
+if (!$stmt_az_insert) {
+    echo json_encode(['success' => false, 'error' => 'Errore preparazione query aziende: ' . $mysqli->error]);
+    exit;
+}
+
+// ── Wrap entire import in a transaction ──
+$mysqli->begin_transaction();
+
+try {
+
 foreach ($rows as $row) {
     $rowCount++;
 
@@ -255,52 +301,32 @@ foreach ($rows as $row) {
     $data_iscrizione_raw = getField($row, 'data_iscrizione', $fieldPositions);
     $data_iscrizione = parseDate($data_iscrizione_raw);
 
-    // Azienda: trova o crea
+    // Azienda: trova nella mappa pre-caricata, o crea e aggiorna la mappa
     $azienda_id = null;
     if (!empty($azienda_nome)) {
-        $stmt_az = $mysqli->prepare("SELECT id FROM aziende WHERE nome_azienda = ?");
-        $stmt_az->bind_param('s', $azienda_nome);
-        $stmt_az->execute();
-        $res_az = $stmt_az->get_result();
-        if ($res_az->num_rows > 0) {
-            $azienda_id = $res_az->fetch_assoc()['id'];
+        $azienda_key = strtolower(trim($azienda_nome));
+        if (isset($aziende_map[$azienda_key])) {
+            $azienda_id = $aziende_map[$azienda_key];
         } else {
-            $stmt_ins = $mysqli->prepare("INSERT INTO aziende (nome_azienda) VALUES (?)");
-            $stmt_ins->bind_param('s', $azienda_nome);
-            if ($stmt_ins->execute()) {
-                $azienda_id = $stmt_ins->insert_id;
+            // Nuova azienda: inserisci e aggiorna la mappa in-memory
+            $stmt_az_insert->bind_param('s', $azienda_nome);
+            if ($stmt_az_insert->execute()) {
+                $azienda_id = (int)$stmt_az_insert->insert_id;
+                $aziende_map[$azienda_key] = $azienda_id;
             }
-            $stmt_ins->close();
         }
-        $stmt_az->close();
     }
 
-    // Controllo duplicati: nome + cognome + azienda
-    $stmt_dup = $mysqli->prepare("SELECT id FROM lavoratori WHERE nome = ? AND cognome = ? AND (azienda_id = ? OR (azienda_id IS NULL AND ? IS NULL))");
-    $stmt_dup->bind_param('ssii', $nome, $cognome, $azienda_id, $azienda_id);
-    $stmt_dup->execute();
-    if ($stmt_dup->get_result()->num_rows > 0) {
+    // Controllo duplicati: nome + cognome + azienda (lookup in-memory)
+    $dup_key = strtolower(trim($nome)) . '|' . strtolower(trim($cognome)) . '|' . ($azienda_id ?? 'NULL');
+    if (isset($existing_lavoratori[$dup_key])) {
         $errorsList[] = "Riga $rowCount: '$cognome $nome' gia' presente. Saltata.";
         $skippedCount++;
-        $stmt_dup->close();
-        continue;
-    }
-    $stmt_dup->close();
-
-    // Insert
-    $stmt = $mysqli->prepare("INSERT INTO lavoratori (
-        nome, cognome, codice_fiscale, telefono, email,
-        indirizzo_via, indirizzo_cap, indirizzo_citta, indirizzo_provincia,
-        paese_nascita, data_nascita, data_iscrizione, settore, genere,
-        azienda_id, ccnl, contratto, orario_contratto, ruolo, note
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-    if (!$stmt) {
-        $errorsList[] = "Riga $rowCount: errore preparazione query.";
         continue;
     }
 
-    $stmt->bind_param(
+    // Insert (prepared statement riutilizzato)
+    $stmt_insert->bind_param(
         'ssssssssssssssssssss',
         $nome, $cognome, $codice_fiscale, $telefono, $email_lav,
         $indirizzo_via, $indirizzo_cap, $indirizzo_citta, $indirizzo_provincia,
@@ -308,13 +334,26 @@ foreach ($rows as $row) {
         $azienda_id, $ccnl, $contratto, $orario_contratto, $ruolo, $note
     );
 
-    if ($stmt->execute()) {
+    if ($stmt_insert->execute()) {
         $insertedCount++;
+        // Aggiorna la mappa duplicati in-memory per righe successive nello stesso file
+        $existing_lavoratori[$dup_key] = true;
     } else {
-        $errorsList[] = "Riga $rowCount: " . $stmt->error;
+        $errorsList[] = "Riga $rowCount: " . $stmt_insert->error;
     }
-    $stmt->close();
 }
+
+    $mysqli->commit();
+} catch (Exception $e) {
+    $mysqli->rollback();
+    $stmt_insert->close();
+    $stmt_az_insert->close();
+    echo json_encode(['success' => false, 'error' => 'Errore durante l\'importazione: ' . $e->getMessage()]);
+    exit;
+}
+
+$stmt_insert->close();
+$stmt_az_insert->close();
 
 // Risposta
 $mappedFields = [];

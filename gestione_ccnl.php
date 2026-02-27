@@ -115,22 +115,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
 
 // ── Recupera dati CCNL ──
 $ccnl_data = [];
-$result = $mysqli->query("
+$stmt = executeQuery("
     SELECT ccnl, COUNT(*) as tot
     FROM lavoratori
     WHERE ccnl IS NOT NULL AND ccnl != '' AND archiviato = 0
     GROUP BY ccnl
     ORDER BY tot DESC
-");
-if ($result) {
+", [], '');
+if ($stmt) {
+    $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
         $ccnl_data[] = $row;
     }
 }
 
 $total_with_ccnl = array_sum(array_column($ccnl_data, 'tot'));
-$total_workers_result = $mysqli->query("SELECT COUNT(*) as tot FROM lavoratori WHERE archiviato = 0");
-$total_workers = $total_workers_result ? $total_workers_result->fetch_assoc()['tot'] : 0;
+$stmt2 = executeQuery("SELECT COUNT(*) as tot FROM lavoratori WHERE archiviato = 0", [], '');
+$total_workers = $stmt2 ? intval($stmt2->get_result()->fetch_assoc()['tot']) : 0;
 $total_without_ccnl = $total_workers - $total_with_ccnl;
 ?>
 <!DOCTYPE html>
@@ -140,59 +141,10 @@ $total_without_ccnl = $total_workers - $total_with_ccnl;
     <title>Gestione CCNL - CRM Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
-    <style>
-        .stat-card {
-            border-radius: 1rem;
-            border: none;
-            overflow: hidden;
-            transition: transform 0.2s cubic-bezier(.4,0,.2,1), box-shadow 0.2s cubic-bezier(.4,0,.2,1);
-            position: relative;
-        }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(0,0,0,0.1) !important;
-        }
-        .stat-card:hover::before { opacity: 1; }
-        .stat-card--dark::before { background: #1e293b; }
-        .stat-card--green::before { background: #22c55e; }
-        .stat-card--amber::before { background: #f59e0b; }
-        .stat-card .stat-icon-wrap {
-            width: 48px; height: 48px;
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.15rem;
-            flex-shrink: 0;
-        }
-        .stat-card--dark .stat-icon-wrap { background: #f1f5f9; color: #1e293b; }
-        .stat-card--green .stat-icon-wrap { background: #dcfce7; color: #16a34a; }
-        .stat-card--amber .stat-icon-wrap { background: #fef3c7; color: #d97706; }
-        .stat-number {
-            font-size: 1.85rem;
-            font-weight: 800;
-            line-height: 1;
-            letter-spacing: -0.02em;
-            color: #0f172a;
-        }
-        .stat-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: #94a3b8;
-            margin-bottom: 4px;
-        }
-    </style>
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.4" rel="stylesheet">
+    <!-- stat-card styles in styles.css -->
 </head>
 <body id="page-top">
     <div id="wrapper">
@@ -228,7 +180,7 @@ $total_without_ccnl = $total_workers - $total_with_ccnl;
                                         </div>
                                         <div class="stat-label mb-0">Lavoratori con CCNL</div>
                                     </div>
-                                    <div class="stat-number" style="color:#16a34a;"><?php echo $total_with_ccnl; ?> / <?php echo $total_workers; ?></div>
+                                    <div class="stat-number stat-number--green"><?php echo $total_with_ccnl; ?> / <?php echo $total_workers; ?></div>
                                 </div>
                             </div>
                         </div>
@@ -241,7 +193,7 @@ $total_without_ccnl = $total_workers - $total_with_ccnl;
                                         </div>
                                         <div class="stat-label mb-0">Senza CCNL</div>
                                     </div>
-                                    <div class="stat-number" style="color:#d97706;"><?php echo $total_without_ccnl; ?></div>
+                                    <div class="stat-number stat-number--amber"><?php echo $total_without_ccnl; ?></div>
                                 </div>
                             </div>
                         </div>
@@ -334,7 +286,7 @@ $total_without_ccnl = $total_workers - $total_with_ccnl;
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.js"></script>
 
     <script>
-    var csrfToken = '<?php echo $_SESSION['csrf_token']; ?>';
+    var csrfToken = <?php echo json_encode($_SESSION['csrf_token']); ?>;
 
     function apiPost(action, data, callback) {
         data.ajax_action = action;

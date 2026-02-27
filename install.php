@@ -152,9 +152,22 @@ ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value);
 executeQuery($query);
 
 // Aggiunta dell'utente admin predefinito
-$admin_username = 'admin';
-$admin_email = 'admin@example.com';
-$admin_password = password_hash('ChangeMe123!', PASSWORD_DEFAULT); // Cambiare dopo il primo login
+// La password DEVE essere fornita come variabile d'ambiente o parametro POST durante l'installazione
+$admin_username = $_POST['admin_username'] ?? ($_ENV['ADMIN_USERNAME'] ?? getenv('ADMIN_USERNAME') ?: '');
+$admin_email = $_POST['admin_email'] ?? ($_ENV['ADMIN_EMAIL'] ?? getenv('ADMIN_EMAIL') ?: '');
+$admin_password_plain = $_POST['admin_password'] ?? ($_ENV['ADMIN_PASSWORD'] ?? getenv('ADMIN_PASSWORD') ?: '');
+
+if (empty($admin_username) || empty($admin_email) || empty($admin_password_plain)) {
+    $mysqli->rollback();
+    die("Errore: username, email e password dell'admin sono obbligatori. Fornirli via POST o variabili d'ambiente (ADMIN_USERNAME, ADMIN_EMAIL, ADMIN_PASSWORD).");
+}
+
+if (strlen($admin_password_plain) < 8) {
+    $mysqli->rollback();
+    die("Errore: la password dell'admin deve essere di almeno 8 caratteri.");
+}
+
+$admin_password = password_hash($admin_password_plain, PASSWORD_DEFAULT);
 
 // Verifica che l'utente admin non esista già
 $stmt = $mysqli->prepare("SELECT * FROM users WHERE username = ? OR email = ?");

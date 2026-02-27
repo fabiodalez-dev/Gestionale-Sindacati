@@ -3,7 +3,10 @@ require 'config.php';
 checkLogin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-   
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        echo json_encode(['error' => 'Token CSRF non valido.']);
+        exit;
+    }
 
     $lavoratore_id = intval($_POST['lavoratore_id']);
     $descrizione = $_POST['descrizione_documento'];
@@ -22,6 +25,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!in_array($fileExtension, $allowedExtensions)) {
             $error = "Tipo di file non supportato. Sono permessi solo immagini e PDF.";
         } else {
+            // Verifica il MIME type reale del file
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $actualMime = $finfo->file($fileTmpPath);
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+            if (!in_array($actualMime, $allowedMimes)) {
+                echo json_encode(['error' => 'Il tipo MIME del file non corrisponde a un formato consentito.']);
+                exit;
+            }
             // Sanifica il nome del file
             $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
 

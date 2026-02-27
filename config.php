@@ -4,10 +4,17 @@
 // Avvio del buffer di output per prevenire invio accidentale di output prima delle intestazioni
 ob_start();
 
-// Impostazioni di visualizzazione degli errori (disabilitare in produzione)
-//ini_set('display_errors', 1);
-//ini_set('display_startup_errors', 1);
-//error_reporting(E_ALL);
+// Gestione errori centralizzata (controllata via APP_DEBUG in .env)
+$app_debug = ($_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG') ?: '0') === '1';
+if ($app_debug) {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+} else {
+    ini_set('display_errors', 0);
+    ini_set('display_startup_errors', 0);
+    error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+}
 
 // Carica le variabili dal file .env
 function loadEnv($path) {
@@ -46,21 +53,23 @@ function sanitizeForHTML($data) {
  * @return string L'HTML sanitizzato
  */
 function sanitizeHTML($data) {
-    // Definisci i tag e gli attributi consentiti
-    // Puoi personalizzare questi tag secondo le tue necessità
-    $allowed_tags = '<p><a><b><strong><i><em><ul><ol><li><br><hr><span><div><img><h1><h2><h3><h4><h5><h6>';
-
-    // Rimuove tutti i tag non consentiti
-    $data = strip_tags($data, $allowed_tags);
-
-    // Opzionale: Puoi ulteriormente sanitizzare gli attributi, ad esempio per gli href degli <a>
-    // Utilizzando una libreria come HTML Purifier per una sanitizzazione avanzata
-
-    return $data;
+    static $purifier = null;
+    if ($purifier === null) {
+        $config = \HTMLPurifier_Config::createDefault();
+        $config->set('HTML.Allowed', 'p,a[href|target],b,strong,i,em,ul,ol,li,br,hr,span,div,img[src|alt|width|height],h1,h2,h3,h4,h5,h6');
+        $config->set('HTML.TargetBlank', true);
+        $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true]);
+        $config->set('Cache.SerializerPath', __DIR__ . '/sessions');
+        $purifier = new \HTMLPurifier($config);
+    }
+    return $purifier->purify($data ?? '');
 }
 function generateCsrfToken() {
-    if (empty($_SESSION['csrf_token'])) {
+    // Ruota il token ogni ora per limitare la finestra di esposizione
+    $now = time();
+    if (empty($_SESSION['csrf_token']) || empty($_SESSION['csrf_token_time']) || ($now - $_SESSION['csrf_token_time']) > 3600) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $_SESSION['csrf_token_time'] = $now;
     }
     return $_SESSION['csrf_token'];
 }
@@ -134,6 +143,12 @@ function startSecureSession() {
 // Avvio della sessione
 startSecureSession();
 
+// Security headers
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: SAMEORIGIN');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+
 // Includi l'autoload di Composer principale (se presente)
 $main_autoload = __DIR__ . '/vendor/autoload.php';
 if (file_exists($main_autoload)) {
@@ -202,14 +217,22 @@ function executeQuery($query, $params = [], $types = '') {
  * @return string|null Il valore dell'impostazione o null se non trovato
  */
 function getSetting($key) {
+    static $cache = [];
+    if (array_key_exists($key, $cache)) {
+        return $cache[$key];
+    }
     $stmt = executeQuery("SELECT setting_value FROM settings WHERE setting_key = ?", [$key], 's');
     if ($stmt === false) {
+        $cache[$key] = null;
         return null;
     }
     $result = $stmt->get_result();
     if ($result->num_rows > 0) {
-        return $result->fetch_assoc()['setting_value'];
+        $value = $result->fetch_assoc()['setting_value'];
+        $cache[$key] = $value;
+        return $value;
     }
+    $cache[$key] = null;
     return null;
 }
 
@@ -579,7 +602,13 @@ function getSettings(array $keys) {
 }
 
 // Definizione della chiave di crittografia generale per i plugin
-define('GENERAL_ENCRYPTION_KEY', $_ENV['GENERAL_ENCRYPTION_KEY'] ?? getenv('GENERAL_ENCRYPTION_KEY') ?: 'Z0MHmscNKs2mTaFEn4dbNhsYE18fZQetltBB4TrHM2k=');
+$_encryption_key = $_ENV['GENERAL_ENCRYPTION_KEY'] ?? getenv('GENERAL_ENCRYPTION_KEY');
+if (!$_encryption_key) {
+    error_log("FATAL: GENERAL_ENCRYPTION_KEY non configurata in .env");
+    die("Errore di configurazione del server. Chiave di crittografia mancante.");
+}
+define('GENERAL_ENCRYPTION_KEY', $_encryption_key);
+unset($_encryption_key);
 
 /**
  * ===========================
@@ -658,9 +687,7 @@ function loadActivePlugins() {
         $plugin_path = __DIR__ . "/plugins/" . $plugin_name . "/plugin.php";
 
         if (file_exists($plugin_path)) {
-            error_log("Caricamento del plugin: $plugin_name");
             require_once $plugin_path;
-            error_log("Plugin $plugin_name caricato con successo.");
         } else {
             error_log("Il file del plugin '$plugin_name' non esiste.");
         }
@@ -787,7 +814,8 @@ $mysqli = new mysqli($host, $user, $pass, $db);
 
 // Verifica la connessione
 if ($mysqli->connect_error) {
-    die("Connessione fallita: " . $mysqli->connect_error);
+    error_log("Connessione DB fallita: " . $mysqli->connect_error);
+    die("Errore di connessione al database. Contattare l'amministratore.");
 }
 
 // Imposta la codifica dei caratteri per la connessione al database

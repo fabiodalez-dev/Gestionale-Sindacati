@@ -3,6 +3,10 @@ require 'config.php';
 checkLogin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        die('Token CSRF non valido.');
+    }
+
     $id = intval($_POST['id']);
     $note = $_POST['note'];
 

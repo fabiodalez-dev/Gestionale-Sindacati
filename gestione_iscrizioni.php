@@ -20,67 +20,21 @@ function formatDateForDisplay($date, $date_format = 'd-m-Y') {
  * Funzione per aggiornare lo stato 'iscritto' nella tabella 'lavoratori' se la data di fine è passata
  */
 function aggiornaStatoIscrizioni($mysqli) {
-    $oggi = date('Y-m-d');
-
-    // Seleziona tutte le iscrizioni con tipo_tessera 'rinnovo annuale' e data_fine <= oggi e iscritto =1
-    // Rimosso GROUP BY lavoratore_id perché lavoratore_id è unico
-    $query = "SELECT i.lavoratore_id FROM iscrizioni i 
-              JOIN lavoratori l ON i.lavoratore_id = l.id 
-              WHERE l.tipo_tessera = 'rinnovo annuale' 
-              AND i.data_fine <= ? 
-              AND l.iscritto = 1";
-
-    $stmt = $mysqli->prepare($query);
-    if (!$stmt) {
-        error_log("Errore nella preparazione della query di aggiornamento: " . $mysqli->error);
-        return;
+    // Singola query: imposta iscritto = 0 per i lavoratori con tipo_tessera 'rinnovo annuale'
+    // che sono ancora segnati come iscritti ma non hanno alcuna iscrizione attiva
+    // (cioè nessuna iscrizione con data_fine >= oggi)
+    $query = "UPDATE lavoratori l
+              SET l.iscritto = 0
+              WHERE l.tipo_tessera = 'rinnovo annuale'
+              AND l.iscritto = 1
+              AND NOT EXISTS (
+                  SELECT 1 FROM iscrizioni i
+                  WHERE i.lavoratore_id = l.id
+                  AND i.data_fine >= CURDATE()
+              )";
+    if (!$mysqli->query($query)) {
+        error_log("Errore nell'aggiornamento stato iscrizioni: " . $mysqli->error);
     }
-    $stmt->bind_param('s', $oggi);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    while ($row = $result->fetch_assoc()) {
-        $lavoratore_id = $row['lavoratore_id'];
-
-        // Controlla se il lavoratore ha altre iscrizioni attive
-        // Con la UNIQUE constraint, questa verifica può essere semplificata
-        $check_query = "SELECT i.id
-                        FROM iscrizioni i
-                        JOIN lavoratori l ON i.lavoratore_id = l.id
-                        WHERE i.lavoratore_id = ? 
-                        AND (
-                            l.tipo_tessera IN ('trattenuta in busta paga', 'sepa')
-                            OR (
-                                l.tipo_tessera = 'rinnovo annuale'
-                                AND i.data_fine >= ?
-                            )
-                        )";
-        $stmt_check = $mysqli->prepare($check_query);
-        if (!$stmt_check) {
-            error_log("Errore nella preparazione della query di controllo: " . $mysqli->error);
-            continue;
-        }
-        $stmt_check->bind_param('is', $lavoratore_id, $oggi);
-        $stmt_check->execute();
-        $result_check = $stmt_check->get_result();
-        $count = $result_check->num_rows;
-        $stmt_check->close();
-
-        if ($count == 0) {
-            // Se non ci sono altre iscrizioni attive, aggiorna lo stato 'iscritto' a 0
-            $update_lavoratore = "UPDATE lavoratori SET iscritto = 0 WHERE id = ?";
-            $stmt_update = $mysqli->prepare($update_lavoratore);
-            if ($stmt_update) {
-                $stmt_update->bind_param('i', $lavoratore_id);
-                $stmt_update->execute();
-                $stmt_update->close();
-            } else {
-                error_log("Errore nella preparazione della query di aggiornamento lavoratore: " . $mysqli->error);
-            }
-        }
-    }
-
-    $stmt->close();
 }
 
 // Esegui l'aggiornamento degli stati
@@ -319,13 +273,13 @@ if ($result_lavoratori) {
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SB Admin 2 CSS (includes Bootstrap) -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
     <!-- jQuery UI CSS -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css" rel="stylesheet">
     <!-- DataTables CSS -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
     <!-- Custom CSS (se necessario) -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.4" rel="stylesheet">
 </head>
 <body id="page-top">
 

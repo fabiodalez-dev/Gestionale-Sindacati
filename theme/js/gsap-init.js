@@ -44,8 +44,8 @@
       gsap.set(stats, { opacity: 0 });
       gsap.to(stats, {
         opacity: 1,
-        duration: 0.3,
-        stagger: 0.04,
+        duration: DURATION,
+        stagger: STAGGER,
         ease: EASE
       });
     }

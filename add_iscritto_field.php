@@ -1,5 +1,7 @@
 <?php
 require 'config.php';
+checkLogin();
+checkUserRole('admin');
 
 // Usa la variabile di connessione corretta
 // Supponiamo che la connessione sia memorizzata in $conn oppure $mysqli

@@ -1,11 +1,6 @@
 <?php
 // archived_lavoratori.php - Versione Avanzata con DataTables e Filtri Completi
 
-// Abilita la visualizzazione degli errori per lo sviluppo (disabilitare in produzione)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 // Includi il file di configurazione e funzioni comuni
 require_once 'config.php';
 
@@ -542,7 +537,7 @@ generateCsrfToken();
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     
     <!-- Bootstrap CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
 
     <!-- DataTables CSS -->
     <link rel="stylesheet" type="text/css" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/dataTables.bootstrap4.min.css">
@@ -554,7 +549,7 @@ generateCsrfToken();
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
     
     <!-- Custom Styles -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.4" rel="stylesheet">
     <style>
         .table th {
             vertical-align: middle;

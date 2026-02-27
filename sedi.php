@@ -1,11 +1,6 @@
 <?php
 // sedi.php - Versione migliorata con conteggio lavoratori e link ai filtri
 
-// Abilita la visualizzazione degli errori per lo sviluppo (disabilita in produzione)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 // Includi il file di configurazione e funzioni comuni
 require_once 'config.php';
 
@@ -99,9 +94,9 @@ if ($statsStmt) {
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
     <!-- Custom Styles -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.4" rel="stylesheet">
     <!-- DataTables CSS -->
     <link rel="stylesheet" type="text/css" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/dataTables.bootstrap4.min.css">
     <link rel="stylesheet" type="text/css" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/extensions/responsive/responsive.bootstrap4.min.css">
@@ -109,54 +104,7 @@ if ($statsStmt) {
     
     <!-- Custom CSS -->
     <style>
-        .stat-card {
-            border-radius: 1rem;
-            border: none;
-            overflow: hidden;
-            transition: transform 0.2s cubic-bezier(.4,0,.2,1), box-shadow 0.2s cubic-bezier(.4,0,.2,1);
-            position: relative;
-        }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(0,0,0,0.1) !important;
-        }
-        .stat-card:hover::before { opacity: 1; }
-        .stat-card--blue::before { background: #3b82f6; }
-        .stat-card--green::before { background: #22c55e; }
-        .stat-card--cyan::before { background: #06b6d4; }
-        .stat-card .stat-icon-wrap {
-            width: 48px; height: 48px;
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.15rem;
-            flex-shrink: 0;
-        }
-        .stat-card--blue .stat-icon-wrap { background: #dbeafe; color: #2563eb; }
-        .stat-card--green .stat-icon-wrap { background: #dcfce7; color: #16a34a; }
-        .stat-card--cyan .stat-icon-wrap { background: #cffafe; color: #0891b2; }
-        .stat-card .stat-number {
-            font-size: 1.85rem;
-            font-weight: 800;
-            line-height: 1;
-            letter-spacing: -0.02em;
-            color: #0f172a;
-        }
-        .stat-card .stat-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: #94a3b8;
-            margin-bottom: 0;
-        }
+        /* stat-card styles now in styles.css */
         .sede-name {
             font-weight: 600;
             color: #5a5c69;

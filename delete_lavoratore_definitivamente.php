@@ -3,6 +3,7 @@
 
 require_once 'config.php';
 checkLogin();
+checkUserRole('admin');
 
 // Verifica che la richiesta sia POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -16,23 +17,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $lavoratore_id = isset($_POST['id']) ? intval($_POST['id']) : 0;
 
     if ($lavoratore_id > 0) {
-        // Prima elimina eventuali dati correlati (es. documenti, iscrizioni, etc.)
-        // Esempio: eliminazione dei documenti associati
-        $deleteDocumentsQuery = "DELETE FROM documenti_lavoratori WHERE lavoratore_id = ?";
-        $stmtDocs = executeQuery($deleteDocumentsQuery, [$lavoratore_id], 'i');
+        global $mysqli;
+        $mysqli->begin_transaction();
+        try {
+            // Prima elimina eventuali dati correlati (es. documenti, iscrizioni, etc.)
+            // Eliminazione dei documenti associati
+            $deleteDocumentsQuery = "DELETE FROM documenti_lavoratori WHERE lavoratore_id = ?";
+            $stmtDocs = executeQuery($deleteDocumentsQuery, [$lavoratore_id], 'i');
+            if ($stmtDocs === false) {
+                throw new Exception("Errore eliminazione documenti lavoratore");
+            }
 
-        // Eliminazione delle iscrizioni
-        $deleteIscrizioniQuery = "DELETE FROM iscrizioni WHERE lavoratore_id = ?";
-        $stmtIscrizioni = executeQuery($deleteIscrizioniQuery, [$lavoratore_id], 'i');
+            // Eliminazione delle iscrizioni
+            $deleteIscrizioniQuery = "DELETE FROM iscrizioni WHERE lavoratore_id = ?";
+            $stmtIscrizioni = executeQuery($deleteIscrizioniQuery, [$lavoratore_id], 'i');
+            if ($stmtIscrizioni === false) {
+                throw new Exception("Errore eliminazione iscrizioni lavoratore");
+            }
 
-        // Eliminazione del lavoratore
-        $deleteLavoratoreQuery = "DELETE FROM lavoratori WHERE id = ?";
-        $stmt = executeQuery($deleteLavoratoreQuery, [$lavoratore_id], 'i');
+            // Eliminazione del lavoratore
+            $deleteLavoratoreQuery = "DELETE FROM lavoratori WHERE id = ?";
+            $stmt = executeQuery($deleteLavoratoreQuery, [$lavoratore_id], 'i');
+            if ($stmt === false) {
+                throw new Exception("Errore eliminazione lavoratore");
+            }
 
-        if ($stmt !== false) {
+            $mysqli->commit();
             header("Location: archived_lavoratori.php?delete_success=1");
             exit;
-        } else {
+        } catch (Exception $e) {
+            $mysqli->rollback();
+            error_log("Errore eliminazione definitiva lavoratore: " . $e->getMessage());
             header("Location: archived_lavoratori.php?delete_error=Errore durante l'eliminazione definitiva.");
             exit;
         }

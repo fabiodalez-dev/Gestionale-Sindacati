@@ -101,10 +101,12 @@ CREATE TABLE IF NOT EXISTS lavoratori (
     data_iscrizione DATE,
     paese_nascita VARCHAR(100),
     ccnl VARCHAR(100),
-    tipo_tessera ENUM('tipo1', 'tipo2', 'tipo3'),
+    tipo_tessera ENUM('trattenuta in busta paga', 'rinnovo annuale', 'sepa'),
     vertenze TINYINT DEFAULT 0,
     orario_contratto VARCHAR(20) NOT NULL,
-    unita_operativa_id INT
+    unita_operativa_id INT,
+    archiviato TINYINT DEFAULT 0,
+    sede_id INT DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS locks (

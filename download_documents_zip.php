@@ -12,6 +12,24 @@ ob_start();
 
 header('Content-Type: application/json');
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        ob_clean();
+        echo json_encode(['success' => false, 'message' => 'Token CSRF non valido.']);
+        exit;
+    }
+}
+
+// Cleanup old ZIP files (older than 1 hour)
+$downloadDir = __DIR__ . '/downloads/';
+if (is_dir($downloadDir)) {
+    foreach (glob($downloadDir . '*.zip') as $file) {
+        if (filemtime($file) < time() - 3600) {
+            @unlink($file);
+        }
+    }
+}
+
 if (isset($_POST['document_ids']) && is_array($_POST['document_ids']) && count($_POST['document_ids']) > 0) {
     $document_ids = $_POST['document_ids'];
 

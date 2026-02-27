@@ -130,9 +130,9 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
     <!-- Font Awesome -->
     <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SB Admin 2 CSS (includes Bootstrap) -->
-    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
     <!-- Custom CSS (se necessario) -->
-    <link href="<?php echo $base_url; ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>styles.css?v=2.4" rel="stylesheet">
     <style>
         /* Stili personalizzati */
         .hidden-editor {

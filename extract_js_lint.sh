@@ -37,7 +37,6 @@ for line in content.split('\n'):
         continue
     if in_script:
         # Replace PHP echo inside strings: "<?php echo ...; ?>" -> "__PHP__"
-        # The key insight: PHP inside JS strings should become part of the string, not add quotes
         line = re.sub(r'<\?(?:php|=)\s*[^?]*?\?>', '__PHP__', line)
         # If line still has unclosed PHP, comment it out
         if '<?' in line or '?>' in line:
@@ -47,15 +46,15 @@ for line in content.split('\n'):
 print('\n'.join(blocks))
 PYEOF
 
-for phpfile in *.php; do
-    [ -f "$phpfile" ] || continue
+# Recursive search, excluding vendor and node_modules
+find . -name "*.php" -type f \
+    -not -path "*/vendor/*" \
+    -not -path "*/node_modules/*" \
+    -not -path "*/.eslint_tmp/*" \
+    | sort | while IFS= read -r phpfile; do
 
-    # Skip files that don't contain inline <script> blocks
-    if ! grep -q '<script>' "$phpfile" 2>/dev/null; then
-        continue
-    fi
-
-    jsfile="$TMPDIR/${phpfile%.php}.js"
+    # Let the Python extractor handle filtering
+    jsfile="$TMPDIR/$(echo "$phpfile" | sed 's|/|__|g; s|\.php$|.js|')"
 
     python3 "$TMPDIR/extract.py" "$phpfile" > "$jsfile" 2>/dev/null
 
@@ -74,7 +73,7 @@ for phpfile in *.php; do
     if [ $exit_code -ne 0 ]; then
         FILES_WITH_ISSUES=$((FILES_WITH_ISSUES + 1))
         echo "--- $phpfile ---"
-        echo "$output" | sed "s|$TMPDIR/${phpfile%.php}.js|$phpfile|g"
+        echo "$output" | sed "s|$jsfile|$phpfile|g"
         echo ""
 
         file_errors=$(echo "$output" | grep -c " error ")

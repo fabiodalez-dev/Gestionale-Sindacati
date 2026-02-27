@@ -60,8 +60,8 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
     <title>Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
-    <link href="<?php echo $base_url; ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>styles.css?v=2.4" rel="stylesheet">
     <!-- FullCalendar CSS (local) -->
     <link rel="stylesheet" href="<?php echo $base_url; ?>theme/vendor/fullcalendar/common.min.css">
     <link rel="stylesheet" href="<?php echo $base_url; ?>theme/vendor/fullcalendar/daygrid.min.css">
@@ -96,56 +96,7 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
         .chart-container { position: relative; height: 350px; }
         .chart-container-lg { position: relative; height: 400px; }
         .chart-container-xl { position: relative; height: 500px; }
-        .stat-card {
-            border-radius: 1rem;
-            border: none;
-            overflow: hidden;
-            transition: transform 0.2s cubic-bezier(.4,0,.2,1), box-shadow 0.2s cubic-bezier(.4,0,.2,1);
-            position: relative;
-        }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(0,0,0,0.1) !important;
-        }
-        .stat-card:hover::before { opacity: 1; }
-        .stat-card--dark::before { background: #1e293b; }
-        .stat-card--green::before { background: #22c55e; }
-        .stat-card--red::before { background: #ef4444; }
-        .stat-card--blue::before { background: #3b82f6; }
-        .stat-card .stat-icon-wrap {
-            width: 48px; height: 48px;
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.15rem;
-            flex-shrink: 0;
-        }
-        .stat-card--dark .stat-icon-wrap { background: #f1f5f9; color: #1e293b; }
-        .stat-card--green .stat-icon-wrap { background: #dcfce7; color: #16a34a; }
-        .stat-card--red .stat-icon-wrap { background: #fee2e2; color: #dc2626; }
-        .stat-card--blue .stat-icon-wrap { background: #dbeafe; color: #2563eb; }
-        .stat-number {
-            font-size: 1.85rem;
-            font-weight: 800;
-            line-height: 1;
-            letter-spacing: -0.02em;
-            color: #0f172a;
-        }
-        .stat-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: #94a3b8;
-            margin-bottom: 4px;
-        }
+        /* stat-card styles now in styles.css */
         .filter-bar { background: #fff; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); padding: 1rem 1.25rem; }
         .chart-card { border: none; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
         .chart-card .card-header { background: #fff; border-bottom: 1px solid #f0f0f0; font-weight: 600; font-size: 0.9rem; padding: 1rem 1.25rem; border-radius: 0.75rem 0.75rem 0 0 !important; }
@@ -331,7 +282,7 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                     </div>
                                     <div class="stat-label mb-0">Iscritti</div>
                                 </div>
-                                <div class="stat-number" id="kpiIscritti" style="color:#16a34a;">-</div>
+                                <div class="stat-number stat-number--green" id="kpiIscritti">-</div>
                             </div>
                         </div>
                     </div>
@@ -344,7 +295,7 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                     </div>
                                     <div class="stat-label mb-0">Non Iscritti</div>
                                 </div>
-                                <div class="stat-number" id="kpiNonIscritti" style="color:#dc2626;">-</div>
+                                <div class="stat-number stat-number--red" id="kpiNonIscritti">-</div>
                             </div>
                         </div>
                     </div>
@@ -357,7 +308,7 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                     </div>
                                     <div class="stat-label mb-0">Tasso Iscrizione</div>
                                 </div>
-                                <div class="stat-number" id="kpiRate" style="color:#2563eb;">-</div>
+                                <div class="stat-number stat-number--blue" id="kpiRate">-</div>
                             </div>
                         </div>
                     </div>

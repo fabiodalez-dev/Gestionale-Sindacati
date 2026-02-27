@@ -1,13 +1,8 @@
 <?php
 // backup.php
 
-$cron_key = "RMolEMPSEtea";
+$cron_key = $_ENV['CRON_KEY'] ?? getenv('CRON_KEY') ?: '';
 
-
-// Abilita la visualizzazione degli errori per lo sviluppo (disabilita in produzione)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
 require_once 'config.php';
 checkLogin();
@@ -195,9 +190,9 @@ usort($cronBackups, function($a, $b) {
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.4" rel="stylesheet">
 </head>
 <body id="page-top">
 

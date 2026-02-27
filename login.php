@@ -1,6 +1,55 @@
 <?php
 require 'config.php';
 
+// --- Rate Limiting Functions (file-based) ---
+
+/**
+ * Check if the given IP is allowed to attempt login.
+ * Returns true if allowed, false if rate-limited (>= 5 failed attempts in 15 min).
+ */
+function checkLoginRateLimit($ip) {
+    $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
+    if (!file_exists($lockFile)) return true;
+    $data = json_decode(file_get_contents($lockFile), true);
+    if (!$data || !isset($data['attempts'])) return true;
+    // Clean old attempts (older than 15 minutes)
+    $data['attempts'] = array_values(array_filter($data['attempts'], fn($t) => $t > time() - 900));
+    // Persist cleaned data
+    file_put_contents($lockFile, json_encode($data), LOCK_EX);
+    if (count($data['attempts']) >= 5) return false;
+    return true;
+}
+
+/**
+ * Record a failed login attempt for the given IP.
+ */
+function recordFailedLogin($ip) {
+    $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
+    $data = ['attempts' => []];
+    if (file_exists($lockFile)) {
+        $existing = json_decode(file_get_contents($lockFile), true);
+        if ($existing && isset($existing['attempts'])) {
+            $data = $existing;
+        }
+    }
+    // Clean old attempts before adding new one
+    $data['attempts'] = array_values(array_filter($data['attempts'], fn($t) => $t > time() - 900));
+    $data['attempts'][] = time();
+    file_put_contents($lockFile, json_encode($data), LOCK_EX);
+}
+
+/**
+ * Clear all failed login attempts for the given IP (on successful login).
+ */
+function clearLoginAttempts($ip) {
+    $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
+    if (file_exists($lockFile)) {
+        @unlink($lockFile);
+    }
+}
+
+// --- End Rate Limiting Functions ---
+
 // Recupera le impostazioni attuali, inclusa la voce 'logo'
 $settings = getSettings(['logo']);
 $logo_path = $settings['logo'] ?? 'uploads/default_logo.png';
@@ -17,38 +66,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         $error = 'Token CSRF non valido.';
     } else {
-        $email = sanitizeInput($_POST['email']);
-        $password = $_POST['password'];
-        $remember_me = isset($_POST['remember_me']) ? true : false;
+        $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 
-        $stmt = executeQuery("SELECT id, username, password, role FROM users WHERE email = ?", [$email], 's');
-        if ($stmt) {
-            $result = $stmt->get_result();
-            if ($result->num_rows === 1) {
-                $user = $result->fetch_assoc();
-                if (password_verify($password, $user['password'])) {
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['username'] = $user['username'];
-                    $_SESSION['user_role'] = $user['role'];
+        // Check rate limit before processing login
+        if (!checkLoginRateLimit($clientIp)) {
+            $error = 'Troppi tentativi di accesso. Riprova tra 15 minuti.';
+        } else {
+            $email = sanitizeInput($_POST['email']);
+            $password = $_POST['password'];
+            $remember_me = isset($_POST['remember_me']) ? true : false;
 
-                    if ($remember_me) {
-                        setcookie('remember_me', '1', time() + (30 * 24 * 60 * 60), '/', '', isset($_SERVER['HTTPS']), true);
-                    } else {
-                        if (isset($_COOKIE['remember_me'])) {
-                            setcookie('remember_me', '', time() - 3600, '/', '', isset($_SERVER['HTTPS']), true);
+            $stmt = executeQuery("SELECT id, username, password, role FROM users WHERE email = ?", [$email], 's');
+            if ($stmt) {
+                $result = $stmt->get_result();
+                if ($result->num_rows === 1) {
+                    $user = $result->fetch_assoc();
+                    if (password_verify($password, $user['password'])) {
+                        // Regenerate session ID to prevent session fixation attacks
+                        session_regenerate_id(true);
+
+                        // Clear failed login attempts on success
+                        clearLoginAttempts($clientIp);
+
+                        $_SESSION['user_id'] = $user['id'];
+                        $_SESSION['username'] = $user['username'];
+                        $_SESSION['user_role'] = $user['role'];
+
+                        if ($remember_me) {
+                            setcookie('remember_me', '1', time() + (30 * 24 * 60 * 60), '/', '', isset($_SERVER['HTTPS']), true);
+                        } else {
+                            if (isset($_COOKIE['remember_me'])) {
+                                setcookie('remember_me', '', time() - 3600, '/', '', isset($_SERVER['HTTPS']), true);
+                            }
                         }
-                    }
 
-                    header('Location: ' . $base_url . 'dashboard.php');
-                    exit;
+                        header('Location: ' . $base_url . 'dashboard.php');
+                        exit;
+                    } else {
+                        recordFailedLogin($clientIp);
+                        $error = 'Email o password errati.';
+                    }
                 } else {
+                    recordFailedLogin($clientIp);
                     $error = 'Email o password errati.';
                 }
             } else {
-                $error = 'Email o password errati.';
+                $error = 'Errore nella connessione al database.';
             }
-        } else {
-            $error = 'Errore nella connessione al database.';
         }
     }
 }
@@ -62,8 +126,8 @@ generateCsrfToken();
     <title>Login - ADL Cobas</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.4" rel="stylesheet">
 </head>
 <body class="bg-gradient-primary">
 

@@ -1,7 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 require_once 'config.php';
 checkLogin();
 
@@ -147,13 +144,13 @@ if (isset($_GET['id'])) {
     <!-- Meta viewport per la responsività -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- jQuery UI CSS -->
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.4" rel="stylesheet">
     <!-- FullCalendar CSS -->
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/common.min.css">
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/daygrid.min.css">
@@ -854,7 +851,7 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
 <?php if(isset($_SESSION['zip_link'])): ?>
   <div id="zipLinkContainer" style="margin-top:20px;">
     <div class="input-group">
-      <input type="text" id="zipLink" class="form-control" readonly value="<?php echo $_SESSION['zip_link']; ?>">
+      <input type="text" id="zipLink" class="form-control" readonly value="<?php echo sanitizeForHTML($_SESSION['zip_link'] ?? ''); ?>">
       <div class="input-group-append">
         <button id="copyZipLinkBtn" class="btn btn-secondary" type="button">Copia Link</button>
         <button id="cancelZipLinkBtn" class="btn btn-danger" type="button">Elimina</button>

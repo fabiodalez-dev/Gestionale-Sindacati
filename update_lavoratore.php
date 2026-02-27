@@ -231,13 +231,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Aggiornamento Lavoratore - CRM Admin</title>
     <!-- SB Admin 2 CSS -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- jQuery UI CSS per l'autocomplete -->
     <link rel="stylesheet" href="<?php echo $base_url; ?>theme/vendor/jquery-ui/jquery-ui.min.css">
     <!-- Custom CSS -->
-    <link href="<?php echo $base_url; ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>styles.css?v=2.4" rel="stylesheet">
     <!-- TinyMCE -->
     <script src="<?php echo $base_url; ?>vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
     <style>

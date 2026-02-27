@@ -1,0 +1,8 @@
+# Blocca l'esecuzione di script PHP in questa cartella.
+# Permette l'accesso diretto ai file scaricabili.
+<FilesMatch "\.php$">
+    Require all denied
+</FilesMatch>
+
+# Disabilita l'esecuzione PHP anche se il file viene rinominato
+php_flag engine off

@@ -252,8 +252,8 @@ generateCsrfToken();
     <title>Impostazioni - CRM Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.4" rel="stylesheet">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
     <style>
         .form-group { margin-bottom: 15px; }
@@ -414,7 +414,7 @@ generateCsrfToken();
                                                 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
                                                 echo sanitizeForHTML($protocol . '://' . $host . $base_url . 'api.php');
                                             ?></code>
-                                            <button class="btn btn-sm btn-outline-secondary ml-2" onclick="navigator.clipboard.writeText(document.getElementById('apiEndpointUrl').textContent.trim()).then(function(){Swal.fire({icon:'success',title:'Copiato!',timer:1500,showConfirmButton:false})});" title="Copia endpoint">
+                                            <button class="btn btn-sm btn-outline-secondary ml-2" id="copyEndpointBtn" title="Copia endpoint">
                                                 <i class="fas fa-copy"></i>
                                             </button>
                                         </div>
@@ -653,18 +653,30 @@ generateCsrfToken();
         });
     });
 
+    function copyToClipboard(text, message) {
+        message = message || 'Copiato!';
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(function() {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: message, showConfirmButton: false, timer: 1500 });
+            });
+        } else {
+            var temp = $('<textarea>').val(text).appendTo('body').select();
+            document.execCommand('copy');
+            temp.remove();
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: message, showConfirmButton: false, timer: 1500 });
+        }
+    }
+
+    $('#copyEndpointBtn').on('click', function() {
+        copyToClipboard($('#apiEndpointUrl').text().trim(), 'Endpoint copiato!');
+    });
+
     $('#copyNewKeyBtn').on('click', function() {
-        var key = $('#newKeyDisplay').text();
-        navigator.clipboard.writeText(key).then(function() {
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Chiave copiata!', showConfirmButton: false, timer: 1500 });
-        });
+        copyToClipboard($('#newKeyDisplay').text(), 'Chiave copiata!');
     });
 
     $(document).on('click', '.copy-key-btn', function() {
-        var key = $(this).data('key');
-        navigator.clipboard.writeText(key).then(function() {
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Chiave copiata!', showConfirmButton: false, timer: 1500 });
-        });
+        copyToClipboard($(this).data('key'), 'Chiave copiata!');
     });
 
     $(document).on('click', '.toggle-key-btn', function() {

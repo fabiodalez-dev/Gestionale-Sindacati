@@ -13,10 +13,10 @@ RewriteRule ^$ /login.php [L,R=302]
     Require all denied
 </Files>
 
-# Protegge il file .env (credenziali database)
-<Files ".env">
+# Protegge i file .env e varianti (.env.local, .env.production, ecc.)
+<FilesMatch "^\.env(\..+)?$">
     Require all denied
-</Files>
+</FilesMatch>
 
 # Protegge i file di log
 <FilesMatch "\.(log)$">
@@ -35,3 +35,34 @@ RewriteRule ^$ /login.php [L,R=302]
 <FilesMatch "\.(md)$">
     Require all denied
 </FilesMatch>
+
+# === Performance: Gzip compression ===
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json text/xml application/xml
+</IfModule>
+
+# === Performance: Browser caching ===
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+</IfModule>
+
+# === Security: Block access to backup and vendor directories ===
+<IfModule mod_rewrite.c>
+    RewriteRule ^vendor/ - [F,L]
+    RewriteRule ^backup/ - [F,L]
+    RewriteRule ^sessions/ - [F,L]
+    RewriteRule ^downloads/ - [F,L]
+    RewriteRule ^plugins/ - [F,L]
+    RewriteRule ^migrations/ - [F,L]
+    RewriteRule ^install/ - [F,L]
+</IfModule>
