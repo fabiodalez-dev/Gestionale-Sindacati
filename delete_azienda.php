@@ -24,6 +24,10 @@ if ($azienda_id <= 0) {
 // Controlla se ci sono lavoratori associati a questa azienda
 $query = "SELECT COUNT(*) AS count FROM lavoratori WHERE azienda_id = ?";
 $stmt = executeQuery($query, [$azienda_id], 'i');
+if ($stmt === false) {
+    header("Location: aziende.php?delete_error=" . urlencode("Errore durante il controllo dei lavoratori associati."));
+    exit();
+}
 $result = $stmt->get_result();
 $count = $result->fetch_assoc()['count'];
 

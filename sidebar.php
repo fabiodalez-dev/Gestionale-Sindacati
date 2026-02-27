@@ -5,17 +5,12 @@ $nome_app = $settings['nome_app'] ?? 'Padova';
 
 // Recupera connessioni attive per la sidebar
 $active_connections = [];
-try {
-    $conn_stmt = executeQuery("SELECT id, name FROM api_connections WHERE is_active = 1 ORDER BY name ASC", [], '');
-    if ($conn_stmt) {
-        $conn_result = $conn_stmt->get_result();
-        while ($row = $conn_result->fetch_assoc()) {
-            $active_connections[] = $row;
-        }
+$conn_stmt = executeQuery("SELECT id, name FROM api_connections WHERE is_active = 1 ORDER BY name ASC", [], '');
+if ($conn_stmt) {
+    $conn_result = $conn_stmt->get_result();
+    while ($row = $conn_result->fetch_assoc()) {
+        $active_connections[] = $row;
     }
-} catch (\Exception $e) {
-    // La tabella api_connections potrebbe non esistere ancora; ignora l'errore
-    $active_connections = [];
 }
 ?>
 <!-- Sidebar -->

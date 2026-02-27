@@ -365,7 +365,7 @@ generateCsrfToken();
     <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     
     <!-- Bootstrap CSS -->
-    <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/css/sb-admin-2.min.css?v=2.5" rel="stylesheet">
 
     <!-- DataTables CSS -->
     <link rel="stylesheet" type="text/css" href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/datatables/dataTables.bootstrap4.min.css">
@@ -379,7 +379,7 @@ generateCsrfToken();
     <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
     
     <!-- Custom Styles -->
-    <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>styles.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>styles.css?v=2.5" rel="stylesheet">
     
     <style>
         /* Stili migliorati per l'usabilità */

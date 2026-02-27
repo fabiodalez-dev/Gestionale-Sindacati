@@ -65,6 +65,30 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+-- ============================================
+-- Clean orphan records before adding FKs
+-- ============================================
+
+-- Clean orphan lavoratore_id in calendario_lavoratori (SET NULL to match ON DELETE SET NULL)
+UPDATE calendario_lavoratori SET lavoratore_id = NULL
+WHERE lavoratore_id IS NOT NULL AND lavoratore_id NOT IN (SELECT id FROM lavoratori);
+
+-- Clean orphan azienda_id in calendario_lavoratori (SET NULL to match ON DELETE SET NULL)
+UPDATE calendario_lavoratori SET azienda_id = NULL
+WHERE azienda_id IS NOT NULL AND azienda_id NOT IN (SELECT id FROM aziende);
+
+-- Clean orphan event_id in event_exceptions (DELETE to match ON DELETE CASCADE)
+DELETE FROM event_exceptions
+WHERE event_id NOT IN (SELECT id FROM calendario_lavoratori);
+
+-- Clean orphan lavoratore_id in event_exceptions (DELETE to match ON DELETE CASCADE)
+DELETE FROM event_exceptions
+WHERE lavoratore_id NOT IN (SELECT id FROM lavoratori);
+
+-- ============================================
+-- Add FK constraints (after orphan cleanup)
+-- ============================================
+
 -- Add FK fk_cal_lavoratore (if not exists)
 SET @fk = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'calendario_lavoratori' AND CONSTRAINT_NAME = 'fk_cal_lavoratore');
 SET @sql = IF(@fk = 0, 'ALTER TABLE calendario_lavoratori ADD CONSTRAINT fk_cal_lavoratore FOREIGN KEY (lavoratore_id) REFERENCES lavoratori(id) ON DELETE SET NULL', 'SELECT 1');

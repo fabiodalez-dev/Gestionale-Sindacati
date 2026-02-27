@@ -10,7 +10,7 @@ require_once 'config.php';
 // Autenticazione tramite chiave cron definita in .env
 $cron_key = $_ENV['CRON_KEY'] ?? getenv('CRON_KEY') ?: '';
 $provided_key = $_GET['key'] ?? '';
-if (empty($cron_key) || !hash_equals($cron_key, $provided_key)) {
+if (!is_string($provided_key) || empty($cron_key) || !hash_equals($cron_key, $provided_key)) {
     http_response_code(403);
     die('Accesso negato.');
 }

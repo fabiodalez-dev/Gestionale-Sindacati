@@ -9,15 +9,26 @@ require 'config.php';
  */
 function checkLoginRateLimit($ip) {
     $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
-    if (!file_exists($lockFile)) return true;
-    $data = json_decode(file_get_contents($lockFile), true);
-    if (!$data || !isset($data['attempts'])) return true;
-    // Clean old attempts (older than 15 minutes)
-    $data['attempts'] = array_values(array_filter($data['attempts'], fn($t) => $t > time() - 900));
-    // Persist cleaned data
-    file_put_contents($lockFile, json_encode($data), LOCK_EX);
-    if (count($data['attempts']) >= 5) return false;
-    return true;
+    $fh = fopen($lockFile, 'c+');
+    if ($fh === false || !flock($fh, LOCK_EX)) {
+        if (is_resource($fh)) fclose($fh);
+        return false;
+    }
+    $raw = stream_get_contents($fh);
+    $data = json_decode($raw ?: '', true);
+    if (!is_array($data) || !isset($data['attempts']) || !is_array($data['attempts'])) {
+        $data = ['attempts' => []];
+    }
+    $now = time();
+    $data['attempts'] = array_values(array_filter($data['attempts'], fn($t) => $t > $now - 900));
+    $isAllowed = count($data['attempts']) < 5;
+    ftruncate($fh, 0);
+    rewind($fh);
+    fwrite($fh, json_encode($data));
+    fflush($fh);
+    flock($fh, LOCK_UN);
+    fclose($fh);
+    return $isAllowed;
 }
 
 /**
@@ -25,17 +36,25 @@ function checkLoginRateLimit($ip) {
  */
 function recordFailedLogin($ip) {
     $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
-    $data = ['attempts' => []];
-    if (file_exists($lockFile)) {
-        $existing = json_decode(file_get_contents($lockFile), true);
-        if ($existing && isset($existing['attempts'])) {
-            $data = $existing;
-        }
+    $fh = fopen($lockFile, 'c+');
+    if ($fh === false || !flock($fh, LOCK_EX)) {
+        if (is_resource($fh)) fclose($fh);
+        return;
     }
-    // Clean old attempts before adding new one
-    $data['attempts'] = array_values(array_filter($data['attempts'], fn($t) => $t > time() - 900));
-    $data['attempts'][] = time();
-    file_put_contents($lockFile, json_encode($data), LOCK_EX);
+    $raw = stream_get_contents($fh);
+    $data = json_decode($raw ?: '', true);
+    if (!is_array($data) || !isset($data['attempts']) || !is_array($data['attempts'])) {
+        $data = ['attempts' => []];
+    }
+    $now = time();
+    $data['attempts'] = array_values(array_filter($data['attempts'], fn($t) => $t > $now - 900));
+    $data['attempts'][] = $now;
+    ftruncate($fh, 0);
+    rewind($fh);
+    fwrite($fh, json_encode($data));
+    fflush($fh);
+    flock($fh, LOCK_UN);
+    fclose($fh);
 }
 
 /**
@@ -126,8 +145,8 @@ generateCsrfToken();
     <title>Login - ADL Cobas</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.5" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.5" rel="stylesheet">
 </head>
 <body class="bg-gradient-primary">
 

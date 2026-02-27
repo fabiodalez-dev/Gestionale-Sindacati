@@ -35,9 +35,20 @@ if ($result->num_rows > 0) {
     $documento = $result->fetch_assoc();
     $percorso = $documento['percorso_documento'];
 
-    // Elimina il file dal server
-    if (file_exists("uploads/" . $percorso)) {
-        unlink("uploads/" . $percorso);
+    // Elimina il file dal server con validazione path traversal
+    $uploadsDir = realpath(__DIR__ . '/uploads');
+    if ($uploadsDir === false) {
+        header("Location: azienda.php?id=" . $azienda_id . "&delete_error=" . urlencode("Directory upload non disponibile."));
+        exit;
+    }
+    $fullPath = realpath($uploadsDir . DIRECTORY_SEPARATOR . ltrim($percorso, '/\\'));
+    if ($fullPath === false || strpos($fullPath, $uploadsDir . DIRECTORY_SEPARATOR) !== 0) {
+        header("Location: azienda.php?id=" . $azienda_id . "&delete_error=" . urlencode("Percorso documento non valido."));
+        exit;
+    }
+    if (is_file($fullPath) && !unlink($fullPath)) {
+        header("Location: azienda.php?id=" . $azienda_id . "&delete_error=" . urlencode("Impossibile eliminare il file dal server."));
+        exit;
     }
 
     // Elimina il record dal database

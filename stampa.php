@@ -134,6 +134,7 @@ $result = $mysqli->query($sql);
 <body>
     <h1>Scarica PDF Lavoratore</h1>
     <form method="POST" action="">
+        <?php csrfInputField(); ?>
         <label for="lavoratore_id">Seleziona un lavoratore:</label>
         <select name="lavoratore_id" id="lavoratore_id" required>
             <option value="">-- Seleziona --</option>

@@ -41,6 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt === false) {
                 throw new Exception("Errore eliminazione lavoratore");
             }
+            if ($stmt->affected_rows !== 1) {
+                throw new Exception("Lavoratore non trovato o già eliminato");
+            }
 
             $mysqli->commit();
             header("Location: archived_lavoratori.php?delete_success=1");

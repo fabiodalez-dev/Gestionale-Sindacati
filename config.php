@@ -4,18 +4,6 @@
 // Avvio del buffer di output per prevenire invio accidentale di output prima delle intestazioni
 ob_start();
 
-// Gestione errori centralizzata (controllata via APP_DEBUG in .env)
-$app_debug = ($_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG') ?: '0') === '1';
-if ($app_debug) {
-    ini_set('display_errors', 1);
-    ini_set('display_startup_errors', 1);
-    error_reporting(E_ALL);
-} else {
-    ini_set('display_errors', 0);
-    ini_set('display_startup_errors', 0);
-    error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
-}
-
 // Carica le variabili dal file .env
 function loadEnv($path) {
     if (!file_exists($path)) {
@@ -40,6 +28,18 @@ function loadEnv($path) {
     }
 }
 loadEnv(__DIR__ . '/.env');
+
+// Gestione errori centralizzata (controllata via APP_DEBUG in .env)
+$app_debug = ($_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG') ?: '0') === '1';
+if ($app_debug) {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+} else {
+    ini_set('display_errors', 0);
+    ini_set('display_startup_errors', 0);
+    error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+}
 
 // Definizione delle funzioni di utilità
 function sanitizeForHTML($data) {
@@ -216,8 +216,11 @@ function executeQuery($query, $params = [], $types = '') {
  * @param string $key La chiave dell'impostazione
  * @return string|null Il valore dell'impostazione o null se non trovato
  */
-function getSetting($key) {
+function getSetting($key, $force_refresh = false) {
     static $cache = [];
+    if ($force_refresh) {
+        unset($cache[$key]);
+    }
     if (array_key_exists($key, $cache)) {
         return $cache[$key];
     }
@@ -263,7 +266,12 @@ function setSetting($key, $value) {
         $types = 'ss';
     }
     $stmt = executeQuery($query, $params, $types);
-    return $stmt !== false;
+    if ($stmt === false) {
+        return false;
+    }
+    // Invalida la cache di getSetting per questa chiave
+    getSetting($key, true);
+    return true;
 }
 
 /**
@@ -298,7 +306,13 @@ function checkUserRole($required_roles) {
  * @return bool True se il token è valido, False altrimenti
  */
 function verifyCsrfToken($token) {
-    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+    if (!isset($_SESSION['csrf_token'], $_SESSION['csrf_token_time'])) {
+        return false;
+    }
+    if ((time() - (int)$_SESSION['csrf_token_time']) > 3600) {
+        return false;
+    }
+    return hash_equals($_SESSION['csrf_token'], $token);
 }
 
 /**

@@ -60,8 +60,8 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
     <title>Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
-    <link href="<?php echo $base_url; ?>styles.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.5" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>styles.css?v=2.5" rel="stylesheet">
     <!-- FullCalendar CSS (local) -->
     <link rel="stylesheet" href="<?php echo $base_url; ?>theme/vendor/fullcalendar/common.min.css">
     <link rel="stylesheet" href="<?php echo $base_url; ?>theme/vendor/fullcalendar/daygrid.min.css">

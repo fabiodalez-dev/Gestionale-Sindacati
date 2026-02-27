@@ -128,11 +128,11 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
     <!-- Meta viewport per la responsività -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- Font Awesome -->
-    <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SB Admin 2 CSS (includes Bootstrap) -->
-    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.5" rel="stylesheet">
     <!-- Custom CSS (se necessario) -->
-    <link href="<?php echo $base_url; ?>styles.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.5" rel="stylesheet">
     <style>
         /* Stili personalizzati */
         .hidden-editor {
@@ -285,16 +285,16 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
     </a>
 
     <!-- Bootstrap core JavaScript-->
-    <script src="<?php echo $base_url; ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <!-- Core plugin JavaScript-->
-    <script src="<?php echo $base_url; ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
 
     <!-- SB Admin 2 JavaScript-->
-    <script src="<?php echo $base_url; ?>theme/js/sb-admin-2.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
 
     <!-- TinyMCE -->
-    <script src="<?php echo $base_url; ?>vendor/tinymce/tinymce.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce/tinymce.min.js"></script>
 
     <!-- Inizializzazione di TinyMCE -->
     <script>
@@ -307,7 +307,7 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
                      'bullist numlist outdent indent | removeformat | help',
             menubar: false,
             branding: false,
-            base_url: '<?php echo $base_url; ?>vendor/tinymce', // Percorso base corretto
+            base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce', // Percorso base corretto
             suffix: '.min', // Suffisso del file
             license_key: 'gpl',
         });

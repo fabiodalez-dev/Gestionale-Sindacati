@@ -5,4 +5,6 @@
 </FilesMatch>
 
 # Disabilita l'esecuzione PHP anche se il file viene rinominato
-php_flag engine off
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>

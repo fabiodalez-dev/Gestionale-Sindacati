@@ -27,7 +27,13 @@ blocks = []
 in_script = False
 for line in content.split('\n'):
     stripped = line.strip()
-    if '<script' in stripped and 'src=' not in stripped and '</script>' not in stripped:
+    # Single-line script block: <script>...</script> on the same line
+    if '<script' in stripped and '</script>' in stripped and 'src=' not in stripped:
+        m = re.search(r'<script[^>]*>(.*?)</script>', line)
+        if m and m.group(1).strip():
+            blocks.append(m.group(1))
+        continue
+    if '<script' in stripped and 'src=' not in stripped:
         in_script = True
         continue
     if '</script>' in stripped:
@@ -47,11 +53,7 @@ print('\n'.join(blocks))
 PYEOF
 
 # Recursive search, excluding vendor and node_modules
-find . -name "*.php" -type f \
-    -not -path "*/vendor/*" \
-    -not -path "*/node_modules/*" \
-    -not -path "*/.eslint_tmp/*" \
-    | sort | while IFS= read -r phpfile; do
+while IFS= read -r phpfile; do
 
     # Let the Python extractor handle filtering
     jsfile="$TMPDIR/$(echo "$phpfile" | sed 's|/|__|g; s|\.php$|.js|')"
@@ -81,7 +83,11 @@ find . -name "*.php" -type f \
         ERRORS=$((ERRORS + file_errors))
         WARNINGS=$((WARNINGS + file_warnings))
     fi
-done
+done < <(find . -name "*.php" -type f \
+    -not -path "*/vendor/*" \
+    -not -path "*/node_modules/*" \
+    -not -path "*/.eslint_tmp/*" \
+    | sort)
 
 echo "========================================="
 echo "  SUMMARY"

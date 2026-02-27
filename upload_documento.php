@@ -4,6 +4,7 @@ checkLogin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
         echo json_encode(['error' => 'Token CSRF non valido.']);
         exit;
     }

@@ -189,13 +189,13 @@ generateCsrfToken();
     <!-- Meta viewport per la responsività -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.5" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- jQuery UI CSS -->
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.5" rel="stylesheet">
     <!-- FullCalendar CSS -->
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/common.min.css">
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/daygrid.min.css">

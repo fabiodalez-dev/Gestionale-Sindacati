@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Verifica del token CSRF
 if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
     error_log("Token CSRF non valido in delete_event.php");
+    http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Token CSRF mancante o non valido.']);
     exit;
 }

@@ -23,6 +23,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
         $old_values = json_decode($_POST['old_values'] ?? '[]', true);
         $new_value = trim($_POST['new_value'] ?? '');
 
+        if (!is_array($old_values)) {
+            echo json_encode(['error' => 'Formato elenco CCNL non valido.']);
+            exit;
+        }
+
         if (empty($old_values) || empty($new_value)) {
             echo json_encode(['error' => 'Seleziona almeno un CCNL e inserisci il nuovo nome.']);
             exit;
@@ -43,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
         $params = array_merge([$new_value], array_values($to_update));
 
         $stmt = executeQuery(
-            "UPDATE lavoratori SET ccnl = ? WHERE ccnl IN ($placeholders)",
+            "UPDATE lavoratori SET ccnl = ? WHERE ccnl IN ($placeholders) AND archiviato = 0",
             $params,
             $types
         );
@@ -72,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
         }
 
         $stmt = executeQuery(
-            "UPDATE lavoratori SET ccnl = ? WHERE ccnl = ?",
+            "UPDATE lavoratori SET ccnl = ? WHERE ccnl = ? AND archiviato = 0",
             [$new_value, $old_value],
             'ss'
         );
@@ -95,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
         }
 
         $stmt = executeQuery(
-            "UPDATE lavoratori SET ccnl = NULL WHERE ccnl = ?",
+            "UPDATE lavoratori SET ccnl = NULL WHERE ccnl = ? AND archiviato = 0",
             [$value],
             's'
         );
@@ -141,9 +146,9 @@ $total_without_ccnl = $total_workers - $total_with_ccnl;
     <title>Gestione CCNL - CRM Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.5" rel="stylesheet">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.5" rel="stylesheet">
     <!-- stat-card styles in styles.css -->
 </head>
 <body id="page-top">

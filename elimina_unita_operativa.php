@@ -28,7 +28,7 @@ $params = [$unita_operativa_id, $azienda_id];
 $types = 'ii';
 
 $stmt = executeQuery($query, $params, $types);
-if ($stmt) {
+if ($stmt && $stmt->affected_rows > 0) {
     header("Location: azienda.php?id=$azienda_id&unita_delete_success=1");
     exit;
 } else {

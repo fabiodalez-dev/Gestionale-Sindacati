@@ -18,13 +18,17 @@ require_once 'config.php';
 
 // Autenticazione basata su token (i client calendario non possono fare login con sessione)
 $token = $_GET['token'] ?? '';
+$token = is_string($token) ? $token : '';
 $expected = getSetting('calendar_token');
 if (empty($expected)) {
     // Genera e salva un token casuale al primo utilizzo
     $expected = bin2hex(random_bytes(16));
-    setSetting('calendar_token', $expected);
+    if (!setSetting('calendar_token', $expected)) {
+        http_response_code(500);
+        die('Errore interno: inizializzazione token non riuscita.');
+    }
 }
-if (!hash_equals($expected, $token)) {
+if ($token === '' || !hash_equals($expected, $token)) {
     http_response_code(403);
     die('Accesso negato. Token non valido.');
 }

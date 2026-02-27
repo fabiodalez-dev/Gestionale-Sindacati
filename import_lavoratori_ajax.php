@@ -327,7 +327,7 @@ foreach ($rows as $row) {
 
     // Insert (prepared statement riutilizzato)
     $stmt_insert->bind_param(
-        'ssssssssssssssssssss',
+        'ssssssssssssssisssss',
         $nome, $cognome, $codice_fiscale, $telefono, $email_lav,
         $indirizzo_via, $indirizzo_cap, $indirizzo_citta, $indirizzo_provincia,
         $paese_nascita, $data_nascita, $data_iscrizione, $settore, $genere,

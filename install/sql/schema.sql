@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS lavoratori (
     vertenze TINYINT DEFAULT 0,
     orario_contratto VARCHAR(20) NOT NULL,
     unita_operativa_id INT,
-    archiviato TINYINT DEFAULT 0,
+    archiviato TINYINT NOT NULL DEFAULT 0,
     sede_id INT DEFAULT NULL
 );
 

@@ -1,11 +1,21 @@
 <?php
 // backup.php
 
-$cron_key = $_ENV['CRON_KEY'] ?? getenv('CRON_KEY') ?: '';
-
-
 require_once 'config.php';
-checkLogin();
+
+// Autenticazione: cron via chiave oppure sessione utente
+$cron_key = $_ENV['CRON_KEY'] ?? getenv('CRON_KEY') ?: '';
+$is_cron = isset($_GET['cron']) && $_GET['cron'] == 1;
+
+if ($is_cron) {
+    $provided_key = $_GET['key'] ?? '';
+    if (!is_string($provided_key) || empty($cron_key) || !hash_equals($cron_key, $provided_key)) {
+        http_response_code(403);
+        die('Accesso negato. Chiave cron non valida.');
+    }
+} else {
+    checkLogin();
+}
 
 // Imposta l'encoding della connessione al database
 $mysqli->set_charset("utf8mb4");
@@ -190,9 +200,9 @@ usort($cronBackups, function($a, $b) {
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.5" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.5" rel="stylesheet">
 </head>
 <body id="page-top">
 

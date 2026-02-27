@@ -3,6 +3,22 @@
 -- Idempotent: safe to run multiple times
 
 -- ============================================
+-- Add missing columns to lavoratori FIRST (before indexes that depend on them)
+-- ============================================
+
+SET @col = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lavoratori' AND COLUMN_NAME = 'archiviato');
+SET @sql = IF(@col = 0, 'ALTER TABLE lavoratori ADD COLUMN archiviato TINYINT NOT NULL DEFAULT 0', 'SELECT 1');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lavoratori' AND COLUMN_NAME = 'sede_id');
+SET @sql = IF(@col = 0, 'ALTER TABLE lavoratori ADD COLUMN sede_id INT DEFAULT NULL', 'SELECT 1');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- ============================================
 -- Indexes on lavoratori (most queried table)
 -- ============================================
 
@@ -77,7 +93,7 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 SET @idx = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'iscrizioni' AND INDEX_NAME = 'idx_isc_lav_fine');
-SET @sql = IF(@idx = 0, 'ALTER TABLE iscrizioni ADD INDEX idx_isc_lav_fine (lavoratore_id, data_fine DESC)', 'SELECT 1');
+SET @sql = IF(@idx = 0, 'ALTER TABLE iscrizioni ADD INDEX idx_isc_lav_fine (lavoratore_id, data_fine)', 'SELECT 1');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -135,24 +151,18 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 -- ============================================
--- Add missing columns to lavoratori (if not present)
--- ============================================
-
-SET @col = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lavoratori' AND COLUMN_NAME = 'archiviato');
-SET @sql = IF(@col = 0, 'ALTER TABLE lavoratori ADD COLUMN archiviato TINYINT DEFAULT 0', 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
-SET @col = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lavoratori' AND COLUMN_NAME = 'sede_id');
-SET @sql = IF(@col = 0, 'ALTER TABLE lavoratori ADD COLUMN sede_id INT DEFAULT NULL', 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
--- ============================================
 -- Fix tipo_tessera ENUM to include 'sepa'
+-- Map legacy values before modifying ENUM
 -- ============================================
+
+UPDATE lavoratori
+SET tipo_tessera = CASE tipo_tessera
+  WHEN 'tipo1' THEN 'trattenuta in busta paga'
+  WHEN 'tipo2' THEN 'rinnovo annuale'
+  WHEN 'tipo3' THEN 'sepa'
+  ELSE tipo_tessera
+END
+WHERE tipo_tessera IN ('tipo1','tipo2','tipo3');
 
 SET @enum = (SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lavoratori' AND COLUMN_NAME = 'tipo_tessera');
 SET @sql = IF(@enum NOT LIKE '%sepa%', 'ALTER TABLE lavoratori MODIFY COLUMN tipo_tessera ENUM(''trattenuta in busta paga'', ''rinnovo annuale'', ''sepa'') DEFAULT NULL', 'SELECT 1');

@@ -252,8 +252,8 @@ generateCsrfToken();
     <title>Impostazioni - CRM Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.4" rel="stylesheet">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.4" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.5" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.5" rel="stylesheet">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
     <style>
         .form-group { margin-bottom: 15px; }
@@ -410,9 +410,12 @@ generateCsrfToken();
                                         <div>
                                             <strong>Endpoint API:</strong>
                                             <code id="apiEndpointUrl"><?php
-                                                $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-                                                $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-                                                echo sanitizeForHTML($protocol . '://' . $host . $base_url . 'api.php');
+                                                $configuredOrigin = rtrim($_ENV['APP_URL'] ?? '', '/');
+                                                if ($configuredOrigin === '') {
+                                                    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                                                    $configuredOrigin = $protocol . '://' . ($_SERVER['SERVER_NAME'] ?? 'localhost');
+                                                }
+                                                echo sanitizeForHTML($configuredOrigin . $base_url . 'api.php');
                                             ?></code>
                                             <button class="btn btn-sm btn-outline-secondary ml-2" id="copyEndpointBtn" title="Copia endpoint">
                                                 <i class="fas fa-copy"></i>
