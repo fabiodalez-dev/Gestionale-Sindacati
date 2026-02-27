@@ -86,7 +86,8 @@ if ($fileExtension === 'csv') {
             $rows[] = $row;
         }
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'error' => 'Errore lettura file: ' . $e->getMessage()]);
+        error_log("Errore lettura file importazione: " . $e->getMessage());
+        echo json_encode(['success' => false, 'error' => 'Errore durante la lettura del file.']);
         exit;
     }
 }
@@ -199,18 +200,21 @@ $stmt_insert = $mysqli->prepare("INSERT INTO lavoratori (
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 if (!$stmt_insert) {
-    echo json_encode(['success' => false, 'error' => 'Errore preparazione query di inserimento: ' . $mysqli->error]);
+    error_log("Errore preparazione query di inserimento lavoratori: " . $mysqli->error);
+    echo json_encode(['success' => false, 'error' => 'Errore preparazione query di inserimento.']);
     exit;
 }
 
 // ── Prepare INSERT statement for new aziende ──
 $stmt_az_insert = $mysqli->prepare("INSERT INTO aziende (nome_azienda) VALUES (?)");
 if (!$stmt_az_insert) {
-    echo json_encode(['success' => false, 'error' => 'Errore preparazione query aziende: ' . $mysqli->error]);
+    error_log("Errore preparazione query aziende: " . $mysqli->error);
+    echo json_encode(['success' => false, 'error' => 'Errore preparazione query aziende.']);
     exit;
 }
 
 // ── Wrap entire import in a transaction ──
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $mysqli->begin_transaction();
 
 try {
@@ -348,7 +352,8 @@ foreach ($rows as $row) {
     $mysqli->rollback();
     $stmt_insert->close();
     $stmt_az_insert->close();
-    echo json_encode(['success' => false, 'error' => 'Errore durante l\'importazione: ' . $e->getMessage()]);
+    error_log("Errore importazione lavoratori: " . $e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'Errore durante l\'importazione. Controlla i log per dettagli.']);
     exit;
 }
 

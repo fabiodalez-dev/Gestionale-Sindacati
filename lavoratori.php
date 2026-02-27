@@ -41,7 +41,7 @@ if ($paesiNascitaStmt !== false) {
 
 // Recupera i CCNL per il filtro
 $ccnlList = [];
-$ccnlStmt = executeQuery("SELECT DISTINCT ccnl FROM lavoratori WHERE ccnl IS NOT NULL AND ccnl <> '' ORDER BY ccnl ASC", [], '');
+$ccnlStmt = executeQuery("SELECT DISTINCT ccnl FROM lavoratori WHERE ccnl IS NOT NULL AND ccnl <> '' AND archiviato = 0 ORDER BY ccnl ASC", [], '');
 if ($ccnlStmt !== false) {
     $ccnlResult = $ccnlStmt->get_result();
     while ($row = $ccnlResult->fetch_assoc()) {
@@ -66,11 +66,11 @@ $urlFilters = [
 // Gestione richieste POST per aggiornamenti in batch
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verifica CSRF token
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         echo json_encode(["error" => "Token CSRF non valido."]);
         exit;
     }
-    
+
     $workerIds = [];
     if (isset($_POST['worker_ids'])) {
         if (is_array($_POST['worker_ids'])) {
@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(["error" => "ID Azienda non valido per il cambio."]);
             exit;
         }
-        $queryUpdate = "UPDATE lavoratori SET azienda_id = ? WHERE id IN ($placeholders)";
+        $queryUpdate = "UPDATE lavoratori SET azienda_id = ? WHERE id IN ($placeholders) AND archiviato = 0";
         $paramsUpdate = array_merge([$newAziendaId], $workerIds);
         $typesUpdate = 'i' . $typesForWorkerIds;
         $stmtUpdate = executeQuery($queryUpdate, $paramsUpdate, $typesUpdate);
@@ -105,18 +105,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(["success" => "Azienda aggiornata con successo per i lavoratori selezionati."]);
         exit;
     }
-    
+
     // Aggiornamento sede per i lavoratori selezionati
     if (isset($_POST['update_sede'])) {
         $newSedeId = isset($_POST['new_sede_id']) && $_POST['new_sede_id'] !== '' ? intval($_POST['new_sede_id']) : null;
         if ($newSedeId === 0) $newSedeId = null;
 
         if ($newSedeId === null) {
-            $queryUpdate = "UPDATE lavoratori SET sede_id = NULL WHERE id IN ($placeholders)";
+            $queryUpdate = "UPDATE lavoratori SET sede_id = NULL WHERE id IN ($placeholders) AND archiviato = 0";
             $paramsUpdate = $workerIds;
             $typesUpdate = $typesForWorkerIds;
         } else {
-            $queryUpdate = "UPDATE lavoratori SET sede_id = ? WHERE id IN ($placeholders)";
+            $queryUpdate = "UPDATE lavoratori SET sede_id = ? WHERE id IN ($placeholders) AND archiviato = 0";
             $paramsUpdate = array_merge([$newSedeId], $workerIds);
             $typesUpdate = 'i' . $typesForWorkerIds;
         }
@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(["error" => "Seleziona un CCNL valido."]);
             exit;
         }
-        $queryUpdate = "UPDATE lavoratori SET ccnl = ? WHERE id IN ($placeholders)";
+        $queryUpdate = "UPDATE lavoratori SET ccnl = ? WHERE id IN ($placeholders) AND archiviato = 0";
         $paramsUpdate = array_merge([$newCcnl], $workerIds);
         $typesUpdate = 's' . $typesForWorkerIds;
         $stmtUpdate = executeQuery($queryUpdate, $paramsUpdate, $typesUpdate);
@@ -156,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(["error" => "Seleziona un settore valido."]);
             exit;
         }
-        $queryUpdate = "UPDATE lavoratori SET settore = ? WHERE id IN ($placeholders)";
+        $queryUpdate = "UPDATE lavoratori SET settore = ? WHERE id IN ($placeholders) AND archiviato = 0";
         $paramsUpdate = array_merge([$newSettore], $workerIds);
         $typesUpdate = 's' . $typesForWorkerIds;
         $stmtUpdate = executeQuery($queryUpdate, $paramsUpdate, $typesUpdate);
@@ -176,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(["error" => "Seleziona un tipo tessera valido."]);
             exit;
         }
-        $queryUpdate = "UPDATE lavoratori SET tipo_tessera = ? WHERE id IN ($placeholders)";
+        $queryUpdate = "UPDATE lavoratori SET tipo_tessera = ? WHERE id IN ($placeholders) AND archiviato = 0";
         $paramsUpdate = array_merge([$newTipoTessera], $workerIds);
         $typesUpdate = 's' . $typesForWorkerIds;
         $stmtUpdate = executeQuery($queryUpdate, $paramsUpdate, $typesUpdate);

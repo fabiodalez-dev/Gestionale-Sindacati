@@ -44,7 +44,7 @@ if ($paesiNascitaStmt !== false) {
 
 // Recupera i CCNL per il filtro
 $ccnlList = [];
-$ccnlStmt = executeQuery("SELECT DISTINCT ccnl FROM lavoratori WHERE ccnl IS NOT NULL AND ccnl <> '' ORDER BY ccnl ASC", [], '');
+$ccnlStmt = executeQuery("SELECT DISTINCT ccnl FROM lavoratori WHERE ccnl IS NOT NULL AND ccnl <> '' AND archiviato = 1 ORDER BY ccnl ASC", [], '');
 if ($ccnlStmt !== false) {
     $ccnlResult = $ccnlStmt->get_result();
     while ($row = $ccnlResult->fetch_assoc()) {
@@ -54,8 +54,10 @@ if ($ccnlStmt !== false) {
 
 // Gestione richieste POST per aggiornamenti in batch
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    checkUserRole('admin');
+
     // Verifica CSRF token
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         echo json_encode(["error" => "Token CSRF non valido."]);
         exit;
     }

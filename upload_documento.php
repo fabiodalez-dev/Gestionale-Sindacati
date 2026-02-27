@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $actualMime = $finfo->file($fileTmpPath);
             $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
             if (!in_array($actualMime, $allowedMimes)) {
+                http_response_code(400);
                 echo json_encode(['error' => 'Il tipo MIME del file non corrisponde a un formato consentito.']);
                 exit;
             }

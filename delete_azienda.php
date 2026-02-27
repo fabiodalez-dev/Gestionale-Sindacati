@@ -11,7 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Verifica token CSRF
 if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
-    die('Token CSRF non valido.');
+    http_response_code(403);
+    header("Location: aziende.php?delete_error=" . urlencode("Token CSRF non valido."));
+    exit;
 }
 
 $azienda_id = intval($_POST['id'] ?? 0);

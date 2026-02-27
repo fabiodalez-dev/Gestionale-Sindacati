@@ -11,9 +11,10 @@ function executeQuery($query) {
     if ($mysqli->query($query) === TRUE) {
         // Query eseguita con successo
     } else {
-        echo "Errore nella query: " . $mysqli->error . "<br>";  // Mostra l'errore specifico
-        $mysqli->rollback();  // Annulla le modifiche in caso di errore
-        die("Installazione interrotta a causa di un errore.");  // Interrompi l'installazione
+        error_log("Errore nella query di installazione: " . $mysqli->error);
+        echo "Errore durante l'installazione. Controlla i log per dettagli.<br>";
+        $mysqli->rollback();
+        die("Installazione interrotta a causa di un errore.");
     }
 }
 
@@ -188,7 +189,8 @@ if ($result->num_rows == 0) {
    if ($stmt->execute()) {
        echo "Utente admin creato con successo.<br>";
    } else {
-       echo "Errore nella creazione dell'utente admin: " . $stmt->error . "<br>";
+       error_log("Errore nella creazione dell'utente admin: " . $stmt->error);
+       echo "Errore nella creazione dell'utente admin. Controlla i log per dettagli.<br>";
        $mysqli->rollback();
        die("Installazione interrotta a causa di un errore.");
    }

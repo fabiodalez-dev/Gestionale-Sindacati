@@ -33,7 +33,7 @@ function aggiornaStatoIscrizioni($mysqli) {
                   AND i.data_fine >= CURDATE()
               )";
     if (!$mysqli->query($query)) {
-        error_log("Errore nell'aggiornamento stato iscrizioni: " . $mysqli->error);
+        error_log("Errore nell'aggiornamento stato iscrizioni (errno: {$mysqli->errno})");
     }
 }
 

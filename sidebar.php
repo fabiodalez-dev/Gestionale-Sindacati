@@ -3,13 +3,15 @@ $settings = getSettings(['logo', 'nome_app']);
 $logo_path = $settings['logo'] ?? 'uploads/default_logo.png';
 $nome_app = $settings['nome_app'] ?? 'Padova';
 
-// Recupera connessioni attive per la sidebar
+// Recupera connessioni attive per la sidebar (solo admin)
 $active_connections = [];
-$conn_stmt = executeQuery("SELECT id, name FROM api_connections WHERE is_active = 1 ORDER BY name ASC", [], '');
-if ($conn_stmt) {
-    $conn_result = $conn_stmt->get_result();
-    while ($row = $conn_result->fetch_assoc()) {
-        $active_connections[] = $row;
+if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin') {
+    $conn_stmt = executeQuery("SELECT id, name FROM api_connections WHERE is_active = 1 ORDER BY name ASC", [], '');
+    if ($conn_stmt) {
+        $conn_result = $conn_stmt->get_result();
+        while ($row = $conn_result->fetch_assoc()) {
+            $active_connections[] = $row;
+        }
     }
 }
 ?>
