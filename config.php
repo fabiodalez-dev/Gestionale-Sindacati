@@ -60,8 +60,9 @@ function sanitizeHTML($data) {
         $config->set('HTML.TargetBlank', true);
         $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true]);
         $cacheDir = __DIR__ . '/cache/htmlpurifier';
-        if (!is_dir($cacheDir)) {
-            mkdir($cacheDir, 0755, true);
+        if (!is_dir($cacheDir) && !mkdir($cacheDir, 0755, true) && !is_dir($cacheDir)) {
+            error_log("Impossibile creare cache HTMLPurifier: $cacheDir");
+            $cacheDir = sys_get_temp_dir();
         }
         $config->set('Cache.SerializerPath', $cacheDir);
         $purifier = new \HTMLPurifier($config);

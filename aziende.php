@@ -1154,7 +1154,11 @@ generateCsrfToken();
             // Eliminazione azienda via POST con conferma SweetAlert2
             $(document).on('click', '.delete-azienda-btn', function(e) {
                 e.preventDefault();
-                var aziendaId = $(this).data('id');
+                var aziendaId = parseInt($(this).data('id'), 10);
+                if (!Number.isInteger(aziendaId) || aziendaId <= 0) {
+                    Swal.fire('Errore', 'ID azienda non valido.', 'error');
+                    return;
+                }
                 Swal.fire({
                     title: 'Sei sicuro?',
                     text: 'Vuoi eliminare questa azienda?',

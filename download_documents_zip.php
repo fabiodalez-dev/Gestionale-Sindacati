@@ -24,9 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Cleanup old ZIP files (older than 1 hour)
 $downloadDir = __DIR__ . '/downloads/';
 if (is_dir($downloadDir)) {
-    foreach (glob($downloadDir . '*.zip') as $file) {
-        if (filemtime($file) < time() - 3600) {
-            unlink($file);
+    foreach ((glob($downloadDir . '*.zip') ?: []) as $file) {
+        $mtime = @filemtime($file);
+        if ($mtime !== false && $mtime < (time() - 3600)) {
+            if (!@unlink($file)) {
+                error_log("Impossibile eliminare ZIP temporaneo: " . $file);
+            }
         }
     }
 }

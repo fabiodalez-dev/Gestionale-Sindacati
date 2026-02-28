@@ -322,11 +322,12 @@ foreach ($rows as $row) {
         } else {
             // Nuova azienda: inserisci e aggiorna la mappa in-memory
             $stmt_az_insert->bind_param('s', $azienda_nome);
-            if ($stmt_az_insert->execute()) {
+            try {
+                $stmt_az_insert->execute();
                 $azienda_id = (int)$stmt_az_insert->insert_id;
                 $aziende_map[$azienda_key] = $azienda_id;
-            } else {
-                error_log("Errore inserimento azienda '$azienda_nome': " . $stmt_az_insert->error);
+            } catch (mysqli_sql_exception $e) {
+                error_log("Errore inserimento azienda '$azienda_nome': " . $e->getMessage());
                 $errorsList[] = "Riga $rowCount: errore inserimento azienda '$azienda_nome'. Lavoratore saltato.";
                 $skippedCount++;
                 continue;
@@ -351,12 +352,13 @@ foreach ($rows as $row) {
         $azienda_id, $ccnl, $contratto, $orario_contratto, $ruolo, $note
     );
 
-    if ($stmt_insert->execute()) {
+    try {
+        $stmt_insert->execute();
         $insertedCount++;
         // Aggiorna la mappa duplicati in-memory per righe successive nello stesso file
         $existing_lavoratori[$dup_key] = true;
-    } else {
-        $errorsList[] = "Riga $rowCount: " . $stmt_insert->error;
+    } catch (mysqli_sql_exception $e) {
+        $errorsList[] = "Riga $rowCount: " . $e->getMessage();
     }
 }
 

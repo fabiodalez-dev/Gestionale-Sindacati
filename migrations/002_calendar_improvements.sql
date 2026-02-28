@@ -71,7 +71,12 @@ DEALLOCATE PREPARE stmt;
 
 -- Clean orphan lavoratore_id in calendario_lavoratori (SET NULL to match ON DELETE SET NULL)
 UPDATE calendario_lavoratori SET lavoratore_id = NULL
-WHERE lavoratore_id IS NOT NULL AND lavoratore_id NOT IN (SELECT id FROM lavoratori);
+WHERE lavoratore_id IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1
+    FROM lavoratori
+    WHERE lavoratori.id = calendario_lavoratori.lavoratore_id
+  );
 
 -- Clean orphan azienda_id in calendario_lavoratori (SET NULL to match ON DELETE SET NULL)
 UPDATE calendario_lavoratori SET azienda_id = NULL
@@ -79,7 +84,8 @@ WHERE azienda_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM aziende WHERE aziende
 
 -- Clean orphan event_id in event_exceptions (DELETE to match ON DELETE CASCADE)
 DELETE FROM event_exceptions
-WHERE NOT EXISTS (SELECT 1 FROM calendario_lavoratori WHERE calendario_lavoratori.id = event_exceptions.event_id);
+WHERE event_id IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM calendario_lavoratori WHERE calendario_lavoratori.id = event_exceptions.event_id);
 
 -- Clean orphan lavoratore_id in event_exceptions (DELETE to match ON DELETE CASCADE)
 DELETE FROM event_exceptions

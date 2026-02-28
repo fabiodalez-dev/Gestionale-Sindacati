@@ -27,13 +27,15 @@ if ($lavoratore_id <= 0) {
 $query = "DELETE FROM lavoratori WHERE id = ?";
 $stmt = executeQuery($query, [$lavoratore_id], 'i');
 
-if ($stmt) {
+if ($stmt && $stmt->affected_rows === 1) {
     // Redirect con messaggio di successo
     header("Location: lavoratori.php?delete_success=1");
     exit;
 } else {
     // Redirect con messaggio di errore
-    $error = "Errore durante l'eliminazione del lavoratore.";
+    $error = ($stmt && $stmt->affected_rows === 0)
+        ? "Lavoratore non trovato o già eliminato."
+        : "Errore durante l'eliminazione del lavoratore.";
     header("Location: lavoratori.php?delete_error=" . urlencode($error));
     exit;
 }

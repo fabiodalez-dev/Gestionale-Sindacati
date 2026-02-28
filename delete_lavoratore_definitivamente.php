@@ -20,16 +20,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         global $mysqli;
         $mysqli->begin_transaction();
         try {
-            // Prima elimina i file fisici dei documenti associati
+            // Raccogli i percorsi dei file da eliminare dopo il commit
+            $filesToDelete = [];
             $stmtFiles = executeQuery("SELECT percorso_documento FROM documenti_lavoratori WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
-            if ($stmtFiles !== false) {
-                $filesResult = $stmtFiles->get_result();
-                $uploadsDir = __DIR__ . '/uploads/';
-                while ($fileRow = $filesResult->fetch_assoc()) {
-                    $filePath = $uploadsDir . $fileRow['percorso_documento'];
-                    if (!empty($fileRow['percorso_documento']) && file_exists($filePath)) {
-                        unlink($filePath);
-                    }
+            if ($stmtFiles === false) {
+                throw new Exception("Errore recupero documenti lavoratore");
+            }
+            $filesResult = $stmtFiles->get_result();
+            while ($fileRow = $filesResult->fetch_assoc()) {
+                $relativePath = ltrim((string)($fileRow['percorso_documento'] ?? ''), '/\\');
+                if ($relativePath !== '') {
+                    $filesToDelete[] = $relativePath;
                 }
             }
 
@@ -58,6 +59,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $mysqli->commit();
+
+            // Elimina i file fisici solo dopo il commit DB riuscito
+            $uploadsDir = realpath(__DIR__ . '/uploads');
+            if ($uploadsDir !== false) {
+                $uploadsDir .= DIRECTORY_SEPARATOR;
+                foreach ($filesToDelete as $relativePath) {
+                    $candidate = realpath($uploadsDir . $relativePath);
+                    if ($candidate !== false && strpos($candidate, $uploadsDir) === 0 && is_file($candidate)) {
+                        @unlink($candidate);
+                    }
+                }
+            }
+
             header("Location: archived_lavoratori.php?delete_success=1");
             exit;
         } catch (Exception $e) {

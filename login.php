@@ -5,15 +5,15 @@ require 'config.php';
 
 /**
  * Atomically check rate limit and reserve a slot for the current attempt.
- * Returns true if allowed (slot reserved), false if rate-limited (>= 5 failed attempts in 15 min).
- * On success, call clearLoginAttempts() or removeLastAttempt() if login succeeds.
+ * Returns true if allowed, false if rate-limited, null on I/O error.
  */
 function checkLoginRateLimit($ip) {
     $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
     $fh = fopen($lockFile, 'c+');
     if ($fh === false || !flock($fh, LOCK_EX)) {
         if (is_resource($fh)) fclose($fh);
-        return false;
+        error_log("Rate limiter non disponibile per IP: $ip");
+        return null;
     }
     $raw = stream_get_contents($fh);
     $data = json_decode($raw ?: '', true);
@@ -36,15 +36,6 @@ function checkLoginRateLimit($ip) {
     flock($fh, LOCK_UN);
     fclose($fh);
     return true;
-}
-
-/**
- * Record a failed login attempt for the given IP.
- * Note: with atomic check+reserve, this is only needed if additional tracking is desired.
- * The attempt is already recorded by checkLoginRateLimit().
- */
-function recordFailedLogin($ip) {
-    // Attempt already recorded atomically in checkLoginRateLimit()
 }
 
 /**
@@ -80,8 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 
         // Check rate limit before processing login
-        if (!checkLoginRateLimit($clientIp)) {
+        $rateLimitResult = checkLoginRateLimit($clientIp);
+        if ($rateLimitResult === false) {
             $error = 'Troppi tentativi di accesso. Riprova tra 15 minuti.';
+        } elseif ($rateLimitResult === null) {
+            $error = 'Servizio temporaneamente non disponibile. Riprova.';
         } else {
             $email = sanitizeInput($_POST['email']);
             $password = $_POST['password'];
@@ -114,11 +108,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         header('Location: ' . $base_url . 'dashboard.php');
                         exit;
                     } else {
-                        recordFailedLogin($clientIp);
                         $error = 'Email o password errati.';
                     }
                 } else {
-                    recordFailedLogin($clientIp);
                     $error = 'Email o password errati.';
                 }
             } else {

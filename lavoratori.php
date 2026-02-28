@@ -204,7 +204,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Eliminazione in batch (solo admin)
     if (isset($_POST['delete_workers'])) {
-        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+        $currentRole = $_SESSION['user_role'] ?? ($_SESSION['user']['role'] ?? null);
+        if ($currentRole !== 'admin') {
             echo json_encode(["error" => "Operazione riservata agli amministratori."]);
             exit;
         }
