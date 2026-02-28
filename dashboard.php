@@ -182,8 +182,13 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                     $ics_host = $_SERVER['HTTP_HOST'] ?? 'localhost';
                                     $calendarToken = getSetting('calendar_token');
                                     if (empty($calendarToken)) {
-                                        $calendarToken = bin2hex(random_bytes(16));
-                                        setSetting('calendar_token', $calendarToken);
+                                        $generatedToken = bin2hex(random_bytes(16));
+                                        if (setSetting('calendar_token', $generatedToken)) {
+                                            $calendarToken = $generatedToken;
+                                        } else {
+                                            error_log("Impossibile salvare calendar_token nelle impostazioni.");
+                                            $calendarToken = $generatedToken;
+                                        }
                                     }
                                     $ics_absolute_url = $ics_scheme . '://' . $ics_host . rtrim($base_url, '/') . '/calendar_feed.php?days=365&token=' . urlencode($calendarToken);
                                 ?>

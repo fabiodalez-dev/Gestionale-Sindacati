@@ -25,7 +25,13 @@ if (isset($_POST['doc_id']) && isset($_POST['description'])) {
 
     // Verifica che il documento esista
     $checkStmt = executeQuery("SELECT id FROM documenti_aziende WHERE id = ?", [$docId], 'i');
-    if ($checkStmt === false || ($checkResult = $checkStmt->get_result())->num_rows === 0) {
+    if ($checkStmt === false) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Errore interno durante la verifica del documento.']);
+        exit;
+    }
+    $checkResult = $checkStmt->get_result();
+    if ($checkResult->num_rows === 0) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Documento non trovato.']);
         exit;

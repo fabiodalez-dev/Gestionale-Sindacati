@@ -11,13 +11,22 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Verifica token CSRF
 if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
-    http_response_code(403);
-    header("Location: aziende.php?unita_delete_error=" . urlencode("Richiesta non valida."));
+    header("Location: aziende.php?unita_delete_error=" . urlencode("Richiesta non valida."), true, 303);
     exit;
 }
 
-$unita_operativa_id = intval($_POST['id'] ?? 0);
-$azienda_id = intval($_POST['azienda_id'] ?? 0);
+// Validazione parametri POST
+if (
+    !isset($_POST['id'], $_POST['azienda_id']) ||
+    !is_scalar($_POST['id']) || !is_scalar($_POST['azienda_id']) ||
+    !ctype_digit((string)$_POST['id']) || !ctype_digit((string)$_POST['azienda_id'])
+) {
+    header("Location: aziende.php?unita_delete_error=" . urlencode("Parametri mancanti."), true, 303);
+    exit();
+}
+
+$unita_operativa_id = (int) $_POST['id'];
+$azienda_id = (int) $_POST['azienda_id'];
 
 if ($unita_operativa_id <= 0 || $azienda_id <= 0) {
     header("Location: aziende.php?unita_delete_error=" . urlencode("Parametri mancanti."));

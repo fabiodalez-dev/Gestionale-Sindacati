@@ -30,7 +30,10 @@ if (isset($_POST['doc_id']) && isset($_POST['description'])) {
         exit;
     }
 
-    // Verifica permessi: solo admin o operatori con accesso alla sede del lavoratore
+    // Verifica permessi: solo admin o operatori con accesso alla sede del lavoratore.
+    // Operatori con sede_id = NULL hanno accesso globale a tutte le sedi.
+    // L'accesso viene negato solo quando sede_id dell'utente è impostato e non corrisponde
+    // alla sede_id del lavoratore associato al documento.
     $currentRole = $_SESSION['user_role'] ?? ($_SESSION['user']['role'] ?? null);
     if ($currentRole !== 'admin') {
         $docRow = $checkResult->fetch_assoc();

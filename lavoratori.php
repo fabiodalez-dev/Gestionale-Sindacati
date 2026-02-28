@@ -69,6 +69,7 @@ $urlFilters = [
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verifica CSRF token
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
         echo json_encode(["error" => "Token CSRF non valido."]);
         exit;
     }

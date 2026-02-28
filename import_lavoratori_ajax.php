@@ -344,8 +344,10 @@ foreach ($rows as $row) {
     }
 
     // Insert (prepared statement riutilizzato)
+    // azienda_id può essere NULL: usa tipo 's' per NULL, 'i' per intero
+    $bind_types = 'ssssssssssssss' . ($azienda_id === null ? 's' : 'i') . 'sssss';
     $stmt_insert->bind_param(
-        'ssssssssssssssisssss',
+        $bind_types,
         $nome, $cognome, $codice_fiscale, $telefono, $email_lav,
         $indirizzo_via, $indirizzo_cap, $indirizzo_citta, $indirizzo_provincia,
         $paese_nascita, $data_nascita, $data_iscrizione, $settore, $genere,

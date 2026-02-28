@@ -42,7 +42,22 @@ for line in content.split('\n'):
             blocks.append(m.group(1))
         continue
     if '<script' in stripped and 'src=' not in stripped:
+        # Capture any JS after the opening tag on the same line
+        open_match = re.search(r'<script[^>]*>', line, re.IGNORECASE)
+        if open_match:
+            after_open = line[open_match.end():]
+            if after_open.strip():
+                blocks.append(after_open)
         in_script = True
+        continue
+    if in_script and '</script>' in stripped:
+        # Capture any JS before the closing tag on the same line
+        close_match = re.search(r'</script>', line, re.IGNORECASE)
+        if close_match:
+            before_close = line[:close_match.start()]
+            if before_close.strip():
+                blocks.append(before_close)
+        in_script = False
         continue
     if '</script>' in stripped:
         in_script = False
@@ -66,7 +81,13 @@ while IFS= read -r phpfile; do
     # Let the Python extractor handle filtering
     jsfile="$TMPDIR/$(echo "$phpfile" | sed 's|/|__|g; s|\.php$|.js|')"
 
-    python3 "$TMPDIR/extract.py" "$phpfile" > "$jsfile" 2>/dev/null
+    if ! python3 "$TMPDIR/extract.py" "$phpfile" > "$jsfile"; then
+        echo "ERROR: estrazione JS fallita per $phpfile" >&2
+        FILES_WITH_ISSUES=$((FILES_WITH_ISSUES + 1))
+        ERRORS=$((ERRORS + 1))
+        rm -f "$jsfile"
+        continue
+    fi
 
     # Skip if no JS was extracted or file is empty
     if [ ! -s "$jsfile" ]; then
@@ -80,23 +101,25 @@ while IFS= read -r phpfile; do
     output=$(eslint -c eslint.config.mjs "$jsfile" 2>&1)
     exit_code=$?
 
-    if [ $exit_code -ne 0 ]; then
+    # Parse counts from ESLint summary line (e.g. "2 problems (1 error, 1 warning)")
+    # Always parse regardless of exit_code since warnings have exit_code 0
+    summary_line=$(echo "$output" | grep -E '[0-9]+ problems?' | tail -n1 || true)
+    if [ -n "$summary_line" ]; then
+        file_errors=$(echo "$summary_line" | grep -oE '[0-9]+ errors?' | grep -oE '[0-9]+' || echo 0)
+        file_warnings=$(echo "$summary_line" | grep -oE '[0-9]+ warnings?' | grep -oE '[0-9]+' || echo 0)
+    else
+        file_errors=$(echo "$output" | grep -c " error " || true)
+        file_warnings=$(echo "$output" | grep -c " warning " || true)
+    fi
+
+    ERRORS=$((ERRORS + file_errors))
+    WARNINGS=$((WARNINGS + file_warnings))
+
+    if [ $exit_code -ne 0 ] || [ "$file_warnings" -gt 0 ]; then
         FILES_WITH_ISSUES=$((FILES_WITH_ISSUES + 1))
         echo "--- $phpfile ---"
         echo "$output" | sed "s|$jsfile|$phpfile|g"
         echo ""
-
-        # Parse counts from ESLint summary line (e.g. "2 problems (1 error, 1 warning)")
-        summary_line=$(echo "$output" | grep -E '^\d+ problems?' || true)
-        if [ -n "$summary_line" ]; then
-            file_errors=$(echo "$summary_line" | grep -oE '[0-9]+ errors?' | grep -oE '[0-9]+' || echo 0)
-            file_warnings=$(echo "$summary_line" | grep -oE '[0-9]+ warnings?' | grep -oE '[0-9]+' || echo 0)
-        else
-            file_errors=$(echo "$output" | grep -c " error " || true)
-            file_warnings=$(echo "$output" | grep -c " warning " || true)
-        fi
-        ERRORS=$((ERRORS + file_errors))
-        WARNINGS=$((WARNINGS + file_warnings))
     fi
 done < <(find . -name "*.php" -type f \
     -not -path "*/vendor/*" \
