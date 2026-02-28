@@ -14,11 +14,6 @@ if ($is_cron) {
         die('Accesso negato. Chiave cron non valida.');
     }
     // Cron key è autorizzata solo per il backup; blocca qualsiasi altra azione
-    $allowed_cron_actions = [''];
-    $cron_action = $_GET['action'] ?? '';
-    if ($cron_action !== '' && $cron_action !== 'download') {
-        // Il cron non deve poter scaricare, solo creare backup
-    }
     if (isset($_GET['action']) && $_GET['action'] !== '') {
         http_response_code(403);
         die('Accesso negato. Il cron può solo eseguire backup.');
@@ -171,7 +166,7 @@ if (isset($_GET['cron']) && $_GET['cron'] == 1) {
 // Se l'utente preme il pulsante per il backup manuale
 elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup_manual'])) {
     // Verifica CSRF
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         $backupMessage = "Token CSRF non valido.";
     } else {
         $dump = generateBackupDump($mysqli, $db);
@@ -241,7 +236,7 @@ usort($cronBackups, function($a, $b) {
                     <!-- Form per il Backup Manuale -->
                     <form method="post" class="mb-4">
                         <input type="hidden" name="backup_manual" value="1">
-                        <input type="hidden" name="csrf_token" value="<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>">
+                        <?php csrfInputField(); ?>
                         <button type="submit" class="btn btn-primary">Esegui Backup Manuale</button>
                     </form>
 

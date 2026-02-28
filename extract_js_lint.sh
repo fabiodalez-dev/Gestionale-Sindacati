@@ -5,6 +5,7 @@
 TMPDIR=".eslint_tmp"
 rm -rf "$TMPDIR"
 mkdir -p "$TMPDIR"
+trap 'rm -rf "$TMPDIR"' EXIT
 ERRORS=0
 WARNINGS=0
 FILES_CHECKED=0
@@ -117,12 +118,17 @@ while IFS= read -r phpfile; do
     file_warnings=0
     summary_line=$(echo "$output" | grep -E '[0-9]+ problems?' | tail -n1 || true)
     if [ -n "$summary_line" ]; then
-        file_errors=$(echo "$summary_line" | grep -oE '[0-9]+ errors?' | grep -oE '[0-9]+' || echo 0)
-        file_warnings=$(echo "$summary_line" | grep -oE '[0-9]+ warnings?' | grep -oE '[0-9]+' || echo 0)
+        file_errors=$(echo "$summary_line" | grep -oE '[0-9]+ errors?' | grep -oE '[0-9]+' | head -1)
+        file_warnings=$(echo "$summary_line" | grep -oE '[0-9]+ warnings?' | grep -oE '[0-9]+' | head -1)
+        file_errors=${file_errors:-0}
+        file_warnings=${file_warnings:-0}
     else
-        file_errors=$(echo "$output" | grep -c " error " || true)
-        file_warnings=$(echo "$output" | grep -c " warning " || true)
+        file_errors=$(echo "$output" | grep -c " error " 2>/dev/null || echo 0)
+        file_warnings=$(echo "$output" | grep -c " warning " 2>/dev/null || echo 0)
     fi
+
+    file_errors=$((file_errors + 0))
+    file_warnings=$((file_warnings + 0))
 
     ERRORS=$((ERRORS + file_errors))
     WARNINGS=$((WARNINGS + file_warnings))
@@ -148,8 +154,7 @@ echo "  Errors:             $ERRORS"
 echo "  Warnings:           $WARNINGS"
 echo "========================================="
 
-# Cleanup
-rm -rf "$TMPDIR"
+# Cleanup handled by trap EXIT
 
 if [ $ERRORS -gt 0 ]; then
     exit 1

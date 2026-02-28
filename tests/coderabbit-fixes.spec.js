@@ -2,8 +2,11 @@
 const { test, expect } = require('@playwright/test');
 
 const BASE = process.env.TEST_BASE_URL || 'http://localhost:8080';
-const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'fabiodalez@gmail.com';
-const ADMIN_PASS = process.env.TEST_ADMIN_PASS || 'Fa310reds?';
+const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL;
+const ADMIN_PASS = process.env.TEST_ADMIN_PASS;
+if (!ADMIN_EMAIL || !ADMIN_PASS) {
+  throw new Error('TEST_ADMIN_EMAIL e TEST_ADMIN_PASS sono obbligatorie.');
+}
 
 // Helper: login as admin and return authenticated context
 async function loginAsAdmin(page) {
@@ -46,23 +49,24 @@ test.describe('Login & Rate Limiter', () => {
 test.describe('Gestione Utenti - CSRF Fix', () => {
   test('create user with invalid CSRF is rejected', async ({ page }) => {
     await loginAsAdmin(page);
+    const uniqueUser = `testuser_${Date.now()}`;
     // POST with bad CSRF token
-    const response = await page.evaluate(async () => {
+    const response = await page.evaluate(async (username) => {
       const formData = new FormData();
       formData.append('action', 'create');
       formData.append('csrf_token', 'invalid_token');
-      formData.append('username', 'testuser');
-      formData.append('email', 'test@test.com');
+      formData.append('username', username);
+      formData.append('email', `${username}@test.com`);
       formData.append('password', 'test123');
       formData.append('role', 'operatore');
       const resp = await fetch('/gestione_utenti.php', { method: 'POST', body: formData });
-      return resp.url;
-    });
+      return { url: resp.url, status: resp.status };
+    }, uniqueUser);
     // Should not create the user - page shows error
     await page.goto(`${BASE}/gestione_utenti.php`);
-    // Verify 'testuser' was NOT created
+    // Verify user was NOT created
     const pageContent = await page.content();
-    expect(pageContent).not.toContain('testuser');
+    expect(pageContent).not.toContain(uniqueUser);
   });
 
   test('gestione_utenti page loads for admin', async ({ page }) => {
@@ -197,13 +201,11 @@ test.describe('Delete Lavoratore - CSRF', () => {
       form: {
         csrf_token: 'bad_token',
         id: '999999'
-      }
+      },
+      maxRedirects: 0
     });
-    // Should redirect (302/303) not die() with plain text
-    const body = await response.text();
-    expect(body).not.toContain('die(');
-    // Should either redirect or return 403
-    expect([200, 302, 303, 403]).toContain(response.status());
+    // Should redirect (302/303) or return 403, never 200 success
+    expect([302, 303, 403]).toContain(response.status());
   });
 });
 

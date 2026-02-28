@@ -193,7 +193,11 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                         }
                                     }
                                     if ($calendarToken !== null) {
-                                        $ics_absolute_url = $ics_scheme . '://' . $ics_host . rtrim($base_url, '/') . '/calendar_feed.php?days=365&token=' . urlencode($calendarToken);
+                                        $configuredPath = parse_url($base_url, PHP_URL_PATH);
+                                        $basePath = $configuredPath !== null ? $configuredPath : $base_url;
+                                        $basePath = '/' . trim($basePath, '/');
+                                        if ($basePath === '/') { $basePath = ''; }
+                                        $ics_absolute_url = $ics_scheme . '://' . $ics_host . $basePath . '/calendar_feed.php?days=365&token=' . urlencode($calendarToken);
                                     }
                                 ?>
                                 <?php if (!empty($ics_absolute_url)): ?>

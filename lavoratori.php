@@ -224,7 +224,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uploadsDir = realpath(__DIR__ . '/uploads');
             while ($docRow = $docsResult->fetch_assoc()) {
                 if (!empty($docRow['percorso_documento']) && $uploadsDir !== false) {
-                    $candidatePath = $uploadsDir . DIRECTORY_SEPARATOR . ltrim($docRow['percorso_documento'], '/\\');
+                    $relativePath = ltrim($docRow['percorso_documento'], '/\\');
+                    $relativePath = preg_replace('#^uploads[\\/]+#', '', $relativePath);
+                    $candidatePath = $uploadsDir . DIRECTORY_SEPARATOR . $relativePath;
                     $fullPath = realpath($candidatePath);
                     if ($fullPath !== false && strpos($fullPath, $uploadsDir . DIRECTORY_SEPARATOR) === 0 && is_file($fullPath)) {
                         $filesToDelete[] = $fullPath;

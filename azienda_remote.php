@@ -22,6 +22,12 @@ $conn_name = $conn['name'];
 $endpoint_url = rtrim($conn['endpoint_url'], '/');
 $api_key_value = $conn['api_key'];
 
+// Verifica che l'endpoint usi HTTPS
+$scheme = strtolower((string) parse_url($endpoint_url, PHP_URL_SCHEME));
+if ($scheme !== 'https') {
+    die("Endpoint API non sicuro: è richiesto HTTPS.");
+}
+
 // Chiama API remota
 $url = $endpoint_url . '?' . http_build_query(['action' => 'azienda', 'id' => $azienda_id]);
 $ch = curl_init($url);

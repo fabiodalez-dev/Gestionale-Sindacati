@@ -40,8 +40,16 @@ if(!in_array($fileType, $allowed_types)) {
 }
 
 // Verifica il MIME type reale del file
-$finfo = new finfo(FILEINFO_MIME_TYPE);
-$actualMime = $finfo->file($_FILES['documento']['tmp_name']);
+$fileError = $_FILES['documento']['error'] ?? UPLOAD_ERR_NO_FILE;
+if ($fileError !== UPLOAD_ERR_OK) {
+    $error = "Errore durante il caricamento del file.";
+    $uploadOk = 0;
+}
+$actualMime = '';
+if ($uploadOk == 1) {
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $actualMime = $finfo->file($_FILES['documento']['tmp_name']);
+}
 $allowedMimes = [
     'image/jpeg', 'image/png', 'image/gif',
     'application/pdf',
@@ -50,7 +58,7 @@ $allowedMimes = [
     'application/vnd.ms-excel',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ];
-if (!in_array($actualMime, $allowedMimes)) {
+if ($uploadOk == 1 && !in_array($actualMime, $allowedMimes, true)) {
     $error = "Il tipo MIME del file non corrisponde a un formato consentito.";
     $uploadOk = 0;
 }

@@ -15,12 +15,16 @@ if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
     exit;
 }
 
-$sede_id = intval($_POST['id'] ?? 0);
-
-if ($sede_id <= 0) {
+if (
+    !isset($_POST['id']) ||
+    !is_scalar($_POST['id']) ||
+    !ctype_digit((string)$_POST['id']) ||
+    (int)$_POST['id'] <= 0
+) {
     header("Location: sedi.php?delete_error=" . urlencode("ID sede non valido."));
     exit();
 }
+$sede_id = (int) $_POST['id'];
 
 $mysqli->begin_transaction();
 
@@ -37,6 +41,9 @@ try {
 
     if (!$stmt) {
         throw new Exception("Errore durante l'eliminazione della sede.");
+    }
+    if ($stmt->affected_rows === 0) {
+        throw new Exception("Sede non trovata o già eliminata.");
     }
 
     $mysqli->commit();

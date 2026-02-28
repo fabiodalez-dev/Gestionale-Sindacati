@@ -118,7 +118,8 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
         $mail->send();
         return true;
     } catch (Exception $e) {
-        error_log("Errore nell'invio dell'email a lavoratore ID {$lavoratore['id']}: {$mail->ErrorInfo}");
+        $workerId = isset($lavoratore['id']) ? (int)$lavoratore['id'] : 0;
+        error_log("Errore nell'invio dell'email a lavoratore ID {$workerId}: {$mail->ErrorInfo}");
         return false;
     }
 }

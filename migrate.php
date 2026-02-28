@@ -306,10 +306,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_indexes'])) {
                             </p>
 
                             <?php foreach ($index_messages as $msg): ?>
-                                <div class="alert alert-success py-2 small"><?php echo $msg; ?></div>
+                                <div class="alert alert-success py-2 small"><?php echo sanitizeForHTML($msg); ?></div>
                             <?php endforeach; ?>
                             <?php foreach ($index_errors as $err): ?>
-                                <div class="alert alert-danger py-2 small"><?php echo $err; ?></div>
+                                <div class="alert alert-danger py-2 small"><?php echo sanitizeForHTML($err); ?></div>
                             <?php endforeach; ?>
 
                             <?php if (!empty($missing_indexes)): ?>

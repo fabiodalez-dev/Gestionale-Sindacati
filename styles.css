@@ -795,6 +795,12 @@ body.bg-gradient-primary {
 }
 .stat-card:hover::before { opacity: 1; }
 
+@media (prefers-reduced-motion: reduce) {
+  .stat-card { transition: none; }
+  .stat-card::before { transition: none; }
+  .stat-card:hover { transform: none; }
+}
+
 /* Color variants - ::before accent line */
 .stat-card--dark::before  { background: #1e293b; }
 .stat-card--green::before { background: #22c55e; }

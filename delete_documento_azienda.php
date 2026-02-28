@@ -57,11 +57,14 @@ if ($result->num_rows > 0) {
     $delete_query = "DELETE FROM documenti_aziende WHERE id = ? AND azienda_id = ?";
     $delete_stmt = executeQuery($delete_query, [$documento_id, $azienda_id], 'ii');
 
-    if ($delete_stmt) {
+    if ($delete_stmt && $delete_stmt->affected_rows === 1) {
         header("Location: azienda.php?id=" . $azienda_id . "&delete_success=1");
         exit;
     } else {
-        header("Location: azienda.php?id=" . $azienda_id . "&delete_error=" . urlencode("Errore durante l'eliminazione del documento."));
+        $msg = ($delete_stmt && $delete_stmt->affected_rows === 0)
+            ? "Documento non trovato o già eliminato."
+            : "Errore durante l'eliminazione del documento.";
+        header("Location: azienda.php?id=" . $azienda_id . "&delete_error=" . urlencode($msg));
         exit;
     }
 } else {

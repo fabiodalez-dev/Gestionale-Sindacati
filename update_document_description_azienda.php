@@ -15,14 +15,14 @@ if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
 
 // Verifica che i parametri POST siano presenti
 if (isset($_POST['doc_id']) && isset($_POST['description'])) {
-    $docId = intval($_POST['doc_id']);
-    $newDescription = trim($_POST['description']);
-
-    if ($docId <= 0) {
+    $rawDocId = $_POST['doc_id'];
+    if (!is_scalar($rawDocId) || !ctype_digit((string)$rawDocId) || (int)$rawDocId <= 0) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'ID documento non valido.']);
         exit;
     }
+    $docId = (int)$rawDocId;
+    $newDescription = trim($_POST['description']);
 
     // Verifica che il documento esista
     $checkStmt = executeQuery("SELECT id FROM documenti_aziende WHERE id = ?", [$docId], 'i');

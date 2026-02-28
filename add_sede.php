@@ -10,7 +10,7 @@ checkLogin();
 // Gestione del form di inserimento della sede
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verifica del token CSRF
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         die("Token CSRF non valido.");
     }
     

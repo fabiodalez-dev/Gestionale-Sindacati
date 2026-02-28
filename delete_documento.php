@@ -57,11 +57,14 @@ if ($result->num_rows > 0) {
     $delete_query = "DELETE FROM documenti_lavoratori WHERE id = ? AND lavoratore_id = ?";
     $delete_stmt = executeQuery($delete_query, [$documento_id, $lavoratore_id], 'ii');
 
-    if ($delete_stmt) {
+    if ($delete_stmt && $delete_stmt->affected_rows === 1) {
         header("Location: lavoratore.php?id=" . $lavoratore_id . "&delete_success=1");
         exit;
     } else {
-        header("Location: lavoratore.php?id=" . $lavoratore_id . "&delete_error=" . urlencode("Errore durante l'eliminazione del documento."));
+        $msg = ($delete_stmt && $delete_stmt->affected_rows === 0)
+            ? "Documento non trovato o già eliminato."
+            : "Errore durante l'eliminazione del documento.";
+        header("Location: lavoratore.php?id=" . $lavoratore_id . "&delete_error=" . urlencode($msg));
         exit;
     }
 } else {

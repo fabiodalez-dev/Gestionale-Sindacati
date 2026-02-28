@@ -1440,7 +1440,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var csrfInput = document.createElement('input');
                 csrfInput.type = 'hidden';
                 csrfInput.name = 'csrf_token';
-                csrfInput.value = '<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>';
+                csrfInput.value = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
                 form.appendChild(csrfInput);
                 var idInput = document.createElement('input');
                 idInput.type = 'hidden';

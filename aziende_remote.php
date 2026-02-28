@@ -31,6 +31,11 @@ $api_key = $conn['api_key'];
 
 // Funzione per chiamare l'API remota
 function callRemoteApi($endpoint_url, $api_key, $params = []) {
+    $scheme = strtolower((string) parse_url($endpoint_url, PHP_URL_SCHEME));
+    if ($scheme !== 'https') {
+        return ['error' => 'Endpoint API non sicuro: è richiesto HTTPS.'];
+    }
+
     $url = $endpoint_url . '?' . http_build_query($params);
     $ch = curl_init($url);
     curl_setopt_array($ch, [

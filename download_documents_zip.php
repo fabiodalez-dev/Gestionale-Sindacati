@@ -12,13 +12,17 @@ ob_start();
 
 header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
-        http_response_code(403);
-        ob_clean();
-        echo json_encode(['success' => false, 'message' => 'Token CSRF non valido.']);
-        exit;
-    }
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    ob_clean();
+    echo json_encode(['success' => false, 'message' => 'Metodo non consentito.']);
+    exit;
+}
+if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+    http_response_code(403);
+    ob_clean();
+    echo json_encode(['success' => false, 'message' => 'Token CSRF non valido.']);
+    exit;
 }
 
 // Cleanup old ZIP files (older than 1 hour)

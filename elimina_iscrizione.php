@@ -3,6 +3,7 @@
 
 require 'config.php';
 checkLogin();
+checkUserRole('admin');
 
 // Richiede metodo POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -67,7 +68,8 @@ if ($stmt->execute()) {
 
     $success_message = "Iscrizione eliminata con successo.";
 } else {
-    $error_message = "Errore nell'eliminazione dell'iscrizione: " . $stmt->error;
+    error_log("Errore nell'eliminazione dell'iscrizione (id={$iscrizione_id}): " . $stmt->error);
+    $error_message = "Errore nell'eliminazione dell'iscrizione.";
 }
 $stmt->close();
 

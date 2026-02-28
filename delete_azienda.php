@@ -11,7 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Verifica token CSRF
 if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
-    http_response_code(403);
     header("Location: aziende.php?delete_error=" . urlencode("Token CSRF non valido."));
     exit;
 }
@@ -44,13 +43,13 @@ if ($count > 0) {
 $query = "DELETE FROM aziende WHERE id = ?";
 $stmt = executeQuery($query, [$azienda_id], 'i');
 
-if ($stmt) {
-    // Redirect con messaggio di successo
+if ($stmt && $stmt->affected_rows === 1) {
     header("Location: aziende.php?delete_success=1");
     exit;
 } else {
-    // Redirect con messaggio di errore
-    $error = "Errore durante l'eliminazione dell'azienda.";
+    $error = ($stmt && $stmt->affected_rows === 0)
+        ? "Azienda non trovata o già eliminata."
+        : "Errore durante l'eliminazione dell'azienda.";
     header("Location: aziende.php?delete_error=" . urlencode($error));
     exit;
 }

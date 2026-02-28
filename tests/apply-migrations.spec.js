@@ -2,8 +2,11 @@
 const { test, expect } = require('@playwright/test');
 
 const BASE = process.env.TEST_BASE_URL || 'http://localhost:8080';
-const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'fabiodalez@gmail.com';
-const ADMIN_PASS = process.env.TEST_ADMIN_PASS || 'Fa310reds?';
+const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL;
+const ADMIN_PASS = process.env.TEST_ADMIN_PASS;
+if (!ADMIN_EMAIL || !ADMIN_PASS) {
+  throw new Error('TEST_ADMIN_EMAIL e TEST_ADMIN_PASS sono obbligatorie.');
+}
 
 test('Apply all pending migrations via migrate.php', async ({ page }) => {
   // Login as admin
@@ -58,13 +61,15 @@ test('Apply all pending migrations via migrate.php', async ({ page }) => {
   console.log(`Found ${indexBtnCount} index optimization buttons`);
 
   if (indexBtnCount > 0) {
-    for (let i = 0; i < indexBtnCount; i++) {
-      const btn = indexBtn.nth(i);
+    let remaining = await indexBtn.count();
+    while (remaining > 0) {
+      const btn = indexBtn.first();
       const btnText = await btn.textContent();
       console.log(`Clicking index button: ${btnText}`);
       await btn.click();
       await page.waitForLoadState('networkidle', { timeout: 30000 });
       console.log('Index optimization completed');
+      remaining = await indexBtn.count();
     }
   }
 

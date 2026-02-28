@@ -34,8 +34,9 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+SET @col = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lavoratori' AND COLUMN_NAME = 'unita_operativa_id');
 SET @idx = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lavoratori' AND INDEX_NAME = 'idx_lav_unita');
-SET @sql = IF(@idx = 0, 'ALTER TABLE lavoratori ADD INDEX idx_lav_unita (unita_operativa_id)', 'SELECT 1');
+SET @sql = IF(@col > 0 AND @idx = 0, 'ALTER TABLE lavoratori ADD INDEX idx_lav_unita (unita_operativa_id)', 'SELECT 1');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -64,8 +65,9 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+SET @col = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lavoratori' AND COLUMN_NAME = 'data_iscrizione');
 SET @idx = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lavoratori' AND INDEX_NAME = 'idx_lav_data_iscrizione');
-SET @sql = IF(@idx = 0, 'ALTER TABLE lavoratori ADD INDEX idx_lav_data_iscrizione (data_iscrizione)', 'SELECT 1');
+SET @sql = IF(@col > 0 AND @idx = 0, 'ALTER TABLE lavoratori ADD INDEX idx_lav_data_iscrizione (data_iscrizione)', 'SELECT 1');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -155,17 +157,23 @@ DEALLOCATE PREPARE stmt;
 -- Map legacy values before modifying ENUM
 -- ============================================
 
-UPDATE lavoratori
-SET tipo_tessera = CASE tipo_tessera
-  WHEN 'tipo1' THEN 'trattenuta in busta paga'
-  WHEN 'tipo2' THEN 'rinnovo annuale'
-  WHEN 'tipo3' THEN 'sepa'
-  ELSE tipo_tessera
-END
-WHERE tipo_tessera IN ('tipo1','tipo2','tipo3');
+SET @has_tipo_tessera = (
+  SELECT COUNT(*)
+  FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'lavoratori'
+    AND COLUMN_NAME = 'tipo_tessera'
+);
+
+SET @sql = IF(@has_tipo_tessera = 1,
+  'UPDATE lavoratori SET tipo_tessera = CASE tipo_tessera WHEN ''tipo1'' THEN ''trattenuta in busta paga'' WHEN ''tipo2'' THEN ''rinnovo annuale'' WHEN ''tipo3'' THEN ''sepa'' ELSE tipo_tessera END WHERE tipo_tessera IN (''tipo1'',''tipo2'',''tipo3'')',
+  'SELECT 1');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 SET @enum = (SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lavoratori' AND COLUMN_NAME = 'tipo_tessera');
-SET @sql = IF(@enum NOT LIKE '%sepa%', 'ALTER TABLE lavoratori MODIFY COLUMN tipo_tessera ENUM(''trattenuta in busta paga'', ''rinnovo annuale'', ''sepa'') DEFAULT NULL', 'SELECT 1');
+SET @sql = IF(@has_tipo_tessera = 1 AND @enum NOT LIKE '%sepa%', 'ALTER TABLE lavoratori MODIFY COLUMN tipo_tessera ENUM(''trattenuta in busta paga'', ''rinnovo annuale'', ''sepa'') DEFAULT NULL', 'SELECT 1');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;

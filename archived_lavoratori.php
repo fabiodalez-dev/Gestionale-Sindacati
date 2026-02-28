@@ -1251,6 +1251,7 @@ generateCsrfToken();
                 </div>
                 <div class="modal-body">
                     <form id="updateSettoreFormModal">
+                        <?php csrfInputField(); ?>
                         <div class="form-group">
                             <label for="newSettoreSelect">Seleziona il nuovo Settore</label>
                             <select id="newSettoreSelect" name="new_settore" class="form-control" required>
@@ -1287,6 +1288,7 @@ generateCsrfToken();
                 </div>
                 <div class="modal-body">
                     <form id="updateTipoTesseraFormModal">
+                        <?php csrfInputField(); ?>
                         <div class="form-group">
                             <label for="newTipoTesseraSelect">Seleziona il nuovo Tipo Tessera</label>
                             <select id="newTipoTesseraSelect" name="new_tipo_tessera" class="form-control" required>
