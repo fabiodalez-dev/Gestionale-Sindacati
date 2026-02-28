@@ -183,14 +183,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_indexes'])) {
             $columns = $idx[2];
             $sql = "CREATE INDEX `$index_name` ON `$table` ($columns)";
             if ($mysqli->query($sql)) {
-                $index_messages[] = "Indice creato: <strong>$index_name</strong> su $table($columns)";
+                $index_messages[] = "Indice creato: <strong>" . sanitizeForHTML($index_name) . "</strong> su " . sanitizeForHTML($table) . "(" . sanitizeForHTML($columns) . ")";
                 $created_count++;
             } else {
-                $index_errors[] = "Errore creazione $index_name: " . $mysqli->error;
+                $index_errors[] = "Errore creazione " . sanitizeForHTML($index_name) . ": " . sanitizeForHTML($mysqli->error);
             }
         }
         if ($created_count > 0) {
-            $index_messages[] = "<strong>$created_count indici creati con successo.</strong>";
+            $index_messages[] = "<strong>" . (int)$created_count . " indici creati con successo.</strong>";
         }
 
         // Ricalcola dopo creazione
@@ -306,10 +306,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_indexes'])) {
                             </p>
 
                             <?php foreach ($index_messages as $msg): ?>
-                                <div class="alert alert-success py-2 small"><?php echo sanitizeForHTML($msg); ?></div>
+                                <div class="alert alert-success py-2 small"><?php echo $msg; ?></div>
                             <?php endforeach; ?>
                             <?php foreach ($index_errors as $err): ?>
-                                <div class="alert alert-danger py-2 small"><?php echo sanitizeForHTML($err); ?></div>
+                                <div class="alert alert-danger py-2 small"><?php echo $err; ?></div>
                             <?php endforeach; ?>
 
                             <?php if (!empty($missing_indexes)): ?>

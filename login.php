@@ -29,10 +29,13 @@ function checkLoginRateLimit($ip) {
     }
     // Reserve a slot atomically
     $data['attempts'][] = $now;
-    ftruncate($fh, 0);
-    rewind($fh);
-    fwrite($fh, json_encode($data));
-    fflush($fh);
+    $json = json_encode($data);
+    if (ftruncate($fh, 0) === false || rewind($fh) === false || fwrite($fh, $json) === false || fflush($fh) === false) {
+        error_log("Rate limiter: errore scrittura file per IP: $ip");
+        flock($fh, LOCK_UN);
+        fclose($fh);
+        return null;
+    }
     flock($fh, LOCK_UN);
     fclose($fh);
     return true;

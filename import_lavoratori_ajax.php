@@ -223,9 +223,9 @@ if (!$stmt_az_insert) {
 
 // ── Wrap entire import in a transaction ──
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-$mysqli->begin_transaction();
 
 try {
+$mysqli->begin_transaction();
 
 foreach ($rows as $row) {
     $rowCount++;
@@ -358,7 +358,9 @@ foreach ($rows as $row) {
         // Aggiorna la mappa duplicati in-memory per righe successive nello stesso file
         $existing_lavoratori[$dup_key] = true;
     } catch (mysqli_sql_exception $e) {
-        $errorsList[] = "Riga $rowCount: " . $e->getMessage();
+        error_log("Errore inserimento lavoratore riga $rowCount: " . $e->getMessage());
+        $errorsList[] = "Riga $rowCount: errore durante l'inserimento. Lavoratore saltato.";
+        $skippedCount++;
     }
 }
 

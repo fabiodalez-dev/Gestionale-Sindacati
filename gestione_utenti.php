@@ -76,7 +76,9 @@ if ($action === 'delete') {
         $error = 'Token CSRF non valido.';
     } else {
         $id = intval($_POST['id'] ?? 0);
-        if ($id === $_SESSION['user_id']) {
+        if ($id <= 0) {
+            $error = "ID utente non valido.";
+        } elseif ($id === (int)$_SESSION['user_id']) {
             $error = "Non puoi eliminare te stesso.";
         } else {
             if (deleteUser($id)) {
@@ -94,6 +96,9 @@ if ($action === 'update') {
         $error = 'Token CSRF non valido.';
     } else {
         $id = intval($_POST['id'] ?? 0);
+        if ($id <= 0) {
+            $error = "ID utente non valido.";
+        }
         $username = sanitizeInput($_POST['username'] ?? '');
         $email = sanitizeInput($_POST['email'] ?? '');
         $role = sanitizeInput($_POST['role'] ?? '');
@@ -101,7 +106,9 @@ if ($action === 'update') {
         $sede_id = (isset($_POST['sede_id']) && $_POST['sede_id'] !== '') ? intval($_POST['sede_id']) : null;
 
         // Validazione dei campi
-        if (empty($username) || empty($email) || empty($role)) {
+        if (!empty($error)) {
+            // ID non valido, errore già impostato sopra
+        } elseif (empty($username) || empty($email) || empty($role)) {
             $error = "Tutti i campi obbligatori (tranne la password) devono essere compilati.";
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = "Indirizzo email non valido.";

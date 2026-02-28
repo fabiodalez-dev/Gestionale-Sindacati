@@ -67,7 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 foreach ($filesToDelete as $relativePath) {
                     $candidate = realpath($uploadsDir . $relativePath);
                     if ($candidate !== false && strpos($candidate, $uploadsDir) === 0 && is_file($candidate)) {
-                        @unlink($candidate);
+                        if (!unlink($candidate)) {
+                            error_log("Impossibile eliminare file: $candidate (lavoratore ID: $lavoratore_id)");
+                        }
                     }
                 }
             }

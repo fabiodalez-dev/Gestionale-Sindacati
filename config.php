@@ -31,6 +31,7 @@ loadEnv(__DIR__ . '/.env');
 
 // Gestione errori centralizzata (controllata via APP_DEBUG in .env)
 $app_debug = ($_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG') ?: '0') === '1';
+$debug_mode = $app_debug; // backward-compatibility alias
 if ($app_debug) {
     ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
