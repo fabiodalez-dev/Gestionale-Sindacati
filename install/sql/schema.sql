@@ -125,6 +125,18 @@ CREATE TABLE IF NOT EXISTS pagamenti_quote (
     data_pagamento DATE NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS sedi (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    indirizzo VARCHAR(255),
+    citta VARCHAR(100),
+    provincia VARCHAR(2),
+    cap VARCHAR(5),
+    telefono VARCHAR(20),
+    email VARCHAR(100),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+);
+
 CREATE TABLE IF NOT EXISTS settings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     setting_key VARCHAR(50) NOT NULL UNIQUE,

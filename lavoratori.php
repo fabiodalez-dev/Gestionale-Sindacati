@@ -47,6 +47,8 @@ if ($ccnlStmt !== false) {
     while ($row = $ccnlResult->fetch_assoc()) {
         $ccnlList[] = $row['ccnl'];
     }
+    $ccnlResult->free();
+    $ccnlStmt->close();
 }
 
 // Leggi parametri URL per i filtri - gestisce sia azienda_filter che azienda_id

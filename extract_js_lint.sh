@@ -15,6 +15,14 @@ echo "  ESLint Check - Inline JS in PHP files"
 echo "========================================="
 echo ""
 
+# Verify required tools
+for cmd in python3 eslint; do
+    if ! command -v "$cmd" &>/dev/null; then
+        echo "ERROR: $cmd is not installed or not in PATH" >&2
+        exit 1
+    fi
+done
+
 # Create the Python extractor
 cat > "$TMPDIR/extract.py" << 'PYEOF'
 import re, sys
@@ -78,8 +86,15 @@ while IFS= read -r phpfile; do
         echo "$output" | sed "s|$jsfile|$phpfile|g"
         echo ""
 
-        file_errors=$(echo "$output" | grep -c " error ")
-        file_warnings=$(echo "$output" | grep -c " warning ")
+        # Parse counts from ESLint summary line (e.g. "2 problems (1 error, 1 warning)")
+        summary_line=$(echo "$output" | grep -E '^\d+ problems?' || true)
+        if [ -n "$summary_line" ]; then
+            file_errors=$(echo "$summary_line" | grep -oE '[0-9]+ errors?' | grep -oE '[0-9]+' || echo 0)
+            file_warnings=$(echo "$summary_line" | grep -oE '[0-9]+ warnings?' | grep -oE '[0-9]+' || echo 0)
+        else
+            file_errors=$(echo "$output" | grep -c " error " || true)
+            file_warnings=$(echo "$output" | grep -c " warning " || true)
+        fi
         ERRORS=$((ERRORS + file_errors))
         WARNINGS=$((WARNINGS + file_warnings))
     fi

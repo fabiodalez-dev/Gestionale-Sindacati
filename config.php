@@ -312,7 +312,10 @@ function checkUserRole($required_roles) {
  * @return bool True se il token è valido, False altrimenti
  */
 function verifyCsrfToken($token) {
-    if (!isset($_SESSION['csrf_token'], $_SESSION['csrf_token_time'])) {
+    if (!is_string($token) || !isset($_SESSION['csrf_token'], $_SESSION['csrf_token_time'])) {
+        return false;
+    }
+    if (!is_string($_SESSION['csrf_token'])) {
         return false;
     }
     if ((time() - (int)$_SESSION['csrf_token_time']) > 3600) {
@@ -466,21 +469,31 @@ function checkLogin() {
             if ($row = $result->fetch_assoc()) {
                 // Imposta le informazioni in un array "user" in sessione
                 $_SESSION['user'] = [
-                    'role'    => $row['role'] ?? 'operator',
+                    'role'    => $row['role'] ?? 'operatore',
                     'sede_id' => $row['sede_id'] ?? null
                 ];
+                // Mantiene compatibilità con checkUserRole() che legge $_SESSION['user_role']
+                if (!isset($_SESSION['user_role'])) {
+                    $_SESSION['user_role'] = $_SESSION['user']['role'];
+                }
             } else {
                 // Se non troviamo l'utente, impostiamo valori di default
                 $_SESSION['user'] = [
-                    'role'    => 'operator',
+                    'role'    => 'operatore',
                     'sede_id' => null
                 ];
+                if (!isset($_SESSION['user_role'])) {
+                    $_SESSION['user_role'] = 'operatore';
+                }
             }
         } else {
             $_SESSION['user'] = [
-                'role'    => 'operator',
+                'role'    => 'operatore',
                 'sede_id' => null
             ];
+            if (!isset($_SESSION['user_role'])) {
+                $_SESSION['user_role'] = 'operatore';
+            }
         }
     }
 }

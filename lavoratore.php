@@ -837,7 +837,12 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
           <td><?php echo date('d/m/Y H:i', strtotime($doc['data_caricamento'])); ?></td>
           <td>
             <a href="<?php echo sanitizeForHTML($file_path); ?>" target="_blank" class="btn btn-sm btn-primary">Visualizza</a>
-            <a href="delete_documento.php?id=<?php echo sanitizeForHTML($doc['id']); ?>&lavoratore_id=<?php echo sanitizeForHTML($lavoratore_id); ?>&csrf_token=<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Sei sicuro di voler eliminare questo documento?');">Elimina</a>
+            <form action="delete_documento.php" method="POST" style="display:inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo documento?');">
+              <?php csrfInputField(); ?>
+              <input type="hidden" name="id" value="<?php echo sanitizeForHTML($doc['id']); ?>">
+              <input type="hidden" name="lavoratore_id" value="<?php echo sanitizeForHTML($lavoratore_id); ?>">
+              <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
+            </form>
           </td>
         </tr>
       <?php endwhile; ?>

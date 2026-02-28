@@ -677,7 +677,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     this.getContainer().style.zIndex = 1040;
                 });
             },
-            inline: false
+            inline: false,
+            license_key: 'gpl'
         });
         $(document).ready(function() {
             $("#azienda").autocomplete({

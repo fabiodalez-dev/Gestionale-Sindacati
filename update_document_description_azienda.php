@@ -1,29 +1,49 @@
 <?php
-require 'config.php';
 header('Content-Type: application/json');
+require_once 'config.php';
+checkLogin();
+
+// Verifica CSRF token
+if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Token CSRF non valido.'
+    ]);
+    exit;
+}
 
 // Verifica che i parametri POST siano presenti
 if (isset($_POST['doc_id']) && isset($_POST['description'])) {
     $docId = intval($_POST['doc_id']);
     $newDescription = trim($_POST['description']);
 
-    // Query per aggiornare la descrizione nella tabella documenti_aziende
-    $query = "UPDATE documenti_aziende SET descrizione_documento = ? WHERE id = ?";
-    
-    // Utilizza la funzione executeQuery con i parametri corretti:
-    // 's' per la stringa e 'i' per l'intero
-    $stmt = executeQuery($query, [$newDescription, $docId], 'si');
+    if ($docId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'ID documento non valido.']);
+        exit;
+    }
 
-    if ($stmt) {
+    // Verifica che il documento esista
+    $checkStmt = executeQuery("SELECT id FROM documenti_aziende WHERE id = ?", [$docId], 'i');
+    if ($checkStmt === false || ($checkResult = $checkStmt->get_result())->num_rows === 0) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Documento non trovato.']);
+        exit;
+    }
+
+    // Query per aggiornare la descrizione nella tabella documenti_aziende
+    $stmt = executeQuery("UPDATE documenti_aziende SET descrizione_documento = ? WHERE id = ?", [$newDescription, $docId], 'si');
+
+    if ($stmt !== false && $stmt->affected_rows >= 0) {
         echo json_encode([
             'success' => true,
             'new_description' => htmlspecialchars($newDescription)
         ]);
     } else {
-        // In caso di errore, restituisce un messaggio di errore
+        error_log("Errore aggiornamento descrizione documento azienda ID $docId");
         echo json_encode([
             'success' => false,
-            'message' => 'Errore durante l\'aggiornamento della descrizione: ' . $mysqli->error
+            'message' => 'Impossibile aggiornare la descrizione.'
         ]);
     }
 } else {

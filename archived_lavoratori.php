@@ -50,6 +50,8 @@ if ($ccnlStmt !== false) {
     while ($row = $ccnlResult->fetch_assoc()) {
         $ccnlList[] = $row['ccnl'];
     }
+    $ccnlResult->free();
+    $ccnlStmt->close();
 }
 
 // Gestione richieste POST per aggiornamenti in batch

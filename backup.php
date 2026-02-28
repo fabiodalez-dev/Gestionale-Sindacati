@@ -231,7 +231,7 @@ usort($cronBackups, function($a, $b) {
                     <!-- Form per il Backup Manuale -->
                     <form method="post" class="mb-4">
                         <input type="hidden" name="backup_manual" value="1">
-                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>">
                         <button type="submit" class="btn btn-primary">Esegui Backup Manuale</button>
                     </form>
 

@@ -358,6 +358,12 @@ foreach ($rows as $row) {
         // Aggiorna la mappa duplicati in-memory per righe successive nello stesso file
         $existing_lavoratori[$dup_key] = true;
     } catch (mysqli_sql_exception $e) {
+        if ((int)$e->getCode() === 1062) {
+            $errorsList[] = "Riga $rowCount: duplicato rilevato. Lavoratore saltato.";
+            $skippedCount++;
+            $existing_lavoratori[$dup_key] = true;
+            continue;
+        }
         error_log("Errore inserimento lavoratore riga $rowCount: " . $e->getMessage());
         $errorsList[] = "Riga $rowCount: errore durante l'inserimento. Lavoratore saltato.";
         $skippedCount++;

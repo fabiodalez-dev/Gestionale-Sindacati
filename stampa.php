@@ -9,6 +9,7 @@ use Mpdf\Mpdf;
 // Verifica se un lavoratore è stato selezionato per generare il PDF
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lavoratore_id'])) {
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
         die('Token CSRF non valido.');
     }
 

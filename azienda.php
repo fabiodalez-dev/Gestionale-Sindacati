@@ -773,7 +773,12 @@ generateCsrfToken();
                                 <td><?php echo sanitizeForHTML(date('d/m/Y H:i', strtotime($doc['data_caricamento'] ?? ''))); ?></td>
                                 <td>
                                     <a href="<?php echo sanitizeForHTML($base_url . 'uploads/' . $doc['percorso_documento']); ?>" target="_blank" class="btn btn-sm btn-primary">Visualizza</a>
-                                    <a href="delete_documento_azienda.php?id=<?php echo sanitizeForHTML($doc['id'] ?? 0); ?>&azienda_id=<?php echo sanitizeForHTML($azienda_id); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Sei sicuro di voler eliminare questo documento?');">Elimina</a>
+                                    <form action="delete_documento_azienda.php" method="POST" style="display:inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo documento?');">
+                                        <?php csrfInputField(); ?>
+                                        <input type="hidden" name="id" value="<?php echo sanitizeForHTML($doc['id'] ?? 0); ?>">
+                                        <input type="hidden" name="azienda_id" value="<?php echo sanitizeForHTML($azienda_id); ?>">
+                                        <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -1428,8 +1433,27 @@ document.addEventListener('DOMContentLoaded', function() {
             confirmButtonText: 'Elimina'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Reindirizza alla pagina di eliminazione
-                window.location.href = 'elimina_unita_operativa.php?id=' + id + '&azienda_id=<?php echo sanitizeForHTML($azienda_id); ?>';
+                // Invia richiesta POST per eliminazione
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'elimina_unita_operativa.php';
+                var csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = '<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>';
+                form.appendChild(csrfInput);
+                var idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'id';
+                idInput.value = id;
+                form.appendChild(idInput);
+                var azInput = document.createElement('input');
+                azInput.type = 'hidden';
+                azInput.name = 'azienda_id';
+                azInput.value = '<?php echo (int)$azienda_id; ?>';
+                form.appendChild(azInput);
+                document.body.appendChild(form);
+                form.submit();
             }
         });
     });
@@ -1443,7 +1467,8 @@ function editDescription(docId) {
   
   // Sostituisce il contenuto della cella con un form di modifica
   descCell.innerHTML = `
-    <form action=" update_document_description_azienda.php" method="POST" onsubmit="return updateDescription(event, ${docId});">
+    <form action="update_document_description_azienda.php" method="POST" onsubmit="return updateDescription(event, ${docId});">
+      <input type="hidden" name="csrf_token" value="<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>">
       <input type="hidden" name="doc_id" value="${docId}">
       <input type="text" name="description" value="${currentDesc}" required>
       <button type="submit" class="btn btn-sm btn-success">Salva</button>
@@ -1467,8 +1492,18 @@ function updateDescription(event, docId) {
     if (data.success) {
       // Ripristina la cella con la nuova descrizione e il bottone "Modifica"
       var descCell = document.getElementById("desc-" + docId);
-      descCell.innerHTML = `<span id="desc-text-${docId}">${data.new_description}</span>
-      <br><button type="button" class="btn btn-sm btn-secondary" onclick="editDescription(${docId})">Modifica</button>`;
+      descCell.innerHTML = '';
+      var span = document.createElement('span');
+      span.id = 'desc-text-' + docId;
+      span.textContent = data.new_description;
+      descCell.appendChild(span);
+      descCell.appendChild(document.createElement('br'));
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-sm btn-secondary';
+      btn.onclick = function() { editDescription(docId); };
+      btn.textContent = 'Modifica';
+      descCell.appendChild(btn);
     } else {
       alert("Errore: " + data.message);
     }

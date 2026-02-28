@@ -526,10 +526,10 @@ function checkLogin() {
             if (\$row = \$result->fetch_assoc()) {
                 \$_SESSION['user_role'] = \$row['role'];
             } else {
-                \$_SESSION['user_role'] = 'operator'; // Ruolo predefinito
+                \$_SESSION['user_role'] = 'operatore'; // Ruolo predefinito
             }
         } else {
-            \$_SESSION['user_role'] = 'operator';
+            \$_SESSION['user_role'] = 'operatore';
         }
     }
 }

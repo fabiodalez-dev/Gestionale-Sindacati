@@ -180,7 +180,12 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                 <?php
                                     $ics_scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
                                     $ics_host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-                                    $ics_absolute_url = $ics_scheme . '://' . $ics_host . rtrim($base_url, '/') . '/calendar_feed.php?days=365';
+                                    $calendarToken = getSetting('calendar_token');
+                                    if (empty($calendarToken)) {
+                                        $calendarToken = bin2hex(random_bytes(16));
+                                        setSetting('calendar_token', $calendarToken);
+                                    }
+                                    $ics_absolute_url = $ics_scheme . '://' . $ics_host . rtrim($base_url, '/') . '/calendar_feed.php?days=365&token=' . urlencode($calendarToken);
                                 ?>
                                 <input type="text" id="icsUrlInput" class="form-control form-control-sm"
                                        value="<?php echo sanitizeForHTML($ics_absolute_url); ?>"

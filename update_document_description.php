@@ -22,12 +22,31 @@ if (isset($_POST['doc_id']) && isset($_POST['description'])) {
         exit;
     }
 
-    // Verifica che il documento esista
-    $checkStmt = executeQuery("SELECT id FROM documenti_lavoratori WHERE id = ?", [$docId], 'i');
-    if ($checkStmt === false || $checkStmt->get_result()->num_rows === 0) {
+    // Verifica che il documento esista e controlla autorizzazione
+    $checkStmt = executeQuery("SELECT dl.id, dl.lavoratore_id FROM documenti_lavoratori dl WHERE dl.id = ?", [$docId], 'i');
+    if ($checkStmt === false || ($checkResult = $checkStmt->get_result())->num_rows === 0) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Documento non trovato.']);
         exit;
+    }
+
+    // Verifica permessi: solo admin o operatori con accesso alla sede del lavoratore
+    $currentRole = $_SESSION['user_role'] ?? ($_SESSION['user']['role'] ?? null);
+    if ($currentRole !== 'admin') {
+        $docRow = $checkResult->fetch_assoc();
+        $sedeCheck = executeQuery(
+            "SELECT l.sede_id FROM lavoratori l WHERE l.id = ?",
+            [$docRow['lavoratore_id']], 'i'
+        );
+        if ($sedeCheck !== false) {
+            $lavSede = $sedeCheck->get_result()->fetch_assoc();
+            $userSedeId = $_SESSION['user']['sede_id'] ?? null;
+            if ($userSedeId !== null && $lavSede && (int)$lavSede['sede_id'] !== (int)$userSedeId) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Non autorizzato.']);
+                exit;
+            }
+        }
     }
 
     // Aggiorna la tabella documenti_lavoratori (non "documenti")
