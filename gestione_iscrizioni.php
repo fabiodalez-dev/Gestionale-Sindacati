@@ -439,7 +439,7 @@ if ($result_lavoratori) {
                                                     <td>
                                                         <!-- Pulsanti per Azioni -->
                                                         <a href="modifica_iscrizione.php?id=<?php echo sanitizeForHTML($scadenza['id']); ?>" class="btn btn-sm btn-info">Modifica</a>
-                                                        <a href="elimina_iscrizione.php?id=<?php echo sanitizeForHTML($scadenza['id']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Sei sicuro di voler eliminare questa iscrizione?');">Elimina</a>
+                                                        <button type="button" class="btn btn-sm btn-danger delete-iscrizione-btn" data-id="<?php echo sanitizeForHTML($scadenza['id']); ?>" onclick="if(confirm('Sei sicuro di voler eliminare questa iscrizione?')){document.getElementById('deleteIscrizioneId').value=this.dataset.id;document.getElementById('deleteIscrizioneForm').submit();}">Elimina</button>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
@@ -491,7 +491,7 @@ if ($result_lavoratori) {
                                                     <td>
                                                         <!-- Pulsanti per Azioni (Modifica, Elimina) -->
                                                         <a href="modifica_iscrizione.php?id=<?php echo sanitizeForHTML($scaduto['id']); ?>" class="btn btn-sm btn-info">Modifica</a>
-                                                        <a href="elimina_iscrizione.php?id=<?php echo sanitizeForHTML($scaduto['id']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Sei sicuro di voler eliminare questa iscrizione?');">Elimina</a>
+                                                        <button type="button" class="btn btn-sm btn-danger delete-iscrizione-btn" data-id="<?php echo sanitizeForHTML($scaduto['id']); ?>" onclick="if(confirm('Sei sicuro di voler eliminare questa iscrizione?')){document.getElementById('deleteIscrizioneId').value=this.dataset.id;document.getElementById('deleteIscrizioneForm').submit();}">Elimina</button>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
@@ -543,7 +543,7 @@ if ($result_lavoratori) {
                                                     <td>
                                                         <!-- Pulsanti per Azioni (Modifica, Elimina) -->
                                                         <a href="modifica_iscrizione.php?id=<?php echo sanitizeForHTML($attivo['id']); ?>" class="btn btn-sm btn-info">Modifica</a>
-                                                        <a href="elimina_iscrizione.php?id=<?php echo sanitizeForHTML($attivo['id']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Sei sicuro di voler eliminare questa iscrizione?');">Elimina</a>
+                                                        <button type="button" class="btn btn-sm btn-danger delete-iscrizione-btn" data-id="<?php echo sanitizeForHTML($attivo['id']); ?>" onclick="if(confirm('Sei sicuro di voler eliminare questa iscrizione?')){document.getElementById('deleteIscrizioneId').value=this.dataset.id;document.getElementById('deleteIscrizioneForm').submit();}">Elimina</button>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
@@ -569,6 +569,12 @@ if ($result_lavoratori) {
 
     </div>
     <!-- End of Page Wrapper -->
+
+    <!-- Hidden form per eliminazione iscrizioni via POST -->
+    <form id="deleteIscrizioneForm" method="POST" action="elimina_iscrizione.php" style="display:none;">
+        <?php csrfInputField(); ?>
+        <input type="hidden" name="id" id="deleteIscrizioneId" value="">
+    </form>
 
     <!-- jQuery, Popper.js, and Bootstrap JS -->
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

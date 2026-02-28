@@ -1,9 +1,9 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
-const BASE = 'http://localhost:8080';
-const ADMIN_EMAIL = 'fabiodalez@gmail.com';
-const ADMIN_PASS = 'Fa310reds?';
+const BASE = process.env.TEST_BASE_URL || 'http://localhost:8080';
+const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'fabiodalez@gmail.com';
+const ADMIN_PASS = process.env.TEST_ADMIN_PASS || 'Fa310reds?';
 
 // Helper: login as admin and return authenticated context
 async function loginAsAdmin(page) {
@@ -285,9 +285,10 @@ test.describe('Email Reminder - CSRF', () => {
 test.describe('Modifica Iscrizione - CSRF', () => {
   test('page requires valid iscrizione ID', async ({ page }) => {
     await loginAsAdmin(page);
-    await page.goto(`${BASE}/modifica_iscrizione.php?id=1`);
+    const response = await page.goto(`${BASE}/modifica_iscrizione.php?id=1`);
     // Should load or redirect - not crash
-    expect([200, 302]).toContain(page.url().includes('modifica_iscrizione') ? 200 : 302);
+    const status = response ? response.status() : 200;
+    expect([200, 302]).toContain(status);
   });
 });
 
@@ -314,11 +315,16 @@ test.describe('Config - HTMLPurifier Cache', () => {
     await loginAsAdmin(page);
     // Loading any page with rich text will trigger HTMLPurifier
     await page.goto(`${BASE}/dashboard.php`);
-    // Check that cache dir exists
-    const { execSync } = require('child_process');
-    const cacheExists = execSync('test -d /Users/fabio/Downloads/AdL/app/cache/htmlpurifier && echo "yes" || echo "no"').toString().trim();
-    // After first use, cache dir should exist or be created on demand
-    // The important thing is sessions/ should NOT contain htmlpurifier files
+    // Verify sessions/ does not contain htmlpurifier files
+    const path = require('path');
+    const fs = require('fs');
+    const appDir = path.resolve(__dirname, '..');
+    const sessionsDir = path.join(appDir, 'sessions');
+    if (fs.existsSync(sessionsDir)) {
+      const sessionFiles = fs.readdirSync(sessionsDir);
+      const purifierFiles = sessionFiles.filter(f => f.toLowerCase().includes('htmlpurifier'));
+      expect(purifierFiles.length, 'HTMLPurifier files should NOT be in sessions/').toBe(0);
+    }
   });
 });
 

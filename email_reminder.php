@@ -5,6 +5,7 @@
 
 require 'config.php';
 checkLogin();
+checkUserRole('admin');
 
 // Includi PHPMailer tramite Composer
 require 'vendor/autoload.php';

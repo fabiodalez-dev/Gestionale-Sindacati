@@ -1,9 +1,9 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
-const BASE_URL = 'http://localhost:8080';
-const ADMIN_EMAIL = 'fabiodalez@gmail.com';
-const ADMIN_PASS = 'Fa310reds?';
+const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:8080';
+const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'fabiodalez@gmail.com';
+const ADMIN_PASS = process.env.TEST_ADMIN_PASS || 'Fa310reds?';
 
 // Helper: login
 async function login(page) {

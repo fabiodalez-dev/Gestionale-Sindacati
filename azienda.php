@@ -1548,8 +1548,18 @@ function updateDescription(event, docId) {
 function cancelEdit(docId, originalDesc) {
   // Ripristina la visualizzazione originale in caso di annullamento
   var descCell = document.getElementById("desc-" + docId);
-  descCell.innerHTML = `<span id="desc-text-${docId}">${originalDesc}</span>
-  <br><button type="button" class="btn btn-sm btn-secondary" onclick="editDescription(${docId})">Modifica</button>`;
+  descCell.innerHTML = '';
+  var span = document.createElement('span');
+  span.id = 'desc-text-' + docId;
+  span.textContent = originalDesc;
+  descCell.appendChild(span);
+  descCell.appendChild(document.createElement('br'));
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn btn-sm btn-secondary';
+  btn.textContent = 'Modifica';
+  btn.onclick = function () { editDescription(docId); };
+  descCell.appendChild(btn);
 }
 </script>
 

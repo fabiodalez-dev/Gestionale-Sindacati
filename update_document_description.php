@@ -54,8 +54,13 @@ if (isset($_POST['doc_id']) && isset($_POST['description'])) {
             exit;
         }
         $lavSede = $sedeCheck->get_result()->fetch_assoc();
+        if (!$lavSede) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Non autorizzato.']);
+            exit;
+        }
         $userSedeId = $_SESSION['user']['sede_id'] ?? null;
-        if ($userSedeId !== null && $lavSede && (int)$lavSede['sede_id'] !== (int)$userSedeId) {
+        if ($userSedeId !== null && (int)$lavSede['sede_id'] !== (int)$userSedeId) {
             http_response_code(403);
             echo json_encode(['success' => false, 'message' => 'Non autorizzato.']);
             exit;

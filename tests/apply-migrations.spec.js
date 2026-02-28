@@ -1,9 +1,9 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
-const BASE = 'http://localhost:8080';
-const ADMIN_EMAIL = 'fabiodalez@gmail.com';
-const ADMIN_PASS = 'Fa310reds?';
+const BASE = process.env.TEST_BASE_URL || 'http://localhost:8080';
+const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'fabiodalez@gmail.com';
+const ADMIN_PASS = process.env.TEST_ADMIN_PASS || 'Fa310reds?';
 
 test('Apply all pending migrations via migrate.php', async ({ page }) => {
   // Login as admin
@@ -30,29 +30,23 @@ test('Apply all pending migrations via migrate.php', async ({ page }) => {
   console.log(`Found ${btnCount} migrate buttons`);
 
   if (btnCount > 0) {
-    // Click each migration button
-    for (let i = 0; i < btnCount; i++) {
-      const btn = migrateButtons.nth(i);
-      const btnText = await btn.textContent();
-      console.log(`Clicking migration button: ${btnText}`);
-      await btn.click();
-      await page.waitForLoadState('networkidle', { timeout: 30000 });
-      console.log(`Migration ${i + 1} completed`);
-    }
+    // Click the first migration button once (runs all pending migrations)
+    const btn = migrateButtons.first();
+    const btnText = await btn.textContent();
+    console.log(`Clicking migration button: ${btnText}`);
+    await btn.click();
+    await page.waitForLoadState('networkidle', { timeout: 30000 });
+    console.log('Migration completed');
   } else {
     // Check for pending migrations text
     const hasPending = content.includes('In Attesa') || content.includes('pending') || content.includes('da eseguire');
     if (hasPending) {
-      console.log('Found pending migrations text, looking for forms...');
-      // Try to find forms
+      console.log('Found pending migrations text, looking for actionable forms...');
       const forms = page.locator('form');
       const formCount = await forms.count();
       console.log(`Found ${formCount} forms on page`);
-      for (let i = 0; i < formCount; i++) {
-        const formAction = await forms.nth(i).getAttribute('action');
-        const formMethod = await forms.nth(i).getAttribute('method');
-        console.log(`Form ${i}: action=${formAction}, method=${formMethod}`);
-      }
+      // Fail if there are pending migrations but no actionable forms
+      expect(formCount, 'Pending migrations found but no actionable forms available').toBeGreaterThan(0);
     } else {
       console.log('No pending migrations found - all up to date');
     }

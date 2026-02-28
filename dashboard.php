@@ -178,8 +178,10 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                     </span>
                                 </div>
                                 <?php
-                                    $ics_scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-                                    $ics_host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                                    $configuredHost = parse_url($base_url, PHP_URL_HOST);
+                                    $configuredScheme = parse_url($base_url, PHP_URL_SCHEME);
+                                    $ics_scheme = $configuredScheme ?: ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http');
+                                    $ics_host = $configuredHost ?: ($_SERVER['SERVER_NAME'] ?? 'localhost');
                                     $calendarToken = getSetting('calendar_token');
                                     if (empty($calendarToken)) {
                                         $generatedToken = bin2hex(random_bytes(16));

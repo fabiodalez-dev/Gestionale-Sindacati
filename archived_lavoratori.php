@@ -237,7 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Elimina i file fisici dopo il commit DB
             foreach ($filesToDelete as $filePath) {
                 if (!unlink($filePath)) {
-                    error_log("Impossibile eliminare il file: $filePath");
+                    error_log("Impossibile eliminare file documento (basename=" . basename($filePath) . ")");
                 }
             }
 

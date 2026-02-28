@@ -4,13 +4,25 @@
 require 'config.php';
 checkLogin();
 
-// Recupera l'ID dell'iscrizione da eliminare
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+// Richiede metodo POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: gestione_iscrizioni.php");
     exit;
 }
 
-$iscrizione_id = intval($_GET['id']);
+// Verifica token CSRF
+if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+    header("Location: gestione_iscrizioni.php?error=" . urlencode("Token CSRF non valido."));
+    exit;
+}
+
+// Recupera l'ID dell'iscrizione da eliminare
+if (!isset($_POST['id']) || !is_numeric($_POST['id'])) {
+    header("Location: gestione_iscrizioni.php");
+    exit;
+}
+
+$iscrizione_id = intval($_POST['id']);
 
 // Recupera i dettagli dell'iscrizione per ottenere lavoratore_id e metodo_pagamento
 $query = "SELECT lavoratore_id, metodo_pagamento FROM iscrizioni WHERE id = ?";

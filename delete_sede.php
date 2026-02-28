@@ -11,7 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Verifica token CSRF
 if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
-    http_response_code(403);
     header("Location: sedi.php?delete_error=" . urlencode("Token CSRF non valido."));
     exit;
 }
@@ -23,22 +22,29 @@ if ($sede_id <= 0) {
     exit();
 }
 
-// Rimuovi il riferimento alla sede dai lavoratori associati
-$updateStmt = executeQuery("UPDATE lavoratori SET sede_id = NULL WHERE sede_id = ?", [$sede_id], 'i');
-if ($updateStmt === false) {
-    header("Location: sedi.php?delete_error=" . urlencode("Errore durante l'aggiornamento dei lavoratori associati."));
-    exit();
-}
+$mysqli->begin_transaction();
 
-// Elimina la sede dal database
-$query = "DELETE FROM sedi WHERE id = ?";
-$stmt = executeQuery($query, [$sede_id], 'i');
+try {
+    // Rimuovi il riferimento alla sede dai lavoratori associati
+    $updateStmt = executeQuery("UPDATE lavoratori SET sede_id = NULL WHERE sede_id = ?", [$sede_id], 'i');
+    if ($updateStmt === false) {
+        throw new Exception("Errore durante l'aggiornamento dei lavoratori associati.");
+    }
 
-if ($stmt) {
+    // Elimina la sede dal database
+    $query = "DELETE FROM sedi WHERE id = ?";
+    $stmt = executeQuery($query, [$sede_id], 'i');
+
+    if (!$stmt) {
+        throw new Exception("Errore durante l'eliminazione della sede.");
+    }
+
+    $mysqli->commit();
     header("Location: sedi.php?delete_success=1");
     exit;
-} else {
-    header("Location: sedi.php?delete_error=" . urlencode("Errore durante l'eliminazione della sede."));
+} catch (Exception $e) {
+    $mysqli->rollback();
+    header("Location: sedi.php?delete_error=" . urlencode($e->getMessage()));
     exit;
 }
 ?>

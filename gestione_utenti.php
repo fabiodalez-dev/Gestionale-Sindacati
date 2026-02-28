@@ -39,6 +39,7 @@ if ($action === 'create') {
         $password = $_POST['password'] ?? '';
         $role = sanitizeInput($_POST['role'] ?? '');
         $sede_id = (isset($_POST['sede_id']) && $_POST['sede_id'] !== '') ? intval($_POST['sede_id']) : null;
+        if ($sede_id !== null && $sede_id <= 0) { $sede_id = null; }
 
         // Validazione dei campi
         if (empty($username) || empty($email) || empty($password) || empty($role)) {
@@ -104,6 +105,7 @@ if ($action === 'update') {
         $role = sanitizeInput($_POST['role'] ?? '');
         $password = $_POST['password'] ?? ''; // Nuova password (opzionale)
         $sede_id = (isset($_POST['sede_id']) && $_POST['sede_id'] !== '') ? intval($_POST['sede_id']) : null;
+        if ($sede_id !== null && $sede_id <= 0) { $sede_id = null; }
 
         // Validazione dei campi
         if (!empty($error)) {
