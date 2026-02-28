@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS iscrizioni (
     id INT AUTO_INCREMENT PRIMARY KEY,
     lavoratore_id INT NOT NULL,
     numero_tessera VARCHAR(50),
-    metodo_pagamento ENUM('carta', 'bonifico', 'contanti') NOT NULL,
+    metodo_pagamento ENUM('trattenuta in busta paga','rinnovo annuale','sepa') NOT NULL,
     nota_pagamento TEXT,
     data_inizio DATE NOT NULL,
     data_fine DATE,
