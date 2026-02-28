@@ -62,6 +62,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
     // Validazioni di base
     $errors = [];
+    // Verifica CSRF token
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Token CSRF non valido.';
+    }
     if ($lavoratore_id <= 0) {
         $errors[] = "Lavoratore non valido. Assicurati di selezionare un lavoratore esistente.";
     }

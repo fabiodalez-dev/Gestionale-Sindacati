@@ -4,8 +4,9 @@ require 'config.php';
 // --- Rate Limiting Functions (file-based) ---
 
 /**
- * Check if the given IP is allowed to attempt login.
- * Returns true if allowed, false if rate-limited (>= 5 failed attempts in 15 min).
+ * Atomically check rate limit and reserve a slot for the current attempt.
+ * Returns true if allowed (slot reserved), false if rate-limited (>= 5 failed attempts in 15 min).
+ * On success, call clearLoginAttempts() or removeLastAttempt() if login succeeds.
  */
 function checkLoginRateLimit($ip) {
     $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
@@ -21,33 +22,12 @@ function checkLoginRateLimit($ip) {
     }
     $now = time();
     $data['attempts'] = array_values(array_filter($data['attempts'], fn($t) => $t > $now - 900));
-    $isAllowed = count($data['attempts']) < 5;
-    ftruncate($fh, 0);
-    rewind($fh);
-    fwrite($fh, json_encode($data));
-    fflush($fh);
-    flock($fh, LOCK_UN);
-    fclose($fh);
-    return $isAllowed;
-}
-
-/**
- * Record a failed login attempt for the given IP.
- */
-function recordFailedLogin($ip) {
-    $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
-    $fh = fopen($lockFile, 'c+');
-    if ($fh === false || !flock($fh, LOCK_EX)) {
-        if (is_resource($fh)) fclose($fh);
-        return;
+    if (count($data['attempts']) >= 5) {
+        flock($fh, LOCK_UN);
+        fclose($fh);
+        return false;
     }
-    $raw = stream_get_contents($fh);
-    $data = json_decode($raw ?: '', true);
-    if (!is_array($data) || !isset($data['attempts']) || !is_array($data['attempts'])) {
-        $data = ['attempts' => []];
-    }
-    $now = time();
-    $data['attempts'] = array_values(array_filter($data['attempts'], fn($t) => $t > $now - 900));
+    // Reserve a slot atomically
     $data['attempts'][] = $now;
     ftruncate($fh, 0);
     rewind($fh);
@@ -55,6 +35,16 @@ function recordFailedLogin($ip) {
     fflush($fh);
     flock($fh, LOCK_UN);
     fclose($fh);
+    return true;
+}
+
+/**
+ * Record a failed login attempt for the given IP.
+ * Note: with atomic check+reserve, this is only needed if additional tracking is desired.
+ * The attempt is already recorded by checkLoginRateLimit().
+ */
+function recordFailedLogin($ip) {
+    // Attempt already recorded atomically in checkLoginRateLimit()
 }
 
 /**
@@ -63,7 +53,9 @@ function recordFailedLogin($ip) {
 function clearLoginAttempts($ip) {
     $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
     if (file_exists($lockFile)) {
-        @unlink($lockFile);
+        if (!unlink($lockFile)) {
+            error_log("Impossibile rimuovere il file di rate limit: $lockFile");
+        }
     }
 }
 

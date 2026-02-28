@@ -4,7 +4,9 @@ checkLogin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
-        die('Token CSRF non valido.');
+        http_response_code(403);
+        header("Location: lavoratori.php");
+        exit;
     }
 
     $id = intval($_POST['id']);

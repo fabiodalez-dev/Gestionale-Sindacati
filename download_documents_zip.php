@@ -14,6 +14,7 @@ header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
         ob_clean();
         echo json_encode(['success' => false, 'message' => 'Token CSRF non valido.']);
         exit;
@@ -25,7 +26,7 @@ $downloadDir = __DIR__ . '/downloads/';
 if (is_dir($downloadDir)) {
     foreach (glob($downloadDir . '*.zip') as $file) {
         if (filemtime($file) < time() - 3600) {
-            @unlink($file);
+            unlink($file);
         }
     }
 }

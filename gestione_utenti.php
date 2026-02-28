@@ -30,43 +30,41 @@ $action = $_POST['action'] ?? '';
 
 if ($action === 'create') {
     // Verifica il token CSRF
-    try {
-        verifyCsrfToken($_POST['csrf_token'] ?? '');
-    } catch (Exception $e) {
-        $error = $e->getMessage();
-    }
-
-    // Recupera i dati dal form
-    $username = sanitizeInput($_POST['username'] ?? '');
-    $email = sanitizeInput($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $role = sanitizeInput($_POST['role'] ?? '');
-    $sede_id = (isset($_POST['sede_id']) && $_POST['sede_id'] !== '') ? intval($_POST['sede_id']) : null;
-
-    // Validazione dei campi
-    if (empty($username) || empty($email) || empty($password) || empty($role)) {
-        $error = "Tutti i campi sono obbligatori.";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = "Indirizzo email non valido.";
-    } elseif (!in_array($role, ['admin', 'operatore'])) {
-        $error = "Ruolo non valido.";
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        $error = 'Token CSRF non valido.';
     } else {
-        // Controlla se l'utente o l'email esistono già
-        $stmt = executeQuery("SELECT * FROM users WHERE username = ? OR email = ?", [$username, $email], 'ss');
-        if ($stmt) {
-            $result = $stmt->get_result();
-            if ($result->num_rows > 0) {
-                $error = "Username o email già in uso.";
+        // Recupera i dati dal form
+        $username = sanitizeInput($_POST['username'] ?? '');
+        $email = sanitizeInput($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $role = sanitizeInput($_POST['role'] ?? '');
+        $sede_id = (isset($_POST['sede_id']) && $_POST['sede_id'] !== '') ? intval($_POST['sede_id']) : null;
+
+        // Validazione dei campi
+        if (empty($username) || empty($email) || empty($password) || empty($role)) {
+            $error = "Tutti i campi sono obbligatori.";
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = "Indirizzo email non valido.";
+        } elseif (!in_array($role, ['admin', 'operatore'])) {
+            $error = "Ruolo non valido.";
+        } else {
+            // Controlla se l'utente o l'email esistono già
+            $stmt = executeQuery("SELECT * FROM users WHERE username = ? OR email = ?", [$username, $email], 'ss');
+            if ($stmt) {
+                $result = $stmt->get_result();
+                if ($result->num_rows > 0) {
+                    $error = "Username o email già in uso.";
+                }
+                $result->free();
+                $stmt->close();
             }
-            $result->free();
-            $stmt->close();
-        }
-        if (empty($error)) {
-            // Si presume che createUser() accetti un ulteriore parametro per la sede
-            if (createUser($username, $email, $password, $role, $sede_id)) {
-                $success = "Utente creato con successo.";
-            } else {
-                $error = "Errore nella creazione dell'utente.";
+            if (empty($error)) {
+                // Si presume che createUser() accetti un ulteriore parametro per la sede
+                if (createUser($username, $email, $password, $role, $sede_id)) {
+                    $success = "Utente creato con successo.";
+                } else {
+                    $error = "Errore nella creazione dell'utente.";
+                }
             }
         }
     }
@@ -74,64 +72,60 @@ if ($action === 'create') {
 
 if ($action === 'delete') {
     // Verifica il token CSRF
-    try {
-        verifyCsrfToken($_POST['csrf_token'] ?? '');
-    } catch (Exception $e) {
-        $error = $e->getMessage();
-    }
-
-    $id = intval($_POST['id'] ?? 0);
-    if ($id === $_SESSION['user_id']) {
-        $error = "Non puoi eliminare te stesso.";
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        $error = 'Token CSRF non valido.';
     } else {
-        if (deleteUser($id)) {
-            $success = "Utente eliminato con successo.";
+        $id = intval($_POST['id'] ?? 0);
+        if ($id === $_SESSION['user_id']) {
+            $error = "Non puoi eliminare te stesso.";
         } else {
-            $error = "Errore nell'eliminazione dell'utente.";
+            if (deleteUser($id)) {
+                $success = "Utente eliminato con successo.";
+            } else {
+                $error = "Errore nell'eliminazione dell'utente.";
+            }
         }
     }
 }
 
 if ($action === 'update') {
     // Verifica il token CSRF
-    try {
-        verifyCsrfToken($_POST['csrf_token'] ?? '');
-    } catch (Exception $e) {
-        $error = $e->getMessage();
-    }
-
-    $id = intval($_POST['id'] ?? 0);
-    $username = sanitizeInput($_POST['username'] ?? '');
-    $email = sanitizeInput($_POST['email'] ?? '');
-    $role = sanitizeInput($_POST['role'] ?? '');
-    $password = $_POST['password'] ?? ''; // Nuova password (opzionale)
-    $sede_id = (isset($_POST['sede_id']) && $_POST['sede_id'] !== '') ? intval($_POST['sede_id']) : null;
-
-    // Validazione dei campi
-    if (empty($username) || empty($email) || empty($role)) {
-        $error = "Tutti i campi obbligatori (tranne la password) devono essere compilati.";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = "Indirizzo email non valido.";
-    } elseif (!in_array($role, ['admin', 'operatore'])) {
-        $error = "Ruolo non valido.";
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        $error = 'Token CSRF non valido.';
     } else {
-        // Controlla se l'utente o l'email esistono già per altri utenti
-        $stmt = executeQuery("SELECT * FROM users WHERE (username = ? OR email = ?) AND id != ?", [$username, $email, $id], 'ssi');
-        if ($stmt) {
-            $result = $stmt->get_result();
-            if ($result->num_rows > 0) {
-                $error = "Username o email già in uso.";
+        $id = intval($_POST['id'] ?? 0);
+        $username = sanitizeInput($_POST['username'] ?? '');
+        $email = sanitizeInput($_POST['email'] ?? '');
+        $role = sanitizeInput($_POST['role'] ?? '');
+        $password = $_POST['password'] ?? ''; // Nuova password (opzionale)
+        $sede_id = (isset($_POST['sede_id']) && $_POST['sede_id'] !== '') ? intval($_POST['sede_id']) : null;
+
+        // Validazione dei campi
+        if (empty($username) || empty($email) || empty($role)) {
+            $error = "Tutti i campi obbligatori (tranne la password) devono essere compilati.";
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = "Indirizzo email non valido.";
+        } elseif (!in_array($role, ['admin', 'operatore'])) {
+            $error = "Ruolo non valido.";
+        } else {
+            // Controlla se l'utente o l'email esistono già per altri utenti
+            $stmt = executeQuery("SELECT * FROM users WHERE (username = ? OR email = ?) AND id != ?", [$username, $email, $id], 'ssi');
+            if ($stmt) {
+                $result = $stmt->get_result();
+                if ($result->num_rows > 0) {
+                    $error = "Username o email già in uso.";
+                }
+                $result->free();
+                $stmt->close();
             }
-            $result->free();
-            $stmt->close();
-        }
-        if (empty($error)) {
-            $newPassword = !empty($password) ? $password : null;
-            // Si presume che updateUser() accetti anche il parametro sede_id
-            if (updateUser($id, $username, $email, $role, $newPassword, $sede_id)) {
-                $success = "Utente aggiornato con successo.";
-            } else {
-                $error = "Errore nell'aggiornamento dell'utente.";
+            if (empty($error)) {
+                $newPassword = !empty($password) ? $password : null;
+                // Si presume che updateUser() accetti anche il parametro sede_id
+                if (updateUser($id, $username, $email, $role, $newPassword, $sede_id)) {
+                    $success = "Utente aggiornato con successo.";
+                } else {
+                    $error = "Errore nell'aggiornamento dell'utente.";
+                }
             }
         }
     }

@@ -20,8 +20,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         global $mysqli;
         $mysqli->begin_transaction();
         try {
-            // Prima elimina eventuali dati correlati (es. documenti, iscrizioni, etc.)
-            // Eliminazione dei documenti associati
+            // Prima elimina i file fisici dei documenti associati
+            $stmtFiles = executeQuery("SELECT percorso_documento FROM documenti_lavoratori WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+            if ($stmtFiles !== false) {
+                $filesResult = $stmtFiles->get_result();
+                $uploadsDir = __DIR__ . '/uploads/';
+                while ($fileRow = $filesResult->fetch_assoc()) {
+                    $filePath = $uploadsDir . $fileRow['percorso_documento'];
+                    if (!empty($fileRow['percorso_documento']) && file_exists($filePath)) {
+                        unlink($filePath);
+                    }
+                }
+            }
+
+            // Eliminazione dei record documenti dal DB
             $deleteDocumentsQuery = "DELETE FROM documenti_lavoratori WHERE lavoratore_id = ?";
             $stmtDocs = executeQuery($deleteDocumentsQuery, [$lavoratore_id], 'i');
             if ($stmtDocs === false) {

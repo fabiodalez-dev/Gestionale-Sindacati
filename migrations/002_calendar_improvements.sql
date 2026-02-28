@@ -75,15 +75,15 @@ WHERE lavoratore_id IS NOT NULL AND lavoratore_id NOT IN (SELECT id FROM lavorat
 
 -- Clean orphan azienda_id in calendario_lavoratori (SET NULL to match ON DELETE SET NULL)
 UPDATE calendario_lavoratori SET azienda_id = NULL
-WHERE azienda_id IS NOT NULL AND azienda_id NOT IN (SELECT id FROM aziende);
+WHERE azienda_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM aziende WHERE aziende.id = calendario_lavoratori.azienda_id);
 
 -- Clean orphan event_id in event_exceptions (DELETE to match ON DELETE CASCADE)
 DELETE FROM event_exceptions
-WHERE event_id NOT IN (SELECT id FROM calendario_lavoratori);
+WHERE NOT EXISTS (SELECT 1 FROM calendario_lavoratori WHERE calendario_lavoratori.id = event_exceptions.event_id);
 
 -- Clean orphan lavoratore_id in event_exceptions (DELETE to match ON DELETE CASCADE)
 DELETE FROM event_exceptions
-WHERE lavoratore_id NOT IN (SELECT id FROM lavoratori);
+WHERE lavoratore_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM lavoratori WHERE lavoratori.id = event_exceptions.lavoratore_id);
 
 -- ============================================
 -- Add FK constraints (after orphan cleanup)

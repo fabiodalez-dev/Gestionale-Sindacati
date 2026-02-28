@@ -59,7 +59,11 @@ function sanitizeHTML($data) {
         $config->set('HTML.Allowed', 'p,a[href|target],b,strong,i,em,ul,ol,li,br,hr,span,div,img[src|alt|width|height],h1,h2,h3,h4,h5,h6');
         $config->set('HTML.TargetBlank', true);
         $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true]);
-        $config->set('Cache.SerializerPath', __DIR__ . '/sessions');
+        $cacheDir = __DIR__ . '/cache/htmlpurifier';
+        if (!is_dir($cacheDir)) {
+            mkdir($cacheDir, 0755, true);
+        }
+        $config->set('Cache.SerializerPath', $cacheDir);
         $purifier = new \HTMLPurifier($config);
     }
     return $purifier->purify($data ?? '');

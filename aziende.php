@@ -293,11 +293,11 @@ if ($length != -1) {
                     $lavoratori .= '</div>';
                     
                     // Azioni
+                    $aziendaIdSafe = intval($row['id']);
                     $azioni = '<div class="d-flex align-items-center gap-2">'
-                            . '<a href="edit_azienda.php?id=' . intval($row['id']) . '" class="table-action-icon" title="Modifica">'
+                            . '<a href="edit_azienda.php?id=' . $aziendaIdSafe . '" class="table-action-icon" title="Modifica">'
                             . '<i class="fas fa-edit"></i></a>'
-                            . '<a href="delete_azienda.php?id=' . intval($row['id']) . '" '
-                            . 'class="table-action-icon" title="Elimina" onclick="return confirm(\'Sei sicuro di voler eliminare questa azienda?\');">'
+                            . '<a href="#" class="table-action-icon delete-azienda-btn" title="Elimina" data-id="' . $aziendaIdSafe . '">'
                             . '<i class="fas fa-trash"></i></a>'
                             . '</div>';
                     
@@ -802,6 +802,12 @@ generateCsrfToken();
         </div>
     </div>
 
+    <!-- Hidden form for delete azienda (POST) -->
+    <form id="deleteAziendaForm" method="POST" action="delete_azienda.php" style="display:none;">
+        <?php csrfInputField(); ?>
+        <input type="hidden" name="id" id="deleteAziendaId">
+    </form>
+
     <!-- Scroll to Top Button -->
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
@@ -1144,6 +1150,27 @@ generateCsrfToken();
             setTimeout(function() {
                 $('.alert').fadeOut(500);
             }, 5000);
+
+            // Eliminazione azienda via POST con conferma SweetAlert2
+            $(document).on('click', '.delete-azienda-btn', function(e) {
+                e.preventDefault();
+                var aziendaId = $(this).data('id');
+                Swal.fire({
+                    title: 'Sei sicuro?',
+                    text: 'Vuoi eliminare questa azienda?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#aaa',
+                    confirmButtonText: 'Sì, elimina!',
+                    cancelButtonText: 'Annulla'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        $('#deleteAziendaId').val(aziendaId);
+                        $('#deleteAziendaForm').submit();
+                    }
+                });
+            });
         });
     </script>
 </body>

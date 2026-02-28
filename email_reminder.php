@@ -30,7 +30,9 @@ $smtpStmt->close();
 
 // Gestione della richiesta POST per aggiornare il template o SMTP
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['action'])) {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        $error_message = 'Token CSRF non valido.';
+    } elseif (isset($_POST['action'])) {
         if ($_POST['action'] === 'update_template') {
             // Aggiorna il template email
             $subject = trim($_POST['subject']);

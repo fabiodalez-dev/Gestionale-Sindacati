@@ -60,7 +60,7 @@ $urlFilters = [
     'settore_filter' => isset($_GET['settore_filter']) ? sanitizeForHTML($_GET['settore_filter']) : '',
     'tipo_tessera_filter' => isset($_GET['tipo_tessera_filter']) ? sanitizeForHTML($_GET['tipo_tessera_filter']) : '',
     'ruolo_filter' => isset($_GET['ruolo_filter']) ? sanitizeForHTML($_GET['ruolo_filter']) : '',
-    'ccnl_filter' => isset($_GET['ccnl_filter']) ? sanitizeForHTML($_GET['ccnl_filter']) : ''
+    'ccnl_filter' => isset($_GET['ccnl_filter']) ? trim($_GET['ccnl_filter']) : ''
 ];
 
 // Gestione richieste POST per aggiornamenti in batch
@@ -202,8 +202,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
     
-    // Eliminazione in batch
+    // Eliminazione in batch (solo admin)
     if (isset($_POST['delete_workers'])) {
+        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+            echo json_encode(["error" => "Operazione riservata agli amministratori."]);
+            exit;
+        }
         global $mysqli;
         $mysqli->begin_transaction();
         try {

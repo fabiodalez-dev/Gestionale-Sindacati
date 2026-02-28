@@ -178,6 +178,10 @@ if ($res_aziende) {
         $aziende_map[strtolower(trim($az_row['nome_azienda']))] = (int)$az_row['id'];
     }
     $res_aziende->free();
+} else {
+    error_log("Errore pre-caricamento aziende: " . $mysqli->error);
+    echo json_encode(['success' => false, 'error' => 'Errore nel caricamento dei dati aziende.']);
+    exit;
 }
 
 // ── Pre-load existing lavoratori for duplicate detection (eliminates per-row SELECT on lavoratori) ──
@@ -189,6 +193,10 @@ if ($res_lav) {
         $existing_lavoratori[$dup_key] = true;
     }
     $res_lav->free();
+} else {
+    error_log("Errore pre-caricamento lavoratori: " . $mysqli->error);
+    echo json_encode(['success' => false, 'error' => 'Errore nel caricamento dei dati lavoratori.']);
+    exit;
 }
 
 // ── Prepare INSERT statement once outside the loop ──
@@ -317,6 +325,11 @@ foreach ($rows as $row) {
             if ($stmt_az_insert->execute()) {
                 $azienda_id = (int)$stmt_az_insert->insert_id;
                 $aziende_map[$azienda_key] = $azienda_id;
+            } else {
+                error_log("Errore inserimento azienda '$azienda_nome': " . $stmt_az_insert->error);
+                $errorsList[] = "Riga $rowCount: errore inserimento azienda '$azienda_nome'. Lavoratore saltato.";
+                $skippedCount++;
+                continue;
             }
         }
     }
