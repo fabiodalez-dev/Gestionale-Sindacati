@@ -187,11 +187,14 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                             $calendarToken = $generatedToken;
                                         } else {
                                             error_log("Impossibile salvare calendar_token nelle impostazioni.");
-                                            $calendarToken = $generatedToken;
+                                            $calendarToken = null;
                                         }
                                     }
-                                    $ics_absolute_url = $ics_scheme . '://' . $ics_host . rtrim($base_url, '/') . '/calendar_feed.php?days=365&token=' . urlencode($calendarToken);
+                                    if ($calendarToken !== null) {
+                                        $ics_absolute_url = $ics_scheme . '://' . $ics_host . rtrim($base_url, '/') . '/calendar_feed.php?days=365&token=' . urlencode($calendarToken);
+                                    }
                                 ?>
+                                <?php if (!empty($ics_absolute_url)): ?>
                                 <input type="text" id="icsUrlInput" class="form-control form-control-sm"
                                        value="<?php echo sanitizeForHTML($ics_absolute_url); ?>"
                                        readonly style="font-size:0.75rem; background:#f8f9fa; cursor:text;">
@@ -205,6 +208,10 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                class="btn btn-sm btn-outline-secondary" download="calendar.ics" title="Scarica file ICS">
                                 <i class="fas fa-download"></i>
                             </a>
+                                <?php else: ?>
+                                <span class="form-control form-control-sm text-muted" style="font-size:0.75rem; background:#f8f9fa;">Feed ICS non disponibile</span>
+                                </div>
+                                <?php endif; ?>
                         </div>
                         </div>
                     </div>

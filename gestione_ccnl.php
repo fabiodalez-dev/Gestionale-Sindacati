@@ -13,6 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
     header('Content-Type: application/json');
 
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
         echo json_encode(['error' => 'Token CSRF non valido']);
         exit;
     }
@@ -330,11 +331,16 @@ $total_without_ccnl = $total_workers - $total_with_ccnl;
         $('.ccnl-check:checked').each(function() { selected.push($(this).val()); });
         if (selected.length < 2) return;
 
-        var html = selected.map(function(v) {
-            return '<span class="badge badge-secondary mr-1 mb-1 p-2" style="cursor:pointer;font-size:0.9rem;" onclick="document.getElementById(\'newCcnlName\').value=this.textContent">' + $('<span>').text(v).html() + '</span>';
-        }).join('');
-
-        $('#selectedList').html(html);
+        var container = document.getElementById('selectedList');
+        container.textContent = '';
+        selected.forEach(function(v) {
+            var badge = document.createElement('span');
+            badge.className = 'badge badge-secondary mr-1 mb-1 p-2';
+            badge.style.cssText = 'cursor:pointer;font-size:0.9rem;';
+            badge.textContent = v;
+            badge.onclick = function() { document.getElementById('newCcnlName').value = this.textContent; };
+            container.appendChild(badge);
+        });
         $('#newCcnlName').val('');
         $('#mergePanel').slideDown(200);
         $('html, body').animate({ scrollTop: $('#mergePanel').offset().top - 80 }, 300);

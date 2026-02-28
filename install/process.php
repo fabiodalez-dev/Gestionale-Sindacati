@@ -26,7 +26,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     show_error('Richiesta non valida.');
 }
 
-// Raccogli i dati del modulo
+// Raccogli i dati del modulo con validazione tipo
+foreach (['db_host', 'db_name', 'db_user', 'db_pass', 'admin_username', 'admin_email', 'admin_password', 'base_url', 'accepted_file_formats'] as $_field) {
+    if (isset($_POST[$_field]) && !is_string($_POST[$_field])) {
+        show_error("Il campo $_field deve essere una stringa.");
+    }
+}
+unset($_field);
+
 $db_host = trim($_POST['db_host'] ?? '');
 $db_name = trim($_POST['db_name'] ?? '');
 $db_user = trim($_POST['db_user'] ?? '');

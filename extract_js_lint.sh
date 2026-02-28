@@ -101,8 +101,20 @@ while IFS= read -r phpfile; do
     output=$(eslint -c eslint.config.mjs "$jsfile" 2>&1)
     exit_code=$?
 
+    # Exit code 2 = fatal error (config problem, invalid file, etc.)
+    if [ $exit_code -eq 2 ]; then
+        FILES_WITH_ISSUES=$((FILES_WITH_ISSUES + 1))
+        ERRORS=$((ERRORS + 1))
+        echo "--- $phpfile [FATAL] ---"
+        echo "$output" | sed "s|$jsfile|$phpfile|g"
+        echo ""
+        continue
+    fi
+
     # Parse counts from ESLint summary line (e.g. "2 problems (1 error, 1 warning)")
     # Always parse regardless of exit_code since warnings have exit_code 0
+    file_errors=0
+    file_warnings=0
     summary_line=$(echo "$output" | grep -E '[0-9]+ problems?' | tail -n1 || true)
     if [ -n "$summary_line" ]; then
         file_errors=$(echo "$summary_line" | grep -oE '[0-9]+ errors?' | grep -oE '[0-9]+' || echo 0)

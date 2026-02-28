@@ -30,7 +30,8 @@ if ($result->num_rows == 0) {
     if ($dbConnection->query($alterQuery)) {
         echo "Campo 'iscritto' aggiunto con successo alla tabella 'lavoratori'.";
     } else {
-        echo "Errore durante l'aggiunta del campo 'iscritto': " . $dbConnection->error;
+        error_log("Errore durante l'aggiunta del campo 'iscritto': " . $dbConnection->error);
+        echo "Errore durante l'aggiunta del campo 'iscritto'. Controlla i log per i dettagli.";
     }
 } else {
     echo "Il campo 'iscritto' esiste già nella tabella 'lavoratori'.";

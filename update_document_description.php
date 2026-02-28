@@ -24,7 +24,13 @@ if (isset($_POST['doc_id']) && isset($_POST['description'])) {
 
     // Verifica che il documento esista e controlla autorizzazione
     $checkStmt = executeQuery("SELECT dl.id, dl.lavoratore_id FROM documenti_lavoratori dl WHERE dl.id = ?", [$docId], 'i');
-    if ($checkStmt === false || ($checkResult = $checkStmt->get_result())->num_rows === 0) {
+    if ($checkStmt === false) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Errore interno durante la verifica del documento.']);
+        exit;
+    }
+    $checkResult = $checkStmt->get_result();
+    if ($checkResult->num_rows === 0) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Documento non trovato.']);
         exit;
@@ -41,14 +47,18 @@ if (isset($_POST['doc_id']) && isset($_POST['description'])) {
             "SELECT l.sede_id FROM lavoratori l WHERE l.id = ?",
             [$docRow['lavoratore_id']], 'i'
         );
-        if ($sedeCheck !== false) {
-            $lavSede = $sedeCheck->get_result()->fetch_assoc();
-            $userSedeId = $_SESSION['user']['sede_id'] ?? null;
-            if ($userSedeId !== null && $lavSede && (int)$lavSede['sede_id'] !== (int)$userSedeId) {
-                http_response_code(403);
-                echo json_encode(['success' => false, 'message' => 'Non autorizzato.']);
-                exit;
-            }
+        if ($sedeCheck === false) {
+            // Fail-closed: se la query fallisce, nega l'accesso
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Errore interno durante la verifica dei permessi.']);
+            exit;
+        }
+        $lavSede = $sedeCheck->get_result()->fetch_assoc();
+        $userSedeId = $_SESSION['user']['sede_id'] ?? null;
+        if ($userSedeId !== null && $lavSede && (int)$lavSede['sede_id'] !== (int)$userSedeId) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Non autorizzato.']);
+            exit;
         }
     }
 

@@ -130,7 +130,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
                 'X-API-Key: ' . $conn['api_key'],
                 'Accept: application/json'
             ],
-            CURLOPT_SSL_VERIFYPEER => false
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2
         ]);
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -631,7 +632,7 @@ generateCsrfToken();
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.js"></script>
     <script>
-    var csrfToken = '<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>';
+    var csrfToken = <?php echo json_encode($_SESSION['csrf_token']); ?>;
 
     function apiPost(action, data, callback) {
         data.ajax_action = action;

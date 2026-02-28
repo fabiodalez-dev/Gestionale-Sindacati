@@ -113,7 +113,7 @@ if (!empty($nazionalita_rest)) {
 }
 
 // ── Aziende (top 20) ──
-$sql = "SELECT a.nome_azienda AS label, COUNT(l.id) AS value FROM aziende a JOIN lavoratori l ON a.id = l.azienda_id $where GROUP BY a.nome_azienda ORDER BY value DESC LIMIT 20";
+$sql = "SELECT a.nome_azienda AS label, COUNT(l.id) AS value FROM aziende a JOIN lavoratori l ON a.id = l.azienda_id $where GROUP BY a.id, a.nome_azienda ORDER BY value DESC LIMIT 20";
 $r = dashQuery($sql, $params, $types);
 $aziende = [];
 if ($r) while ($row = $r->fetch_assoc()) $aziende[] = $row;

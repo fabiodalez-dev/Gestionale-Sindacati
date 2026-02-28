@@ -40,7 +40,8 @@ function callRemoteApi($endpoint_url, $api_key, $params = []) {
             'X-API-Key: ' . $api_key,
             'Accept: application/json'
         ],
-        CURLOPT_SSL_VERIFYPEER => false
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2
     ]);
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

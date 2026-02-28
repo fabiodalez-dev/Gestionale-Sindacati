@@ -1464,17 +1464,47 @@ function editDescription(docId) {
   // Recupera la cella della descrizione e il testo attuale
   var descCell = document.getElementById("desc-" + docId);
   var currentDesc = document.getElementById("desc-text-" + docId).innerText;
-  
-  // Sostituisce il contenuto della cella con un form di modifica
-  descCell.innerHTML = `
-    <form action="update_document_description_azienda.php" method="POST" onsubmit="return updateDescription(event, ${docId});">
-      <input type="hidden" name="csrf_token" value="<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>">
-      <input type="hidden" name="doc_id" value="${docId}">
-      <input type="text" name="description" value="${currentDesc}" required>
-      <button type="submit" class="btn btn-sm btn-success">Salva</button>
-      <button type="button" class="btn btn-sm btn-warning" onclick="cancelEdit(${docId}, '${currentDesc.replace(/'/g, "\\'")}')">Annulla</button>
-    </form>
-  `;
+
+  // Costruisce il form via DOM API per evitare XSS
+  descCell.textContent = '';
+  var form = document.createElement('form');
+  form.action = 'update_document_description_azienda.php';
+  form.method = 'POST';
+  form.onsubmit = function(e) { return updateDescription(e, docId); };
+
+  var csrfInput = document.createElement('input');
+  csrfInput.type = 'hidden';
+  csrfInput.name = 'csrf_token';
+  csrfInput.value = <?php echo json_encode($_SESSION['csrf_token']); ?>;
+  form.appendChild(csrfInput);
+
+  var docIdInput = document.createElement('input');
+  docIdInput.type = 'hidden';
+  docIdInput.name = 'doc_id';
+  docIdInput.value = docId;
+  form.appendChild(docIdInput);
+
+  var descInput = document.createElement('input');
+  descInput.type = 'text';
+  descInput.name = 'description';
+  descInput.value = currentDesc;
+  descInput.required = true;
+  form.appendChild(descInput);
+
+  var saveBtn = document.createElement('button');
+  saveBtn.type = 'submit';
+  saveBtn.className = 'btn btn-sm btn-success';
+  saveBtn.textContent = 'Salva';
+  form.appendChild(saveBtn);
+
+  var cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'btn btn-sm btn-warning';
+  cancelBtn.textContent = 'Annulla';
+  cancelBtn.onclick = function() { cancelEdit(docId, currentDesc); };
+  form.appendChild(cancelBtn);
+
+  descCell.appendChild(form);
 }
 
 function updateDescription(event, docId) {

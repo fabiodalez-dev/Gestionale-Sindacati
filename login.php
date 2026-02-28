@@ -46,11 +46,16 @@ function checkLoginRateLimit($ip) {
  */
 function clearLoginAttempts($ip) {
     $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
-    if (file_exists($lockFile)) {
-        if (!unlink($lockFile)) {
-            error_log("Impossibile rimuovere il file di rate limit: $lockFile");
-        }
+    $fh = @fopen($lockFile, 'c+');
+    if ($fh === false) return;
+    if (!flock($fh, LOCK_EX)) {
+        fclose($fh);
+        return;
     }
+    ftruncate($fh, 0);
+    flock($fh, LOCK_UN);
+    fclose($fh);
+    @unlink($lockFile);
 }
 
 // --- End Rate Limiting Functions ---

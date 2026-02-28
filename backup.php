@@ -13,6 +13,16 @@ if ($is_cron) {
         http_response_code(403);
         die('Accesso negato. Chiave cron non valida.');
     }
+    // Cron key è autorizzata solo per il backup; blocca qualsiasi altra azione
+    $allowed_cron_actions = [''];
+    $cron_action = $_GET['action'] ?? '';
+    if ($cron_action !== '' && $cron_action !== 'download') {
+        // Il cron non deve poter scaricare, solo creare backup
+    }
+    if (isset($_GET['action']) && $_GET['action'] !== '') {
+        http_response_code(403);
+        die('Accesso negato. Il cron può solo eseguire backup.');
+    }
 } else {
     checkLogin();
 }

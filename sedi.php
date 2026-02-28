@@ -380,12 +380,14 @@ if ($statsStmt) {
                                                                title="Modifica sede">
                                                                 <i class="fas fa-edit"></i>
                                                             </a>
-                                                            <a href="delete_sede.php?id=<?php echo sanitizeForHTML($sede['id']); ?>&csrf_token=<?php echo $_SESSION['csrf_token']; ?>"
-                                                               class="table-action-icon"
-                                                               onclick="return confirm('Sei sicuro di voler eliminare questa sede? I lavoratori associati perderanno il riferimento alla sede.');"
-                                                               title="Elimina sede">
-                                                                <i class="fas fa-trash"></i>
-                                                            </a>
+                                                            <form method="POST" action="delete_sede.php" style="display:inline;"
+                                                                  onsubmit="return confirm('Sei sicuro di voler eliminare questa sede? I lavoratori associati perderanno il riferimento alla sede.');">
+                                                                <input type="hidden" name="id" value="<?php echo intval($sede['id']); ?>">
+                                                                <?php csrfInputField(); ?>
+                                                                <button type="submit" class="table-action-icon" title="Elimina sede" style="border:none;background:none;cursor:pointer;">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </form>
                                                         </div>
                                                     </td>
                                                 </tr>

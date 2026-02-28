@@ -640,6 +640,13 @@ if (!$_encryption_key) {
     error_log("FATAL: GENERAL_ENCRYPTION_KEY non configurata in .env");
     die("Errore di configurazione del server. Chiave di crittografia mancante.");
 }
+// Verifica che la chiave sia base64 valida e decodifichi a 32 byte (AES-256)
+$_decoded_key = base64_decode($_encryption_key, true);
+if ($_decoded_key === false || strlen($_decoded_key) !== 32) {
+    error_log("FATAL: GENERAL_ENCRYPTION_KEY non è una chiave base64 valida di 32 byte");
+    die("Errore di configurazione del server. Chiave di crittografia non valida.");
+}
+unset($_decoded_key);
 define('GENERAL_ENCRYPTION_KEY', $_encryption_key);
 unset($_encryption_key);
 

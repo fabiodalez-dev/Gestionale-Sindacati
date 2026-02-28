@@ -199,6 +199,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Eliminazione definitiva in batch
     if (isset($_POST['delete_workers'])) {
         global $mysqli;
+
+        // Prima recupera i file fisici da eliminare
+        $queryGetDocs = "SELECT percorso_documento FROM documenti_lavoratori WHERE lavoratore_id IN ($placeholders)";
+        $stmtGetDocs = executeQuery($queryGetDocs, $workerIds, $typesForWorkerIds);
+        $filesToDelete = [];
+        if ($stmtGetDocs !== false) {
+            $docsResult = $stmtGetDocs->get_result();
+            $uploadsDir = realpath(__DIR__ . '/uploads');
+            while ($docRow = $docsResult->fetch_assoc()) {
+                if (!empty($docRow['percorso_documento']) && $uploadsDir !== false) {
+                    $candidatePath = $uploadsDir . DIRECTORY_SEPARATOR . ltrim($docRow['percorso_documento'], '/\\');
+                    $fullPath = realpath($candidatePath);
+                    if ($fullPath !== false && strpos($fullPath, $uploadsDir . DIRECTORY_SEPARATOR) === 0 && is_file($fullPath)) {
+                        $filesToDelete[] = $fullPath;
+                    }
+                }
+            }
+        }
+
         $mysqli->begin_transaction();
         try {
             $queryDeleteDocs = "DELETE FROM documenti_lavoratori WHERE lavoratore_id IN ($placeholders)";
@@ -208,12 +227,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $queryDeleteIscrizioni = "DELETE FROM iscrizioni WHERE lavoratore_id IN ($placeholders)";
             $stmtDeleteIscrizioni = executeQuery($queryDeleteIscrizioni, $workerIds, $typesForWorkerIds);
             if ($stmtDeleteIscrizioni === false) throw new Exception("Errore eliminazione iscrizioni.");
-            
+
             $queryDelete = "DELETE FROM lavoratori WHERE id IN ($placeholders)";
             $stmtDelete = executeQuery($queryDelete, $workerIds, $typesForWorkerIds);
             if ($stmtDelete === false) throw new Exception("Errore eliminazione lavoratori.");
 
             $mysqli->commit();
+
+            // Elimina i file fisici dopo il commit DB
+            foreach ($filesToDelete as $filePath) {
+                if (!unlink($filePath)) {
+                    error_log("Impossibile eliminare il file: $filePath");
+                }
+            }
+
             echo json_encode(["success" => "Lavoratori eliminati definitivamente con successo."]);
         } catch (Exception $e) {
             $mysqli->rollback();
@@ -1115,7 +1142,7 @@ generateCsrfToken();
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <input type="hidden" name="csrf_token_modal_azienda" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <?php csrfInputField(); ?>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1155,7 +1182,7 @@ generateCsrfToken();
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <input type="hidden" name="csrf_token_modal_sede" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <?php csrfInputField(); ?>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1195,7 +1222,7 @@ generateCsrfToken();
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <input type="hidden" name="csrf_token_modal_ccnl" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <?php csrfInputField(); ?>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1313,7 +1340,7 @@ generateCsrfToken();
     <script>
         $(document).ready(function() {
             var selectedWorkers = {};
-            var csrfToken = '<?php echo $_SESSION['csrf_token']; ?>';
+            var csrfToken = <?php echo json_encode($_SESSION['csrf_token']); ?>;
             var table;
             var columnFiltersVisible = false;
             var customFiltersVisible = true;

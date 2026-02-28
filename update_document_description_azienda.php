@@ -19,6 +19,7 @@ if (isset($_POST['doc_id']) && isset($_POST['description'])) {
     $newDescription = trim($_POST['description']);
 
     if ($docId <= 0) {
+        http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'ID documento non valido.']);
         exit;
     }
