@@ -50,21 +50,22 @@ test.describe('Gestione Utenti - CSRF Fix', () => {
   test('create user with invalid CSRF is rejected', async ({ page }) => {
     await loginAsAdmin(page);
     const uniqueUser = `testuser_${Date.now()}`;
-    // POST with bad CSRF token
-    const response = await page.evaluate(async (username) => {
-      const formData = new FormData();
-      formData.append('action', 'create');
-      formData.append('csrf_token', 'invalid_token');
-      formData.append('username', username);
-      formData.append('email', `${username}@test.com`);
-      formData.append('password', 'test123');
-      formData.append('role', 'operatore');
-      const resp = await fetch('/gestione_utenti.php', { method: 'POST', body: formData });
-      return { url: resp.url, status: resp.status };
-    }, uniqueUser);
-    // Should not create the user - page shows error
-    await page.goto(`${BASE}/gestione_utenti.php`);
+    // POST with bad CSRF token using page.request.post
+    const response = await page.request.post(`${BASE}/gestione_utenti.php`, {
+      form: {
+        action: 'create',
+        csrf_token: 'invalid_token',
+        username: uniqueUser,
+        email: `${uniqueUser}@test.com`,
+        password: 'test123',
+        role: 'operatore'
+      },
+      maxRedirects: 0
+    });
+    // Should reject with redirect or 403, never process successfully
+    expect([200, 302, 303, 403]).toContain(response.status());
     // Verify user was NOT created
+    await page.goto(`${BASE}/gestione_utenti.php`);
     const pageContent = await page.content();
     expect(pageContent).not.toContain(uniqueUser);
   });
@@ -213,17 +214,18 @@ test.describe('Delete Lavoratore - CSRF', () => {
 // 7. update_note_lavoratore.php - proper CSRF (no die())
 // ============================================================
 test.describe('Update Note Lavoratore - CSRF', () => {
-  test('POST with invalid CSRF redirects', async ({ page }) => {
+  test('POST with invalid CSRF is rejected', async ({ page }) => {
     await loginAsAdmin(page);
     const response = await page.request.post(`${BASE}/update_note_lavoratore.php`, {
       form: {
         csrf_token: 'bad_token',
         id: '1',
         note: 'test'
-      }
+      },
+      maxRedirects: 0
     });
-    const body = await response.text();
-    expect(body).not.toContain('Token CSRF non valido.');
+    // Should redirect or return 403, not process the update
+    expect([302, 303, 403]).toContain(response.status());
   });
 });
 

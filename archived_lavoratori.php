@@ -234,8 +234,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $mysqli->commit();
 
-            // Elimina i file fisici dopo il commit DB
-            foreach ($filesToDelete as $filePath) {
+            // Elimina i file fisici dopo il commit DB (deduplica per sicurezza)
+            foreach (array_unique($filesToDelete) as $filePath) {
                 if (!unlink($filePath)) {
                     error_log("Impossibile eliminare file documento (basename=" . basename($filePath) . ")");
                 }

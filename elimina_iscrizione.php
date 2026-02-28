@@ -46,7 +46,7 @@ $stmt->close();
 $delete_query = "DELETE FROM iscrizioni WHERE id = ?";
 $stmt = $mysqli->prepare($delete_query);
 $stmt->bind_param('i', $iscrizione_id);
-if ($stmt->execute()) {
+if ($stmt->execute() && $stmt->affected_rows > 0) {
     // Controlla se il lavoratore ha altre iscrizioni attive
     $check_query = "SELECT COUNT(*) AS count FROM iscrizioni WHERE lavoratore_id = ? AND (metodo_pagamento IN ('trattenuta in busta paga', 'sepa') OR (metodo_pagamento = 'rinnovo annuale' AND data_fine >= ?))";
     $oggi = date('Y-m-d');

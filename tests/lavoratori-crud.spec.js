@@ -380,7 +380,11 @@ test.describe('Modifica lavoratore', () => {
     await login(page);
 
     // Trova dinamicamente un lavoratore con tipo_tessera = 'sepa'
-    const sepaWorkerId = process.env.TEST_SEPA_WORKER_ID || '14047';
+    const sepaWorkerId = process.env.TEST_SEPA_WORKER_ID;
+    if (!sepaWorkerId) {
+      test.skip();
+      return;
+    }
     await page.goto(`${BASE_URL}/edit_lavoratore.php?id=${sepaWorkerId}`, { timeout: 30000 });
 
     // Wait for the form to load

@@ -50,6 +50,11 @@ function validateDate($date, $format = 'Y-m-d') {
 
 // Gestione della richiesta POST per aggiungere una nuova iscrizione
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'aggiungi_iscrizione') {
+    // Verifica token CSRF
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = "Token CSRF non valido.";
+    }
+
     // Recupera e sanitizza i dati del modulo
     $lavoratore_id = isset($_POST['lavoratore_id']) ? intval($_POST['lavoratore_id']) : 0;
     $numero_tessera = trim($_POST['numero_tessera']) ?: NULL; // Permette NULL
@@ -58,7 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $data_fine_input = isset($_POST['data_fine']) && !empty($_POST['data_fine']) ? $_POST['data_fine'] : NULL;
 
     // Validazioni di base
-    $errors = [];
     if ($lavoratore_id <= 0) {
         $errors[] = "Lavoratore non valido. Assicurati di selezionare un lavoratore esistente.";
     }

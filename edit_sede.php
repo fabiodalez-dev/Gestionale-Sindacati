@@ -28,7 +28,7 @@ if (!$sede) {
 // Gestione dell'invio del form per aggiornare la sede
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verifica del token CSRF
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         die("Token CSRF non valido.");
     }
     
@@ -104,7 +104,7 @@ generateCsrfToken();
                     <div class="card shadow mb-4">
                         <div class="card-body">
                             <form action="edit_sede.php?id=<?php echo sanitizeForHTML($sede_id); ?>" method="POST">
-                                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                                <?php csrfInputField(); ?>
                                 
                                 <div class="form-group">
                                     <label for="nome">Nome Sede <span class="text-danger">*</span></label>

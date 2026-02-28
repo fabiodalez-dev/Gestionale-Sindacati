@@ -39,18 +39,27 @@ if ($result->num_rows > 0) {
 
     // Elimina il file dal server con validazione path traversal
     $uploadsDir = realpath(__DIR__ . '/uploads');
+    $fileDeleteFailed = false;
     if ($uploadsDir !== false) {
         $candidatePath = $uploadsDir . DIRECTORY_SEPARATOR . ltrim($percorso, '/\\');
         $fullPath = realpath($candidatePath);
         if ($fullPath !== false && strpos($fullPath, $uploadsDir . DIRECTORY_SEPARATOR) === 0) {
             if (is_file($fullPath) && !unlink($fullPath)) {
-                error_log("Impossibile eliminare il file: $fullPath");
+                error_log("Impossibile eliminare il file: " . basename($fullPath));
+                $fileDeleteFailed = true;
             }
         } elseif ($fullPath !== false) {
-            // Path traversal attempt — non eliminare il file ma procedi con il DB
-            error_log("Tentativo di path traversal bloccato per documento ID $documento_id: $percorso");
+            // Path traversal attempt — non eliminare il file e non procedere
+            error_log("Tentativo di path traversal bloccato per documento ID $documento_id");
+            header("Location: azienda.php?id=" . $azienda_id . "&delete_error=" . urlencode("Errore di sicurezza durante l'eliminazione."));
+            exit;
         }
         // Se realpath restituisce false, il file non esiste più — procedi comunque con il DB
+    }
+
+    if ($fileDeleteFailed) {
+        header("Location: azienda.php?id=" . $azienda_id . "&delete_error=" . urlencode("Impossibile eliminare il file fisico. Record non rimosso."));
+        exit;
     }
 
     // Elimina il record dal database

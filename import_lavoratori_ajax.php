@@ -16,7 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Verifica CSRF
-if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+    http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Token CSRF non valido.']);
     exit;
 }

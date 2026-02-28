@@ -78,7 +78,7 @@ if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin') {
             <span>Gestione Sedi</span></a>
     </li>
 
-    <?php if ($_SESSION['user_role'] === 'admin'): ?>
+    <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
     <!-- Nav Item - Gestione CCNL -->
     <li class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'gestione_ccnl.php' ? 'active' : ''; ?>">
         <a class="nav-link" href="<?php echo $base_url; ?>gestione_ccnl.php">

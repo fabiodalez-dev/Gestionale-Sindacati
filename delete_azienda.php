@@ -30,6 +30,10 @@ if ($stmt === false) {
     exit();
 }
 $result = $stmt->get_result();
+if (!$result) {
+    header("Location: aziende.php?delete_error=" . urlencode("Errore durante il controllo dei lavoratori associati."));
+    exit();
+}
 $count = $result->fetch_assoc()['count'];
 
 if ($count > 0) {

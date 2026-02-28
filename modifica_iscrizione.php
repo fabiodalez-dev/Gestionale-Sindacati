@@ -53,6 +53,12 @@ $stmt->close();
 
 // Gestione della richiesta POST per aggiornare l'iscrizione
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'modifica_iscrizione') {
+    // Verifica CSRF token prima di qualsiasi elaborazione
+    $errors = [];
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Token CSRF non valido.';
+    }
+
     // Recupera e sanitizza i dati del modulo
     $lavoratore_id = isset($_POST['lavoratore_id']) ? intval($_POST['lavoratore_id']) : 0;
     $tipo_tessera = isset($_POST['tipo_tessera']) ? trim($_POST['tipo_tessera']) : '';
@@ -61,11 +67,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $nota_pagamento = trim($_POST['nota_pagamento']) ?: NULL;
 
     // Validazioni di base
-    $errors = [];
-    // Verifica CSRF token
-    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
-        $errors[] = 'Token CSRF non valido.';
-    }
     if ($lavoratore_id <= 0) {
         $errors[] = "Lavoratore non valido. Assicurati di selezionare un lavoratore esistente.";
     }

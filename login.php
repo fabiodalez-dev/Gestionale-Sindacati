@@ -46,24 +46,7 @@ function checkLoginRateLimit($ip) {
  */
 function clearLoginAttempts($ip) {
     $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
-    $fh = fopen($lockFile, 'c+');
-    if ($fh === false) {
-        error_log("Rate limiter cleanup: impossibile aprire file per IP hash " . md5($ip));
-        return false;
-    }
-    if (!flock($fh, LOCK_EX)) {
-        fclose($fh);
-        return false;
-    }
-    if (!ftruncate($fh, 0)) {
-        flock($fh, LOCK_UN);
-        fclose($fh);
-        error_log("Rate limiter cleanup: ftruncate fallita per IP hash " . md5($ip));
-        return false;
-    }
-    flock($fh, LOCK_UN);
-    fclose($fh);
-    if (file_exists($lockFile) && !unlink($lockFile)) {
+    if (file_exists($lockFile) && !@unlink($lockFile)) {
         error_log("Rate limiter cleanup: unlink fallita per IP hash " . md5($ip));
         return false;
     }

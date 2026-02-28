@@ -1,6 +1,6 @@
 # Blocca l'esecuzione di script PHP in questa cartella.
 # Permette l'accesso diretto ai file scaricabili.
-<FilesMatch "\.php$">
+<FilesMatch "\.(php|phtml|php[345s]|pht)$">
     Require all denied
 </FilesMatch>
 

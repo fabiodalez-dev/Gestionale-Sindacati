@@ -33,7 +33,7 @@ test('Apply all pending migrations via migrate.php', async ({ page }) => {
   console.log(`Found ${btnCount} migrate buttons`);
 
   if (btnCount > 0) {
-    // Click the first migration button once (runs all pending migrations)
+    // Click migration button once - it runs all pending migrations in one pass
     const btn = migrateButtons.first();
     const btnText = await btn.textContent();
     console.log(`Clicking migration button: ${btnText}`);

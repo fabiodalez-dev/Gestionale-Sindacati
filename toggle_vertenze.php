@@ -16,6 +16,7 @@ if (!isset($_POST['id'], $_POST['csrf_token'])) {
 
 // Verifica il token CSRF
 if (!verifyCsrfToken($_POST['csrf_token'])) {
+    http_response_code(403);
     echo "Token CSRF non valido.";
     exit;
 }
