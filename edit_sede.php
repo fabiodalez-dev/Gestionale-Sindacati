@@ -29,7 +29,7 @@ if (!$sede) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verifica del token CSRF
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
-        header("Location: sedi.php?error=" . urlencode("Token CSRF non valido."));
+        header("Location: sedi.php?error=" . urlencode("Token CSRF non valido."), true, 303);
         exit;
     }
     

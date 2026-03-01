@@ -1335,6 +1335,11 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
     form.action = 'update_document_description.php';
     form.method = 'POST';
     form.onsubmit = function(e) { return updateDescription(e, docId); };
+    var csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrf_token';
+    csrfInput.value = <?php echo json_encode($_SESSION['csrf_token']); ?>;
+    form.appendChild(csrfInput);
     var hiddenInput = document.createElement('input');
     hiddenInput.type = 'hidden';
     hiddenInput.name = 'doc_id';

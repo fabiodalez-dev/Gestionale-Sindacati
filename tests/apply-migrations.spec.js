@@ -75,7 +75,7 @@ test('Apply all pending migrations via migrate.php', async ({ page }) => {
       iteration++;
     }
     if (iteration >= MAX_INDEX_ITERATIONS) {
-      console.warn(`Index optimization stopped after ${MAX_INDEX_ITERATIONS} iterations`);
+      throw new Error(`Index optimization did not converge after ${MAX_INDEX_ITERATIONS} iterations`);
     }
   }
 

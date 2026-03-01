@@ -70,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
         $new_value = trim($_POST['new_value'] ?? '');
 
         if (empty($old_value) || empty($new_value)) {
+            http_response_code(400);
             echo json_encode(['error' => 'Valori mancanti.']);
             exit;
         }
@@ -98,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
         $value = trim($_POST['value'] ?? '');
 
         if (empty($value)) {
+            http_response_code(400);
             echo json_encode(['error' => 'Valore mancante.']);
             exit;
         }

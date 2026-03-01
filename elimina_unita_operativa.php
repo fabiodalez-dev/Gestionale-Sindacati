@@ -29,7 +29,7 @@ $unita_operativa_id = (int) $_POST['id'];
 $azienda_id = (int) $_POST['azienda_id'];
 
 if ($unita_operativa_id <= 0 || $azienda_id <= 0) {
-    header("Location: aziende.php?unita_delete_error=" . urlencode("Parametri mancanti."));
+    header("Location: aziende.php?unita_delete_error=" . urlencode("Parametri mancanti."), true, 303);
     exit();
 }
 

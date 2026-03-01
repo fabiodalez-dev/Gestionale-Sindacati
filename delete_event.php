@@ -66,6 +66,12 @@ $stmt->close();
 
 // Gestione della cancellazione per tutti gli eventi aziendali
 if ($delete_for_all === 1 && intval($evento['is_company_event']) === 1) {
+    // Solo admin può eliminare tutti gli eventi aziendali
+    if (($_SESSION['user_role'] ?? '') !== 'admin') {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Solo gli amministratori possono eliminare tutti gli eventi aziendali.']);
+        exit;
+    }
     // Elimina tutti gli eventi aziendali per questa azienda
     $delete_query = "DELETE FROM calendario_lavoratori WHERE azienda_id = ? AND is_company_event = 1";
     $params = [intval($evento['azienda_id'])];
@@ -114,13 +120,8 @@ if ($delete_stmt === false) {
     exit;
 }
 
-if ($delete_stmt->execute()) {
-    error_log("Evento singolo eliminato con successo. ID evento: $id");
-    echo json_encode(['success' => true, 'message' => 'Evento eliminato con successo.']);
-} else {
-    error_log("Errore nell'eliminazione dell'evento singolo: " . $delete_stmt->error);
-    echo json_encode(['success' => false, 'error' => 'Errore nell\'eliminazione dell\'evento.']);
-}
+error_log("Evento singolo eliminato con successo. ID evento: $id");
+echo json_encode(['success' => true, 'message' => 'Evento eliminato con successo.']);
 
 // Chiudi lo statement di eliminazione
 $delete_stmt->close();

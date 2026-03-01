@@ -45,6 +45,20 @@ if (!in_array($fileExtension, $allowedExtensions)) {
     exit;
 }
 
+// MIME type validation
+$allowedMimeTypes = [
+    'text/csv', 'text/plain',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+];
+$finfo = finfo_open(FILEINFO_MIME_TYPE);
+$detectedMime = finfo_file($finfo, $fileTmpPath);
+finfo_close($finfo);
+if ($detectedMime !== false && !in_array($detectedMime, $allowedMimeTypes)) {
+    echo json_encode(['success' => false, 'error' => 'Tipo file non valido. Contenuto non corrisponde all\'estensione.']);
+    exit;
+}
+
 // ── Leggi i dati dal file ──────────────────────────────────────────────
 $rows = [];
 $headerRow = [];

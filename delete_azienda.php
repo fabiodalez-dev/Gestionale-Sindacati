@@ -22,39 +22,46 @@ if ($azienda_id <= 0) {
     exit();
 }
 
-// Controlla se ci sono lavoratori associati a questa azienda
-$query = "SELECT COUNT(*) AS count FROM lavoratori WHERE azienda_id = ?";
-$stmt = executeQuery($query, [$azienda_id], 'i');
-if ($stmt === false) {
-    header("Location: aziende.php?delete_error=" . urlencode("Errore durante il controllo dei lavoratori associati."));
-    exit();
-}
-$result = $stmt->get_result();
-if (!$result) {
-    header("Location: aziende.php?delete_error=" . urlencode("Errore durante il controllo dei lavoratori associati."));
-    exit();
-}
-$count = $result->fetch_assoc()['count'];
+// Controlla e elimina in transazione per evitare race condition
+global $mysqli;
+$mysqli->begin_transaction();
+try {
+    // Lock riga azienda per prevenire eliminazioni concorrenti
+    $lockStmt = executeQuery("SELECT id FROM aziende WHERE id = ? FOR UPDATE", [$azienda_id], 'i');
+    if ($lockStmt === false || $lockStmt->get_result()->num_rows === 0) {
+        throw new Exception("Azienda non trovata o già eliminata.");
+    }
 
-if ($count > 0) {
-    // Non è possibile eliminare l'azienda se ci sono lavoratori associati
-    $error = "Non è possibile eliminare l'azienda perché ci sono lavoratori associati. Alcuni di questi potrebbero essere archiviati";
-    header("Location: aziende.php?delete_error=" . urlencode($error));
-    exit;
-}
+    // Controlla se ci sono lavoratori associati
+    $countStmt = executeQuery("SELECT COUNT(*) AS count FROM lavoratori WHERE azienda_id = ?", [$azienda_id], 'i');
+    if ($countStmt === false) {
+        throw new Exception("Errore durante il controllo dei lavoratori associati.");
+    }
+    $count = $countStmt->get_result()->fetch_assoc()['count'];
 
-// Elimina l'azienda dal database
-$query = "DELETE FROM aziende WHERE id = ?";
-$stmt = executeQuery($query, [$azienda_id], 'i');
+    if ($count > 0) {
+        $mysqli->rollback();
+        $error = "Non è possibile eliminare l'azienda perché ci sono lavoratori associati. Alcuni di questi potrebbero essere archiviati";
+        header("Location: aziende.php?delete_error=" . urlencode($error));
+        exit;
+    }
 
-if ($stmt && $stmt->affected_rows === 1) {
+    // Elimina l'azienda
+    $delStmt = executeQuery("DELETE FROM aziende WHERE id = ?", [$azienda_id], 'i');
+    if ($delStmt === false || $delStmt->affected_rows !== 1) {
+        throw new Exception("Errore durante l'eliminazione dell'azienda.");
+    }
+
+    if (!$mysqli->commit()) {
+        throw new Exception("Commit transazione fallito.");
+    }
+
     header("Location: aziende.php?delete_success=1");
     exit;
-} else {
-    $error = ($stmt && $stmt->affected_rows === 0)
-        ? "Azienda non trovata o già eliminata."
-        : "Errore durante l'eliminazione dell'azienda.";
-    header("Location: aziende.php?delete_error=" . urlencode($error));
+} catch (Exception $e) {
+    $mysqli->rollback();
+    error_log("Errore eliminazione azienda (id={$azienda_id}): " . $e->getMessage());
+    header("Location: aziende.php?delete_error=" . urlencode($e->getMessage()));
     exit;
 }
 ?>

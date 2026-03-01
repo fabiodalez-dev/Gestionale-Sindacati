@@ -62,8 +62,15 @@ test.describe('Gestione Utenti - CSRF Fix', () => {
       },
       maxRedirects: 0
     });
-    // Should reject: redirect (302/303), forbidden (403), or page re-rendered with error (200)
-    expect([200, 302, 303, 403]).toContain(response.status());
+    // Should reject: redirect (302/303) or forbidden (403)
+    // If 200, the page must contain a CSRF error message (re-rendered with error)
+    const status = response.status();
+    if (status === 200) {
+      const body = await response.text();
+      expect(body).toContain('CSRF');
+    } else {
+      expect([302, 303, 403]).toContain(status);
+    }
     // Verify user was NOT created
     await page.goto(`${BASE}/gestione_utenti.php`);
     const pageContent = await page.content();
@@ -316,6 +323,12 @@ test.describe('Gestione Iscrizioni', () => {
 // ============================================================
 test.describe('Config - HTMLPurifier Cache', () => {
   test('HTMLPurifier cache dir is NOT in sessions/', async ({ page }) => {
+    // Skip if testing against a remote host (no local filesystem access)
+    const url = new URL(BASE);
+    if (url.hostname !== 'localhost' && url.hostname !== '127.0.0.1' && url.hostname !== '::1') {
+      test.skip(true, 'Skipping filesystem check on remote host');
+      return;
+    }
     await loginAsAdmin(page);
     // Loading any page with rich text will trigger HTMLPurifier
     await page.goto(`${BASE}/dashboard.php`);

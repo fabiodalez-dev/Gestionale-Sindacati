@@ -81,7 +81,7 @@ PYEOF
 while IFS= read -r phpfile; do
 
     # Let the Python extractor handle filtering
-    jsfile="$TMPDIR/$(echo "$phpfile" | sed 's|/|__|g; s|\.php$|.js|')"
+    jsfile="$TMPDIR/$(echo "$phpfile" | shasum -a 256 | cut -c1-16).js"
 
     if ! python3 "$TMPDIR/extract.py" "$phpfile" > "$jsfile"; then
         echo "ERROR: JS extraction failed for $phpfile" >&2

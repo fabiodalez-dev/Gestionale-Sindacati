@@ -16,7 +16,12 @@ if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
     exit;
 }
 
-$lavoratore_id = intval($_POST['id'] ?? 0);
+$rawId = $_POST['id'] ?? '';
+if (!is_scalar($rawId) || !ctype_digit((string)$rawId)) {
+    header("Location: lavoratori.php?delete_error=" . urlencode("ID lavoratore non valido."));
+    exit();
+}
+$lavoratore_id = intval($rawId);
 
 if ($lavoratore_id <= 0) {
     header("Location: lavoratori.php?delete_error=" . urlencode("ID lavoratore non valido."));

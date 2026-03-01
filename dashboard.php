@@ -178,6 +178,7 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                     </span>
                                 </div>
                                 <?php
+                                    $ics_absolute_url = null;
                                     $configuredHost = parse_url($base_url, PHP_URL_HOST);
                                     $configuredScheme = parse_url($base_url, PHP_URL_SCHEME);
                                     $configuredPort = parse_url($base_url, PHP_URL_PORT);

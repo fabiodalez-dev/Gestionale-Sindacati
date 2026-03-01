@@ -58,9 +58,10 @@ if ($ccnlStmt !== false) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     checkUserRole('admin');
 
-    // Verifica CSRF token
+    // Verifica CSRF token (AJAX endpoint: rispondi con JSON)
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         http_response_code(403);
+        header('Content-Type: application/json');
         echo json_encode(["error" => "Token CSRF non valido."]);
         exit;
     }
@@ -209,7 +210,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uploadsDir = realpath(__DIR__ . '/uploads');
             while ($docRow = $docsResult->fetch_assoc()) {
                 if (!empty($docRow['percorso_documento']) && $uploadsDir !== false) {
-                    $candidatePath = $uploadsDir . DIRECTORY_SEPARATOR . ltrim($docRow['percorso_documento'], '/\\');
+                    $relativePath = ltrim(str_replace('uploads/', '', $docRow['percorso_documento']), '/\\');
+                    $candidatePath = $uploadsDir . DIRECTORY_SEPARATOR . $relativePath;
                     $fullPath = realpath($candidatePath);
                     if ($fullPath !== false && strpos($fullPath, $uploadsDir . DIRECTORY_SEPARATOR) === 0 && is_file($fullPath)) {
                         $filesToDelete[] = $fullPath;

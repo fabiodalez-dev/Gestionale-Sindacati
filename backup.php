@@ -20,6 +20,7 @@ if ($is_cron) {
     }
 } else {
     checkLogin();
+    checkUserRole('admin');
 }
 
 // Imposta l'encoding della connessione al database

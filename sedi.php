@@ -384,8 +384,8 @@ if ($statsStmt) {
                                                                   onsubmit="return confirm('Sei sicuro di voler eliminare questa sede? I lavoratori associati perderanno il riferimento alla sede.');">
                                                                 <input type="hidden" name="id" value="<?php echo intval($sede['id']); ?>">
                                                                 <?php csrfInputField(); ?>
-                                                                <button type="submit" class="table-action-icon" title="Elimina sede" style="border:none;background:none;cursor:pointer;">
-                                                                    <i class="fas fa-trash"></i>
+                                                                <button type="submit" class="table-action-icon" title="Elimina sede" aria-label="Elimina sede" style="border:none;background:none;cursor:pointer;">
+                                                                    <i class="fas fa-trash" aria-hidden="true"></i>
                                                                 </button>
                                                             </form>
                                                         </div>

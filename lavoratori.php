@@ -597,8 +597,8 @@ if (isset($_GET['datatables_ajax']) && $_GET['datatables_ajax'] == 1) {
             $azioni = '<div class="d-flex align-items-center gap-2">'
                     . '<a href="edit_lavoratore.php?id=' . sanitizeForHTML($row['id']) . '" class="table-action-icon" title="Modifica">'
                     . '<i class="fas fa-edit"></i></a>'
-                    . '<button type="button" class="table-action-icon delete-lavoratore-btn" data-id="' . sanitizeForHTML($row['id']) . '" title="Elimina">'
-                    . '<i class="fas fa-trash"></i></button>'
+                    . '<button type="button" class="table-action-icon delete-lavoratore-btn" data-id="' . sanitizeForHTML($row['id']) . '" title="Elimina" aria-label="Elimina lavoratore">'
+                    . '<i class="fas fa-trash" aria-hidden="true"></i></button>'
                     . '</div>';
             
             // ORDINE COLONNE: checkbox, COGNOME, NOME, resto...
@@ -1189,7 +1189,7 @@ generateCsrfToken();
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <input type="hidden" name="csrf_token_modal_azienda" value="<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>">
+                        <?php csrfInputField(); ?>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1229,7 +1229,7 @@ generateCsrfToken();
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <input type="hidden" name="csrf_token_modal_sede" value="<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>">
+                        <?php csrfInputField(); ?>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1269,7 +1269,7 @@ generateCsrfToken();
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <input type="hidden" name="csrf_token_modal_ccnl" value="<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>">
+                        <?php csrfInputField(); ?>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1306,7 +1306,7 @@ generateCsrfToken();
                                 <option value="privato">Privato</option>
                             </select>
                         </div>
-                        <input type="hidden" name="csrf_token_modal_settore" value="<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>">
+                        <?php csrfInputField(); ?>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1344,7 +1344,7 @@ generateCsrfToken();
                                 <option value="sepa">SEPA</option>
                             </select>
                         </div>
-                        <input type="hidden" name="csrf_token_modal_tipo_tessera" value="<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>">
+                        <?php csrfInputField(); ?>
                     </form>
                 </div>
                 <div class="modal-footer">

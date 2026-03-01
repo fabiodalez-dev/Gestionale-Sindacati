@@ -73,7 +73,7 @@ if (isset($_POST['doc_id']) && isset($_POST['description'])) {
     if ($stmt !== false && $stmt->affected_rows >= 0) {
         echo json_encode([
             'success' => true,
-            'new_description' => htmlspecialchars($newDescription)
+            'new_description' => $newDescription
         ]);
     } else {
         http_response_code(500);

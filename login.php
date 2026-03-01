@@ -12,7 +12,7 @@ function checkLoginRateLimit($ip) {
     $fh = fopen($lockFile, 'c+');
     if ($fh === false || !flock($fh, LOCK_EX)) {
         if (is_resource($fh)) fclose($fh);
-        error_log("Rate limiter non disponibile per IP: $ip");
+        error_log("Rate limiter non disponibile per IP hash: " . md5($ip));
         return null;
     }
     $raw = stream_get_contents($fh);
@@ -31,7 +31,7 @@ function checkLoginRateLimit($ip) {
     $data['attempts'][] = $now;
     $json = json_encode($data);
     if (ftruncate($fh, 0) === false || rewind($fh) === false || fwrite($fh, $json) === false || fflush($fh) === false) {
-        error_log("Rate limiter: errore scrittura file per IP: $ip");
+        error_log("Rate limiter: errore scrittura file per IP hash: " . md5($ip));
         flock($fh, LOCK_UN);
         fclose($fh);
         return null;
@@ -57,7 +57,7 @@ function rollbackReservedLoginAttempt($ip) {
         array_pop($data['attempts']);
         $json = json_encode($data);
         if (ftruncate($fh, 0) === false || rewind($fh) === false || fwrite($fh, $json) === false || fflush($fh) === false) {
-            error_log("Rate limiter rollback: errore scrittura file per IP: $ip");
+            error_log("Rate limiter rollback: errore scrittura file per IP hash: " . md5($ip));
             flock($fh, LOCK_UN);
             fclose($fh);
             return false;
@@ -121,7 +121,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         session_regenerate_id(true);
 
                         // Clear failed login attempts on success
-                        clearLoginAttempts($clientIp);
+                        if (!clearLoginAttempts($clientIp)) {
+                            error_log("clearLoginAttempts fallito per IP hash: " . md5($clientIp));
+                        }
 
                         $_SESSION['user_id'] = $user['id'];
                         $_SESSION['username'] = $user['username'];
@@ -145,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             } else {
                 if (!rollbackReservedLoginAttempt($clientIp)) {
-                    error_log("Rollback rate limiter fallito per IP: $clientIp");
+                    error_log("Rollback rate limiter fallito per IP hash: " . md5($clientIp));
                 }
                 $error = 'Errore nella connessione al database.';
             }

@@ -78,6 +78,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
             echo json_encode(['error' => 'URL non valido']);
             exit;
         }
+        $connScheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+        if ($connScheme !== 'https') {
+            echo json_encode(['error' => 'Endpoint non sicuro: usare HTTPS']);
+            exit;
+        }
         $stmt = executeQuery(
             "INSERT INTO api_connections (name, endpoint_url, api_key, created_by) VALUES (?, ?, ?, ?)",
             [$name, $url, $key, $_SESSION['user_id']],
@@ -127,7 +132,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
             echo json_encode(['error' => 'Endpoint non sicuro: usare HTTPS']);
             exit;
         }
-        $url = $endpointBase . '?action=ping';
+        $separator = (parse_url($endpointBase, PHP_URL_QUERY) !== null) ? '&' : '?';
+        $url = $endpointBase . $separator . 'action=ping';
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,

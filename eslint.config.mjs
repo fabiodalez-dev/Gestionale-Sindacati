@@ -44,6 +44,13 @@ export default [
         "tinymce": "readonly",
         "DataTable": "readonly",
         "ChartDataLabels": "readonly",
+        // Node/CommonJS globals (for extracted scripts)
+        "require": "readonly",
+        "module": "readonly",
+        "process": "readonly",
+        "__dirname": "readonly",
+        "__filename": "readonly",
+        "exports": "readonly",
         // PHP-injected variables (common patterns)
         "csrfToken": "writable",
         "baseUrl": "writable",

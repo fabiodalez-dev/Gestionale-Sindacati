@@ -603,9 +603,8 @@ test.describe('Export lavoratori', () => {
       page.waitForEvent('download', { timeout: 15000 }).catch(() => null),
       exportBtn.click()
     ]);
-    if (download) {
-      const filename = download.suggestedFilename();
-      expect(filename).toMatch(/\.xlsx?$/);
-    }
+    expect(download, 'Export should trigger a file download').not.toBeNull();
+    const filename = download.suggestedFilename();
+    expect(filename).toMatch(/\.xlsx?$/);
   });
 });

@@ -58,7 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Lavoratore non trovato o già eliminato");
             }
 
-            $mysqli->commit();
+            if (!$mysqli->commit()) {
+                throw new Exception("Commit transazione fallito");
+            }
 
             // Elimina i file fisici solo dopo il commit DB riuscito
             $uploadsDir = realpath(__DIR__ . '/uploads');
