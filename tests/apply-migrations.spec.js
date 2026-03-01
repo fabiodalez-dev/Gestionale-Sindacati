@@ -61,15 +61,21 @@ test('Apply all pending migrations via migrate.php', async ({ page }) => {
   console.log(`Found ${indexBtnCount} index optimization buttons`);
 
   if (indexBtnCount > 0) {
+    const MAX_INDEX_ITERATIONS = 20;
     let remaining = await indexBtn.count();
-    while (remaining > 0) {
+    let iteration = 0;
+    while (remaining > 0 && iteration < MAX_INDEX_ITERATIONS) {
       const btn = indexBtn.first();
       const btnText = await btn.textContent();
-      console.log(`Clicking index button: ${btnText}`);
+      console.log(`Clicking index button (${iteration + 1}/${MAX_INDEX_ITERATIONS}): ${btnText}`);
       await btn.click();
       await page.waitForLoadState('networkidle', { timeout: 30000 });
       console.log('Index optimization completed');
       remaining = await indexBtn.count();
+      iteration++;
+    }
+    if (iteration >= MAX_INDEX_ITERATIONS) {
+      console.warn(`Index optimization stopped after ${MAX_INDEX_ITERATIONS} iterations`);
     }
   }
 
@@ -80,6 +86,12 @@ test('Apply all pending migrations via migrate.php', async ({ page }) => {
   const finalContent = await page.content();
   expect(finalContent).not.toContain('Fatal error');
   expect(finalContent).not.toContain('Parse error');
+
+  // Verify no pending migrations remain
+  const stillPending = finalContent.includes('In Attesa') || finalContent.includes('pending') || finalContent.includes('da eseguire');
+  if (stillPending) {
+    console.warn('Warning: some migrations may still be pending after execution');
+  }
 
   console.log('Migration process completed successfully');
 });

@@ -49,11 +49,15 @@ function validateDate($date, $format = 'Y-m-d') {
 }
 
 // Gestione della richiesta POST per aggiungere una nuova iscrizione
+$errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'aggiungi_iscrizione') {
     // Verifica token CSRF
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         $errors[] = "Token CSRF non valido.";
     }
+    if (!empty($errors)) {
+        // CSRF non valido — salta il resto dell'elaborazione
+    } else {
 
     // Recupera e sanitizza i dati del modulo
     $lavoratore_id = isset($_POST['lavoratore_id']) ? intval($_POST['lavoratore_id']) : 0;
@@ -178,6 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $errors[] = $e->getMessage();
         }
     }
+    } // end else (CSRF valido)
 }
 
 // Recupera le iscrizioni in scadenza (tessere in scadenza)

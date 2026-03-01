@@ -396,8 +396,8 @@ function verifyCsrfToken(\$token) {
     if (!is_string(\$token) || !isset(\$_SESSION['csrf_token']) || !hash_equals(\$_SESSION['csrf_token'], \$token)) {
         return false;
     }
-    // Token scade dopo 1 ora
-    if (isset(\$_SESSION['csrf_token_time']) && (time() - \$_SESSION['csrf_token_time']) > 3600) {
+    // Token scade dopo 1 ora — fail-closed se manca il timestamp
+    if (!isset(\$_SESSION['csrf_token_time']) || (time() - \$_SESSION['csrf_token_time']) > 3600) {
         unset(\$_SESSION['csrf_token'], \$_SESSION['csrf_token_time']);
         return false;
     }

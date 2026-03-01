@@ -2,6 +2,7 @@
 header('Content-Type: application/json');
 require_once 'config.php';
 checkLogin();
+checkUserRole(['admin', 'operatore']);
 
 // Verifica CSRF token
 if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {

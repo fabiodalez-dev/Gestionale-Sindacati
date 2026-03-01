@@ -42,6 +42,30 @@ function checkLoginRateLimit($ip) {
 }
 
 /**
+ * Rollback last reserved login attempt slot on infrastructure failure.
+ * This prevents penalizing users when the system itself fails.
+ */
+function rollbackReservedLoginAttempt($ip) {
+    $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
+    if (!file_exists($lockFile)) return;
+    $fh = fopen($lockFile, 'c+');
+    if (!$fh) return;
+    if (!flock($fh, LOCK_EX)) { fclose($fh); return; }
+    $raw = stream_get_contents($fh);
+    $data = json_decode($raw, true);
+    if (is_array($data) && !empty($data['attempts'])) {
+        array_pop($data['attempts']);
+        $json = json_encode($data);
+        ftruncate($fh, 0);
+        rewind($fh);
+        fwrite($fh, $json);
+        fflush($fh);
+    }
+    flock($fh, LOCK_UN);
+    fclose($fh);
+}
+
+/**
  * Clear all failed login attempts for the given IP (on successful login).
  */
 function clearLoginAttempts($ip) {
@@ -117,6 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Email o password errati.';
                 }
             } else {
+                rollbackReservedLoginAttempt($clientIp);
                 $error = 'Errore nella connessione al database.';
             }
         }

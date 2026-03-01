@@ -51,7 +51,8 @@ try {
     exit;
 } catch (Exception $e) {
     $mysqli->rollback();
-    header("Location: sedi.php?delete_error=" . urlencode($e->getMessage()));
+    error_log("Errore eliminazione sede ID $sede_id: " . $e->getMessage());
+    header("Location: sedi.php?delete_error=" . urlencode("Errore durante l'eliminazione della sede."));
     exit;
 }
 ?>

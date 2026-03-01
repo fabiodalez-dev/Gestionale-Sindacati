@@ -469,16 +469,15 @@ test.describe('Test campi specifici', () => {
     await page.fill('[name="email"]', 'email-non-valida');
     await fillAutocomplete(page, '[name="azienda"]', '5b Service');
 
-    // Check if the email field has type="email" for browser validation
+    // Email field must have type="email" for browser validation
     const emailType = await page.locator('[name="email"]').getAttribute('type');
-    if (emailType === 'email') {
-      // Browser will prevent form submission with invalid email
-      const isValid = await page.evaluate(() => {
-        const emailInput = document.querySelector('[name="email"]');
-        return emailInput ? emailInput.checkValidity() : true;
-      });
-      expect(isValid).toBe(false);
-    }
+    expect(emailType).toBe('email');
+    // Browser will prevent form submission with invalid email
+    const isValid = await page.evaluate(() => {
+      const emailInput = document.querySelector('[name="email"]');
+      return emailInput ? emailInput.checkValidity() : true;
+    });
+    expect(isValid).toBe(false);
   });
 
   test('Tutti e tre i tipi tessera sono selezionabili', async ({ page }) => {

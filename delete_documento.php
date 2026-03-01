@@ -44,11 +44,11 @@ if ($result->num_rows > 0) {
         $fullPath = realpath($candidatePath);
         if ($fullPath !== false && strpos($fullPath, $uploadsDir . DIRECTORY_SEPARATOR) === 0) {
             if (is_file($fullPath) && !unlink($fullPath)) {
-                error_log("Impossibile eliminare il file: $fullPath");
+                error_log("Impossibile eliminare il file documento ID $documento_id: " . basename($fullPath));
             }
         } elseif ($fullPath !== false) {
             // Path traversal attempt — non eliminare il file ma procedi con il DB
-            error_log("Tentativo di path traversal bloccato per documento ID $documento_id: $percorso");
+            error_log("Tentativo di path traversal bloccato per documento ID $documento_id");
         }
         // Se realpath restituisce false, il file non esiste più — procedi comunque con il DB
     }

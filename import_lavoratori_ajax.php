@@ -377,6 +377,9 @@ foreach ($rows as $row) {
             $errorsList[] = "Riga $rowCount: duplicato rilevato. Lavoratore saltato.";
             $skippedCount++;
             $existing_lavoratori[$dup_key] = true;
+            if (!empty($codice_fiscale)) {
+                $existing_cf[strtoupper(trim($codice_fiscale))] = true;
+            }
             continue;
         }
         error_log("Errore inserimento lavoratore riga $rowCount: " . $e->getMessage());

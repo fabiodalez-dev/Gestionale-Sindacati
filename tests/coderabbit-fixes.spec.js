@@ -291,8 +291,8 @@ test.describe('Modifica Iscrizione - CSRF', () => {
     await loginAsAdmin(page);
     const response = await page.goto(`${BASE}/modifica_iscrizione.php?id=1`);
     // Should load or redirect - not crash
-    const status = response ? response.status() : 200;
-    expect([200, 302]).toContain(status);
+    expect(response).not.toBeNull();
+    expect([200, 302]).toContain(response.status());
   });
 });
 
@@ -366,8 +366,8 @@ test.describe('Elimina Unita Operativa - HTTP codes', () => {
   test('GET request returns 405 or redirects', async ({ page }) => {
     await loginAsAdmin(page);
     const response = await page.request.get(`${BASE}/elimina_unita_operativa.php`, { maxRedirects: 0 });
-    // Should redirect (POST-only)
-    expect([302, 303]).toContain(response.status());
+    // Should redirect (POST-only) or return 405 Method Not Allowed
+    expect([302, 303, 405]).toContain(response.status());
   });
 });
 

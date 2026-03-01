@@ -61,10 +61,14 @@ $dest_path = $uploadFileDir . $newFileName;
                     echo json_encode(['success' => true]);
                     exit;
                 } else {
-                    $error = "Errore durante il salvataggio nel database.";
+                    http_response_code(500);
+                    echo json_encode(['error' => 'Errore durante il salvataggio nel database.']);
+                    exit;
                 }
             } else {
-                $error = "Errore durante il caricamento del file.";
+                http_response_code(500);
+                echo json_encode(['error' => 'Errore durante il caricamento del file.']);
+                exit;
             }
         }
     } else {

@@ -51,7 +51,9 @@ if ($action === 'create') {
         } else {
             // Controlla se l'utente o l'email esistono già
             $stmt = executeQuery("SELECT * FROM users WHERE username = ? OR email = ?", [$username, $email], 'ss');
-            if ($stmt) {
+            if ($stmt === false) {
+                $error = "Errore durante la verifica dei dati. Riprova.";
+            } elseif ($stmt) {
                 $result = $stmt->get_result();
                 if ($result->num_rows > 0) {
                     $error = "Username o email già in uso.";

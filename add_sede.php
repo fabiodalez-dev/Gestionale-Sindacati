@@ -11,7 +11,8 @@ checkLogin();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verifica del token CSRF
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
-        die("Token CSRF non valido.");
+        header("Location: sedi.php?error=" . urlencode("Token CSRF non valido."));
+        exit;
     }
     
     // Recupera e pulisci i dati inviati

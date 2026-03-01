@@ -472,28 +472,22 @@ function checkLogin() {
                     'role'    => $row['role'] ?? 'operatore',
                     'sede_id' => $row['sede_id'] ?? null
                 ];
-                // Mantiene compatibilità con checkUserRole() che legge $_SESSION['user_role']
-                if (!isset($_SESSION['user_role'])) {
-                    $_SESSION['user_role'] = $_SESSION['user']['role'];
-                }
+                // Sincronizza sempre per garantire coerenza con checkUserRole()
+                $_SESSION['user_role'] = $_SESSION['user']['role'];
             } else {
                 // Se non troviamo l'utente, impostiamo valori di default
                 $_SESSION['user'] = [
                     'role'    => 'operatore',
                     'sede_id' => null
                 ];
-                if (!isset($_SESSION['user_role'])) {
-                    $_SESSION['user_role'] = 'operatore';
-                }
+                $_SESSION['user_role'] = 'operatore';
             }
         } else {
             $_SESSION['user'] = [
                 'role'    => 'operatore',
                 'sede_id' => null
             ];
-            if (!isset($_SESSION['user_role'])) {
-                $_SESSION['user_role'] = 'operatore';
-            }
+            $_SESSION['user_role'] = 'operatore';
         }
     }
 }
