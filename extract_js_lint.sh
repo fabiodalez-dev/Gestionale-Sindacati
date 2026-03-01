@@ -84,7 +84,7 @@ while IFS= read -r phpfile; do
     jsfile="$TMPDIR/$(echo "$phpfile" | sed 's|/|__|g; s|\.php$|.js|')"
 
     if ! python3 "$TMPDIR/extract.py" "$phpfile" > "$jsfile"; then
-        echo "ERROR: estrazione JS fallita per $phpfile" >&2
+        echo "ERROR: JS extraction failed for $phpfile" >&2
         FILES_WITH_ISSUES=$((FILES_WITH_ISSUES + 1))
         ERRORS=$((ERRORS + 1))
         rm -f "$jsfile"
@@ -144,7 +144,7 @@ done < <(find . -name "*.php" -type f \
     -not -path "*/vendor/*" \
     -not -path "*/node_modules/*" \
     -not -path "*/.eslint_tmp/*" \
-    | sort)
+    -print0 | sort -z | tr '\0' '\n')
 
 echo "========================================="
 echo "  SUMMARY"

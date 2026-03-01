@@ -142,14 +142,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 throw new Exception("Il lavoratore ha già un'iscrizione attiva. Non è possibile aggiungere un'altra iscrizione.");
             }
 
-            // Inserisci la nuova iscrizione
-            $insert_query = "INSERT INTO iscrizioni (lavoratore_id, numero_tessera, data_inizio, data_fine, nota_pagamento) 
-                             VALUES (?, ?, ?, ?, ?)";
+            // Inserisci la nuova iscrizione con metodo_pagamento dal tipo_tessera del lavoratore
+            $metodo_pagamento = $tipo_tessera;
+            $insert_query = "INSERT INTO iscrizioni (lavoratore_id, numero_tessera, metodo_pagamento, data_inizio, data_fine, nota_pagamento)
+                             VALUES (?, ?, ?, ?, ?, ?)";
             $stmt = $mysqli->prepare($insert_query);
             if (!$stmt) {
                 throw new Exception("Errore nella preparazione della query di inserimento: " . $mysqli->error);
             }
-            $stmt->bind_param('issss', $lavoratore_id, $numero_tessera, $data_inizio, $data_fine, $nota_pagamento);
+            $stmt->bind_param('isssss', $lavoratore_id, $numero_tessera, $metodo_pagamento, $data_inizio, $data_fine, $nota_pagamento);
             if (!$stmt->execute()) {
                 if ($mysqli->errno === 1062) { // Duplicate entry
                     throw new Exception("Il lavoratore ha già un'iscrizione attiva. Non è possibile aggiungere un'altra iscrizione.");

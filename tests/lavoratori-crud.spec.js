@@ -210,11 +210,10 @@ test.describe('Visualizzazione lavoratore', () => {
 
     // Click on the first result link to view detail
     const firstLink = page.locator('a[href*="lavoratore.php?id="]').first();
-    if (await firstLink.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await firstLink.click();
-      await page.waitForURL('**/lavoratore.php?id=**');
-      await expect(page.locator('body')).toContainText(`TestNome${RUN_ID}`);
-    }
+    await expect(firstLink).toBeVisible({ timeout: 5000 });
+    await firstLink.click();
+    await page.waitForURL('**/lavoratore.php?id=**');
+    await expect(page.locator('body')).toContainText(`TestNome${RUN_ID}`);
   });
 
   test('I filtri nella lista lavoratori funzionano', async ({ page }) => {

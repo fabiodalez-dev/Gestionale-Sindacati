@@ -1,9 +1,12 @@
 // @ts-check
 const { defineConfig, devices } = require('@playwright/test');
 
+const parsedTimeout = parseInt(process.env.TEST_TIMEOUT ?? '30000', 10);
+const timeout = Number.isFinite(parsedTimeout) && parsedTimeout > 0 ? parsedTimeout : 30000;
+
 module.exports = defineConfig({
   testDir: './tests',
-  timeout: parseInt(process.env.TEST_TIMEOUT || '30000', 10),
+  timeout,
   retries: 0,
   reporter: 'line',
   use: {

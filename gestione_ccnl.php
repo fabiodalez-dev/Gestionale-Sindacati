@@ -25,11 +25,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
         $new_value = trim($_POST['new_value'] ?? '');
 
         if (!is_array($old_values)) {
+            http_response_code(400);
             echo json_encode(['error' => 'Formato elenco CCNL non valido.']);
             exit;
         }
 
         if (empty($old_values) || empty($new_value)) {
+            http_response_code(400);
             echo json_encode(['error' => 'Seleziona almeno un CCNL e inserisci il nuovo nome.']);
             exit;
         }
@@ -115,6 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
         exit;
     }
 
+    http_response_code(400);
     echo json_encode(['error' => 'Azione non riconosciuta.']);
     exit;
 }

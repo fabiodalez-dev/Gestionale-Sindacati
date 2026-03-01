@@ -121,7 +121,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
             exit;
         }
 
-        $url = rtrim($conn['endpoint_url'], '/') . '?action=ping';
+        $endpointBase = rtrim($conn['endpoint_url'], '/');
+        $scheme = strtolower((string) parse_url($endpointBase, PHP_URL_SCHEME));
+        if ($scheme !== 'https') {
+            echo json_encode(['error' => 'Endpoint non sicuro: usare HTTPS']);
+            exit;
+        }
+        $url = $endpointBase . '?action=ping';
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
@@ -419,7 +425,13 @@ generateCsrfToken();
                                                         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
                                                         $configuredOrigin = $protocol . '://' . ($_SERVER['SERVER_NAME'] ?? 'localhost');
                                                     }
-                                                    echo sanitizeForHTML(rtrim($configuredOrigin, '/') . '/' . ltrim(rtrim($base_url, '/'), '/') . '/api.php');
+                                                    $basePath = trim($base_url, '/');
+                                                    $endpointUrl = rtrim($configuredOrigin, '/');
+                                                    if ($basePath !== '') {
+                                                        $endpointUrl .= '/' . $basePath;
+                                                    }
+                                                    $endpointUrl .= '/api.php';
+                                                    echo sanitizeForHTML($endpointUrl);
                                                 }
                                             ?></code>
                                             <button class="btn btn-sm btn-outline-secondary ml-2" id="copyEndpointBtn" title="Copia endpoint">

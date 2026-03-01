@@ -47,22 +47,25 @@ function checkLoginRateLimit($ip) {
  */
 function rollbackReservedLoginAttempt($ip) {
     $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
-    if (!file_exists($lockFile)) return;
+    if (!file_exists($lockFile)) return true;
     $fh = fopen($lockFile, 'c+');
-    if (!$fh) return;
-    if (!flock($fh, LOCK_EX)) { fclose($fh); return; }
+    if (!$fh) return false;
+    if (!flock($fh, LOCK_EX)) { fclose($fh); return false; }
     $raw = stream_get_contents($fh);
     $data = json_decode($raw, true);
     if (is_array($data) && !empty($data['attempts'])) {
         array_pop($data['attempts']);
         $json = json_encode($data);
-        ftruncate($fh, 0);
-        rewind($fh);
-        fwrite($fh, $json);
-        fflush($fh);
+        if (ftruncate($fh, 0) === false || rewind($fh) === false || fwrite($fh, $json) === false || fflush($fh) === false) {
+            error_log("Rate limiter rollback: errore scrittura file per IP: $ip");
+            flock($fh, LOCK_UN);
+            fclose($fh);
+            return false;
+        }
     }
     flock($fh, LOCK_UN);
     fclose($fh);
+    return true;
 }
 
 /**
@@ -141,7 +144,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Email o password errati.';
                 }
             } else {
-                rollbackReservedLoginAttempt($clientIp);
+                if (!rollbackReservedLoginAttempt($clientIp)) {
+                    error_log("Rollback rate limiter fallito per IP: $clientIp");
+                }
                 $error = 'Errore nella connessione al database.';
             }
         }

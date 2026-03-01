@@ -324,11 +324,13 @@ test.describe('Config - HTMLPurifier Cache', () => {
     const fs = require('fs');
     const appDir = path.resolve(__dirname, '..');
     const sessionsDir = path.join(appDir, 'sessions');
-    if (fs.existsSync(sessionsDir)) {
-      const sessionFiles = fs.readdirSync(sessionsDir);
-      const purifierFiles = sessionFiles.filter(f => f.toLowerCase().includes('htmlpurifier'));
-      expect(purifierFiles.length, 'HTMLPurifier files should NOT be in sessions/').toBe(0);
+    if (!fs.existsSync(sessionsDir)) {
+      test.skip(true, 'sessions/ directory does not exist — nothing to verify');
+      return;
     }
+    const sessionFiles = fs.readdirSync(sessionsDir);
+    const purifierFiles = sessionFiles.filter(f => f.toLowerCase().includes('htmlpurifier'));
+    expect(purifierFiles.length, 'HTMLPurifier files should NOT be in sessions/').toBe(0);
   });
 });
 

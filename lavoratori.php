@@ -74,6 +74,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    // Tutte le operazioni bulk richiedono ruolo admin
+    $currentRole = $_SESSION['user_role'] ?? ($_SESSION['user']['role'] ?? null);
+    if ($currentRole !== 'admin') {
+        http_response_code(403);
+        echo json_encode(["error" => "Operazione riservata agli amministratori."]);
+        exit;
+    }
+
     $workerIds = [];
     if (isset($_POST['worker_ids'])) {
         if (is_array($_POST['worker_ids'])) {
@@ -205,14 +213,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
     
-    // Eliminazione in batch (solo admin)
+    // Eliminazione in batch
     if (isset($_POST['delete_workers'])) {
-        $currentRole = $_SESSION['user_role'] ?? ($_SESSION['user']['role'] ?? null);
-        if ($currentRole !== 'admin') {
-            http_response_code(403);
-            echo json_encode(["error" => "Operazione riservata agli amministratori."]);
-            exit;
-        }
         global $mysqli;
 
         // Recupera file fisici da eliminare prima del delete DB

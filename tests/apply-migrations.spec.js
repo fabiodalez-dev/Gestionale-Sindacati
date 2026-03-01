@@ -89,8 +89,10 @@ test('Apply all pending migrations via migrate.php', async ({ page }) => {
 
   // Verify no pending migrations remain
   const stillPending = finalContent.includes('In Attesa') || finalContent.includes('pending') || finalContent.includes('da eseguire');
-  if (stillPending) {
-    console.warn('Warning: some migrations may still be pending after execution');
+  if (stillPending && btnCount > 0) {
+    throw new Error('Migrations still pending after clicking migrate button');
+  } else if (stillPending) {
+    console.warn('Warning: some migrations may still be pending');
   }
 
   console.log('Migration process completed successfully');

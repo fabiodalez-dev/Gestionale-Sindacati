@@ -1330,14 +1330,34 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
   function editDescription(docId) {
     var descCell = document.getElementById("desc-" + docId);
     var currentDesc = document.getElementById("desc-text-" + docId).innerText;
-    descCell.innerHTML = `
-      <form action="update_document_description.php" method="POST" onsubmit="return updateDescription(event, ${docId});">
-        <input type="hidden" name="doc_id" value="${docId}">
-        <input type="text" name="description" value="${currentDesc}" required>
-        <button type="submit" class="btn btn-sm btn-secondary">Salva</button>
-        <button type="button" class="btn btn-sm btn-secondary" onclick="cancelEdit(${docId}, '${currentDesc.replace(/'/g, "\\'")}')">Annulla</button>
-      </form>
-    `;
+    descCell.textContent = '';
+    var form = document.createElement('form');
+    form.action = 'update_document_description.php';
+    form.method = 'POST';
+    form.onsubmit = function(e) { return updateDescription(e, docId); };
+    var hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'doc_id';
+    hiddenInput.value = docId;
+    form.appendChild(hiddenInput);
+    var textInput = document.createElement('input');
+    textInput.type = 'text';
+    textInput.name = 'description';
+    textInput.value = currentDesc;
+    textInput.required = true;
+    form.appendChild(textInput);
+    var saveBtn = document.createElement('button');
+    saveBtn.type = 'submit';
+    saveBtn.className = 'btn btn-sm btn-secondary';
+    saveBtn.textContent = 'Salva';
+    form.appendChild(saveBtn);
+    var cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn btn-sm btn-secondary';
+    cancelBtn.textContent = 'Annulla';
+    cancelBtn.onclick = function() { cancelEdit(docId, currentDesc); };
+    form.appendChild(cancelBtn);
+    descCell.appendChild(form);
   }
 
   function updateDescription(event, docId) {
@@ -1351,9 +1371,7 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        var descCell = document.getElementById("desc-" + docId);
-        descCell.innerHTML = `<span id="desc-text-${docId}">${data.new_description}</span>
-          <br><button type="button" class="btn btn-sm btn-secondary" onclick="editDescription(${docId})">Modifica</button>`;
+        cancelEdit(docId, data.new_description);
       } else {
         alert("Errore: " + data.message);
       }
@@ -1366,8 +1384,18 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
 
   function cancelEdit(docId, originalDesc) {
     var descCell = document.getElementById("desc-" + docId);
-    descCell.innerHTML = `<span id="desc-text-${docId}">${originalDesc}</span>
-      <br><button type="button" class="btn btn-sm btn-secondary" onclick="editDescription(${docId})">Modifica</button>`;
+    descCell.textContent = '';
+    var span = document.createElement('span');
+    span.id = 'desc-text-' + docId;
+    span.textContent = originalDesc;
+    descCell.appendChild(span);
+    descCell.appendChild(document.createElement('br'));
+    var editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'btn btn-sm btn-secondary';
+    editBtn.textContent = 'Modifica';
+    editBtn.onclick = function() { editDescription(docId); };
+    descCell.appendChild(editBtn);
   }
 
   // Gestione del click per scaricare i documenti selezionati

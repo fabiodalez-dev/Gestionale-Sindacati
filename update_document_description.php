@@ -76,6 +76,7 @@ if (isset($_POST['doc_id']) && isset($_POST['description'])) {
             'new_description' => htmlspecialchars($newDescription)
         ]);
     } else {
+        http_response_code(500);
         error_log("Errore aggiornamento descrizione documento ID $docId");
         echo json_encode([
             'success' => false,
@@ -83,6 +84,7 @@ if (isset($_POST['doc_id']) && isset($_POST['description'])) {
         ]);
     }
 } else {
+    http_response_code(400);
     echo json_encode([
         'success' => false,
         'message' => 'Dati mancanti.'

@@ -393,15 +393,18 @@ function checkUserRole(\$required_role) {
  * @return bool True se il token è valido, False altrimenti
  */
 function verifyCsrfToken(\$token) {
-    if (!is_string(\$token) || !isset(\$_SESSION['csrf_token']) || !hash_equals(\$_SESSION['csrf_token'], \$token)) {
+    if (!is_string(\$token) || !isset(\$_SESSION['csrf_token'], \$_SESSION['csrf_token_time'])) {
         return false;
     }
-    // Token scade dopo 1 ora — fail-closed se manca il timestamp
-    if (!isset(\$_SESSION['csrf_token_time']) || (time() - \$_SESSION['csrf_token_time']) > 3600) {
+    if (!is_string(\$_SESSION['csrf_token'])) {
+        return false;
+    }
+    // Token scade dopo 1 ora
+    if ((time() - (int)\$_SESSION['csrf_token_time']) > 3600) {
         unset(\$_SESSION['csrf_token'], \$_SESSION['csrf_token_time']);
         return false;
     }
-    return true;
+    return hash_equals(\$_SESSION['csrf_token'], \$token);
 }
 
 /**
