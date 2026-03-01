@@ -59,8 +59,9 @@ if (!$is_company_event) {
         $query_lavoratore = "SELECT azienda_id FROM lavoratori WHERE id = ?";
         $stmt_lavoratore = executeQuery($query_lavoratore, [$lavoratore_id], 'i');
 
-        if ($stmt_lavoratore && $stmt_lavoratore->get_result()->num_rows > 0) {
-            $row = $stmt_lavoratore->get_result()->fetch_assoc();
+        $lav_result = $stmt_lavoratore ? $stmt_lavoratore->get_result() : null;
+        if ($lav_result && $lav_result->num_rows > 0) {
+            $row = $lav_result->fetch_assoc();
             $azienda_id = intval($row['azienda_id']);
             error_log("Azienda ID recuperato per lavoratore $lavoratore_id: $azienda_id");
         } else {

@@ -208,8 +208,8 @@ test.describe('Visualizzazione lavoratore', () => {
     await searchInput.fill(`TestNome${RUN_ID}`);
     await page.waitForTimeout(2000);
 
-    // Click on the first result link to view detail
-    const firstLink = page.locator('a[href*="lavoratore.php?id="]').first();
+    // Click on the first result link to view detail (scoped to DataTable)
+    const firstLink = page.locator('#lavoratoriTable a[href*="lavoratore.php?id="]').first();
     await expect(firstLink).toBeVisible({ timeout: 5000 });
     await firstLink.click();
     await page.waitForURL('**/lavoratore.php?id=**');
@@ -267,8 +267,8 @@ test.describe('Modifica lavoratore', () => {
     await searchInput.fill(`TestNome${RUN_ID}`);
     await page.waitForTimeout(2000);
 
-    // Find edit link
-    const editLink = page.locator('a[href*="edit_lavoratore.php"]').first();
+    // Find edit link (scoped to DataTable to avoid topbar search dropdown)
+    const editLink = page.locator('#lavoratoriTable a[href*="edit_lavoratore.php"]').first();
     let editUrl;
 
     if (await editLink.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -364,7 +364,7 @@ test.describe('Modifica lavoratore', () => {
     await searchInput.fill(`ModNome${RUN_ID}`);
     await page.waitForTimeout(2000);
 
-    const detailLink = page.locator('a[href*="lavoratore.php?id="]').first();
+    const detailLink = page.locator('#lavoratoriTable a[href*="lavoratore.php?id="]').first();
     await expect(detailLink).toBeVisible({ timeout: 5000 });
     await detailLink.click();
     await page.waitForURL('**/lavoratore.php?id=**');
