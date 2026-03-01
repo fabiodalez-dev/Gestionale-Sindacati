@@ -48,7 +48,6 @@ export default [
         "csrfToken": "writable",
         "baseUrl": "writable",
         "gridData": "writable",
-        "table": "writable",
         "columnFiltersVisible": "writable",
       }
     },

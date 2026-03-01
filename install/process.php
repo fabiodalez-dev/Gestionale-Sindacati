@@ -51,6 +51,11 @@ if (empty($db_host) || empty($db_name) || empty($db_user) || empty($admin_userna
     show_error('Tutti i campi contrassegnati sono obbligatori.');
 }
 
+// Validazione della password admin
+if (strlen($admin_password) < 8) {
+    show_error('La password dell\'amministratore deve contenere almeno 8 caratteri.');
+}
+
 // Validazione dell'email admin
 if (!filter_var($admin_email, FILTER_VALIDATE_EMAIL)) {
     show_error('L\'email dell\'amministratore non è valida.');
@@ -388,11 +393,11 @@ function checkUserRole(\$required_role) {
  * @return bool True se il token è valido, False altrimenti
  */
 function verifyCsrfToken(\$token) {
-    if (!isset(\$_SESSION['csrf_token']) || !hash_equals(\$_SESSION['csrf_token'], \$token)) {
+    if (!is_string(\$token) || !isset(\$_SESSION['csrf_token']) || !hash_equals(\$_SESSION['csrf_token'], \$token)) {
         return false;
     }
-    // Token scade dopo 2 ore
-    if (isset(\$_SESSION['csrf_token_time']) && (time() - \$_SESSION['csrf_token_time']) > 7200) {
+    // Token scade dopo 1 ora
+    if (isset(\$_SESSION['csrf_token_time']) && (time() - \$_SESSION['csrf_token_time']) > 3600) {
         unset(\$_SESSION['csrf_token'], \$_SESSION['csrf_token_time']);
         return false;
     }

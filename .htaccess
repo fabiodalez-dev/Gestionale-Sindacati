@@ -65,4 +65,5 @@ RewriteRule ^$ /login.php [L,R=302]
     RewriteRule ^plugins/ - [F,L]
     RewriteRule ^migrations/ - [F,L]
     RewriteRule ^install/ - [F,L]
+    RewriteRule ^install\.php$ - [F,L]
 </IfModule>

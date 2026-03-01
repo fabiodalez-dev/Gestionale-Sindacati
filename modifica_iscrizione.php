@@ -51,10 +51,12 @@ if ($result->num_rows === 0) {
 $iscrizione = $result->fetch_assoc();
 $stmt->close();
 
+// Inizializza array errori (usato anche nel template)
+$errors = [];
+
 // Gestione della richiesta POST per aggiornare l'iscrizione
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'modifica_iscrizione') {
     // Verifica CSRF token prima di qualsiasi elaborazione
-    $errors = [];
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         $errors[] = 'Token CSRF non valido.';
     }

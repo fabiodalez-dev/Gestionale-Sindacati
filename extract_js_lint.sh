@@ -38,12 +38,12 @@ for line in content.split('\n'):
     stripped = line.strip()
     stripped_lower = stripped.lower()
     # Single-line script block: <script>...</script> on the same line
-    if '<script' in stripped_lower and '</script>' in stripped_lower and 'src=' not in stripped_lower:
+    if '<script' in stripped_lower and '</script>' in stripped_lower and not re.search(r'\bsrc\s*=', stripped_lower):
         m = re.search(r'<script[^>]*>(.*?)</script>', line, re.IGNORECASE)
         if m and m.group(1).strip():
             blocks.append(m.group(1))
         continue
-    if '<script' in stripped_lower and 'src=' not in stripped_lower:
+    if '<script' in stripped_lower and not re.search(r'\bsrc\s*=', stripped_lower):
         # Capture any JS after the opening tag on the same line
         open_match = re.search(r'<script[^>]*>', line, re.IGNORECASE)
         if open_match:
@@ -64,7 +64,7 @@ for line in content.split('\n'):
     if '</script>' in stripped_lower:
         in_script = False
         continue
-    if '<script' in stripped_lower and 'src=' in stripped_lower:
+    if '<script' in stripped_lower and re.search(r'\bsrc\s*=', stripped_lower):
         continue
     if in_script:
         # Replace PHP echo inside strings: "<?php echo ...; ?>" -> "__PHP__"

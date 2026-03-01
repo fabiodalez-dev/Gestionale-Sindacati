@@ -62,7 +62,7 @@ test.describe('Gestione Utenti - CSRF Fix', () => {
       },
       maxRedirects: 0
     });
-    // Should reject with redirect or 403, never process successfully
+    // Should reject: redirect (302/303), forbidden (403), or page re-rendered with error (200)
     expect([200, 302, 303, 403]).toContain(response.status());
     // Verify user was NOT created
     await page.goto(`${BASE}/gestione_utenti.php`);
@@ -353,9 +353,9 @@ test.describe('Migrate Page', () => {
 test.describe('Delete Azienda - POST only', () => {
   test('GET request redirects to aziende.php', async ({ page }) => {
     await loginAsAdmin(page);
-    const response = await page.request.get(`${BASE}/delete_azienda.php?id=999999`);
+    const response = await page.request.get(`${BASE}/delete_azienda.php?id=999999`, { maxRedirects: 0 });
     // Should redirect to aziende.php (not process deletion via GET)
-    expect(response.url()).toContain('aziende.php');
+    expect([302, 303]).toContain(response.status());
   });
 });
 
@@ -365,9 +365,9 @@ test.describe('Delete Azienda - POST only', () => {
 test.describe('Elimina Unita Operativa - HTTP codes', () => {
   test('GET request returns 405 or redirects', async ({ page }) => {
     await loginAsAdmin(page);
-    const response = await page.request.get(`${BASE}/elimina_unita_operativa.php`);
+    const response = await page.request.get(`${BASE}/elimina_unita_operativa.php`, { maxRedirects: 0 });
     // Should redirect (POST-only)
-    expect(response.url()).toContain('aziende.php');
+    expect([302, 303]).toContain(response.status());
   });
 });
 

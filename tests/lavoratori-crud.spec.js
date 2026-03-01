@@ -225,7 +225,8 @@ test.describe('Visualizzazione lavoratore', () => {
 
     // Check which filters exist on the page
     const filterForm = page.locator('#customFilterForm');
-    if (await filterForm.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await expect(filterForm).toBeVisible({ timeout: 5000 });
+    {
       // Try any select filter that exists
       const selects = filterForm.locator('select');
       const count = await selects.count();
@@ -365,14 +366,13 @@ test.describe('Modifica lavoratore', () => {
     await page.waitForTimeout(2000);
 
     const detailLink = page.locator('a[href*="lavoratore.php?id="]').first();
-    if (await detailLink.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await detailLink.click();
-      await page.waitForURL('**/lavoratore.php?id=**');
+    await expect(detailLink).toBeVisible({ timeout: 5000 });
+    await detailLink.click();
+    await page.waitForURL('**/lavoratore.php?id=**');
 
-      const body = await page.textContent('body');
-      expect(body).toContain(`ModNome${RUN_ID}`);
-      expect(body).toContain(`ModCognome${RUN_ID}`);
-    }
+    const body = await page.textContent('body');
+    expect(body).toContain(`ModNome${RUN_ID}`);
+    expect(body).toContain(`ModCognome${RUN_ID}`);
   });
 
   test('Modifica lavoratore SEPA - verifica fix metodo_pagamento SEPA', async ({ page }) => {
@@ -438,20 +438,15 @@ test.describe('Eliminazione lavoratore', () => {
       await searchInput.fill(name);
       await page.waitForTimeout(2000);
 
-      // Check if delete button exists (it's a POST form)
-      const deleteForm = page.locator('form[action*="delete_lavoratore"]').first();
-      if (await deleteForm.isVisible({ timeout: 3000 }).catch(() => false)) {
-        // Click the delete button
-        const deleteBtn = deleteForm.locator('button[type="submit"], input[type="submit"]').first();
-        if (await deleteBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-          await deleteBtn.click();
-          // Handle SweetAlert2 or confirm dialog
-          const swalConfirm = page.locator('.swal2-confirm');
-          if (await swalConfirm.isVisible({ timeout: 3000 }).catch(() => false)) {
-            await swalConfirm.click();
-          }
-          await page.waitForTimeout(1500);
-        }
+      // Click delete button (triggers SweetAlert confirmation)
+      const deleteBtn = page.locator('.delete-lavoratore-btn').first();
+      if (await deleteBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await deleteBtn.click();
+        // Confirm SweetAlert2 dialog
+        const swalConfirm = page.locator('.swal2-confirm');
+        await expect(swalConfirm).toBeVisible({ timeout: 3000 });
+        await swalConfirm.click();
+        await page.waitForLoadState('networkidle', { timeout: 10000 });
       }
     }
     // Verify we're still on lavoratori page (no crash)
@@ -598,16 +593,21 @@ test.describe('Export lavoratori', () => {
     await page.goto(`${BASE_URL}/lavoratori.php`);
     await page.waitForTimeout(3000);
 
-    const exportBtn = page.locator('a[href*="export_lavoratori"], a:has-text("Excel"), a:has-text("Export")').first();
-    if (await exportBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      const [download] = await Promise.all([
-        page.waitForEvent('download', { timeout: 15000 }).catch(() => null),
-        exportBtn.click()
-      ]);
-      if (download) {
-        const filename = download.suggestedFilename();
-        expect(filename).toMatch(/\.xlsx?$/);
-      }
+    // Export may be a link, DataTables button, or not present
+    const exportBtn = page.locator('a[href*="export_lavoratori"], a:has-text("Excel"), a:has-text("Export"), button:has-text("Excel")').first();
+    const exportVisible = await exportBtn.isVisible({ timeout: 3000 }).catch(() => false);
+    if (!exportVisible) {
+      console.log('Export button not found on page - skipping export test');
+      test.skip();
+      return;
+    }
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 15000 }).catch(() => null),
+      exportBtn.click()
+    ]);
+    if (download) {
+      const filename = download.suggestedFilename();
+      expect(filename).toMatch(/\.xlsx?$/);
     }
   });
 });

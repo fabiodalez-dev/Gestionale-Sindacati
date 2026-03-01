@@ -595,9 +595,8 @@ if (isset($_GET['datatables_ajax']) && $_GET['datatables_ajax'] == 1) {
             $azioni = '<div class="d-flex align-items-center gap-2">'
                     . '<a href="edit_lavoratore.php?id=' . sanitizeForHTML($row['id']) . '" class="table-action-icon" title="Modifica">'
                     . '<i class="fas fa-edit"></i></a>'
-                    . '<a href="delete_lavoratore.php?id=' . sanitizeForHTML($row['id']) . '&csrf_token=' . $_SESSION['csrf_token'] . '" '
-                    . 'class="table-action-icon" title="Elimina" onclick="return confirm(\'Sei sicuro di voler eliminare questo lavoratore?\');">'
-                    . '<i class="fas fa-trash"></i></a>'
+                    . '<button type="button" class="table-action-icon delete-lavoratore-btn" data-id="' . sanitizeForHTML($row['id']) . '" title="Elimina">'
+                    . '<i class="fas fa-trash"></i></button>'
                     . '</div>';
             
             // ORDINE COLONNE: checkbox, COGNOME, NOME, resto...
@@ -1188,7 +1187,7 @@ generateCsrfToken();
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <input type="hidden" name="csrf_token_modal_azienda" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <input type="hidden" name="csrf_token_modal_azienda" value="<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>">
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1228,7 +1227,7 @@ generateCsrfToken();
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <input type="hidden" name="csrf_token_modal_sede" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <input type="hidden" name="csrf_token_modal_sede" value="<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>">
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1268,7 +1267,7 @@ generateCsrfToken();
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <input type="hidden" name="csrf_token_modal_ccnl" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <input type="hidden" name="csrf_token_modal_ccnl" value="<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>">
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1305,6 +1304,7 @@ generateCsrfToken();
                                 <option value="privato">Privato</option>
                             </select>
                         </div>
+                        <input type="hidden" name="csrf_token_modal_settore" value="<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>">
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1342,6 +1342,7 @@ generateCsrfToken();
                                 <option value="sepa">SEPA</option>
                             </select>
                         </div>
+                        <input type="hidden" name="csrf_token_modal_tipo_tessera" value="<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>">
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1355,6 +1356,12 @@ generateCsrfToken();
             </div>
         </div>
     </div>
+
+    <!-- Hidden form per eliminazione singolo lavoratore (POST con CSRF) -->
+    <form id="deleteLavoratoreForm" method="POST" action="delete_lavoratore.php" style="display:none;">
+        <?php csrfInputField(); ?>
+        <input type="hidden" name="id" id="deleteLavoratoreId">
+    </form>
 
     <!-- Scroll to Top Button -->
     <a class="scroll-to-top rounded" href="#page-top">
@@ -1387,7 +1394,7 @@ generateCsrfToken();
     <script>
         $(document).ready(function() {
             var selectedWorkers = {};
-            var csrfToken = '<?php echo $_SESSION['csrf_token']; ?>';
+            var csrfToken = <?php echo json_encode($_SESSION['csrf_token']); ?>;
             var table;
             var columnFiltersVisible = false;
             var customFiltersVisible = true;
@@ -2062,6 +2069,25 @@ generateCsrfToken();
                 );
             });
             
+            // Elimina singolo lavoratore via POST form
+            $(document).on('click', '.delete-lavoratore-btn', function() {
+                var workerId = $(this).data('id');
+                Swal.fire({
+                    title: 'Sei sicuro di voler eliminare questo lavoratore?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sì, elimina!',
+                    cancelButtonText: 'Annulla',
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#aaa'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        document.getElementById('deleteLavoratoreId').value = workerId;
+                        document.getElementById('deleteLavoratoreForm').submit();
+                    }
+                });
+            });
+
             function confirmAndExecuteBulkAction(action, title, confirmButtonText, successMessage, iconType = 'warning') {
                 if (Object.keys(selectedWorkers).length === 0) {
                     Swal.fire('Attenzione', 'Seleziona almeno un lavoratore.', 'warning');

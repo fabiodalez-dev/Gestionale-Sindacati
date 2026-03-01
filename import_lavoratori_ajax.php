@@ -187,11 +187,15 @@ if ($res_aziende) {
 
 // ── Pre-load existing lavoratori for duplicate detection (eliminates per-row SELECT on lavoratori) ──
 $existing_lavoratori = [];
-$res_lav = $mysqli->query("SELECT nome, cognome, azienda_id FROM lavoratori");
+$existing_cf = [];
+$res_lav = $mysqli->query("SELECT nome, cognome, azienda_id, codice_fiscale FROM lavoratori");
 if ($res_lav) {
     while ($lav_row = $res_lav->fetch_assoc()) {
         $dup_key = strtolower(trim($lav_row['nome'])) . '|' . strtolower(trim($lav_row['cognome'])) . '|' . ($lav_row['azienda_id'] ?? 'NULL');
         $existing_lavoratori[$dup_key] = true;
+        if (!empty($lav_row['codice_fiscale'])) {
+            $existing_cf[strtoupper(trim($lav_row['codice_fiscale']))] = true;
+        }
     }
     $res_lav->free();
 } else {
@@ -336,7 +340,12 @@ foreach ($rows as $row) {
         }
     }
 
-    // Controllo duplicati: nome + cognome + azienda (lookup in-memory)
+    // Controllo duplicati: codice_fiscale (se presente) o nome + cognome + azienda
+    if (!empty($codice_fiscale) && isset($existing_cf[strtoupper(trim($codice_fiscale))])) {
+        $errorsList[] = "Riga $rowCount: codice fiscale '$codice_fiscale' gia' presente. Saltata.";
+        $skippedCount++;
+        continue;
+    }
     $dup_key = strtolower(trim($nome)) . '|' . strtolower(trim($cognome)) . '|' . ($azienda_id ?? 'NULL');
     if (isset($existing_lavoratori[$dup_key])) {
         $errorsList[] = "Riga $rowCount: '$cognome $nome' gia' presente. Saltata.";
@@ -360,6 +369,9 @@ foreach ($rows as $row) {
         $insertedCount++;
         // Aggiorna la mappa duplicati in-memory per righe successive nello stesso file
         $existing_lavoratori[$dup_key] = true;
+        if (!empty($codice_fiscale)) {
+            $existing_cf[strtoupper(trim($codice_fiscale))] = true;
+        }
     } catch (mysqli_sql_exception $e) {
         if ((int)$e->getCode() === 1062) {
             $errorsList[] = "Riga $rowCount: duplicato rilevato. Lavoratore saltato.";

@@ -82,8 +82,11 @@ if ($action === 'delete') {
         } elseif ($id === (int)$_SESSION['user_id']) {
             $error = "Non puoi eliminare te stesso.";
         } else {
-            if (deleteUser($id)) {
+            $deleteStmt = executeQuery("DELETE FROM users WHERE id = ?", [$id], 'i');
+            if ($deleteStmt !== false && $deleteStmt->affected_rows === 1) {
                 $success = "Utente eliminato con successo.";
+            } elseif ($deleteStmt !== false && $deleteStmt->affected_rows === 0) {
+                $error = "Utente non trovato o già eliminato.";
             } else {
                 $error = "Errore nell'eliminazione dell'utente.";
             }

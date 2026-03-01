@@ -419,7 +419,7 @@ generateCsrfToken();
                                                         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
                                                         $configuredOrigin = $protocol . '://' . ($_SERVER['SERVER_NAME'] ?? 'localhost');
                                                     }
-                                                    echo sanitizeForHTML($configuredOrigin . $base_url . 'api.php');
+                                                    echo sanitizeForHTML(rtrim($configuredOrigin, '/') . '/' . ltrim($base_url, '/') . 'api.php');
                                                 }
                                             ?></code>
                                             <button class="btn btn-sm btn-outline-secondary ml-2" id="copyEndpointBtn" title="Copia endpoint">

@@ -45,11 +45,11 @@ test('Apply all pending migrations via migrate.php', async ({ page }) => {
     const hasPending = content.includes('In Attesa') || content.includes('pending') || content.includes('da eseguire');
     if (hasPending) {
       console.log('Found pending migrations text, looking for actionable forms...');
-      const forms = page.locator('form');
-      const formCount = await forms.count();
-      console.log(`Found ${formCount} forms on page`);
-      // Fail if there are pending migrations but no actionable forms
-      expect(formCount, 'Pending migrations found but no actionable forms available').toBeGreaterThan(0);
+      const submitBtns = page.locator('form button[type="submit"], form input[type="submit"]');
+      const submitCount = await submitBtns.count();
+      console.log(`Found ${submitCount} submit buttons on page`);
+      // Fail if there are pending migrations but no actionable submit buttons
+      expect(submitCount, 'Pending migrations found but no actionable submit buttons available').toBeGreaterThan(0);
     } else {
       console.log('No pending migrations found - all up to date');
     }

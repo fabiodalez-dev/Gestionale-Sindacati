@@ -18,7 +18,7 @@ if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
 }
 
 // Recupera l'ID dell'iscrizione da eliminare
-if (!isset($_POST['id']) || !is_numeric($_POST['id'])) {
+if (!isset($_POST['id']) || !is_scalar($_POST['id']) || !ctype_digit((string)$_POST['id'])) {
     header("Location: gestione_iscrizioni.php");
     exit;
 }

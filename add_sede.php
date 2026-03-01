@@ -79,7 +79,7 @@ generateCsrfToken();
                     <div class="card shadow mb-4">
                         <div class="card-body">
                             <form action="add_sede.php" method="POST">
-                                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                                <?php csrfInputField(); ?>
                                 <div class="form-group">
                                     <label for="nome">Nome Sede <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="nome" name="nome" required>

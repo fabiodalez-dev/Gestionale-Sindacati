@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
             // Sanifica il nome del file
-            $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
+            $newFileName = bin2hex(random_bytes(16)) . '.' . $fileExtension;
 
             // Directory di destinazione
 $uploadFileDir = __DIR__ . '/uploads/';

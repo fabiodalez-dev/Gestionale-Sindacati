@@ -46,7 +46,7 @@ function checkLoginRateLimit($ip) {
  */
 function clearLoginAttempts($ip) {
     $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
-    if (file_exists($lockFile) && !@unlink($lockFile)) {
+    if (file_exists($lockFile) && !unlink($lockFile)) {
         error_log("Rate limiter cleanup: unlink fallita per IP hash " . md5($ip));
         return false;
     }

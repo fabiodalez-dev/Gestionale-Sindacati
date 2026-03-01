@@ -23,20 +23,47 @@ if ($lavoratore_id <= 0) {
     exit();
 }
 
-// Elimina il lavoratore dal database
-$query = "DELETE FROM lavoratori WHERE id = ?";
-$stmt = executeQuery($query, [$lavoratore_id], 'i');
+// Elimina lavoratore e record correlati in transazione
+$mysqli->begin_transaction();
+try {
+    // Elimina documenti fisici associati
+    $docStmt = executeQuery("SELECT percorso_documento FROM documenti_lavoratori WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+    if ($docStmt !== false) {
+        $docResult = $docStmt->get_result();
+        while ($docRow = $docResult->fetch_assoc()) {
+            $filePath = __DIR__ . '/uploads/' . $docRow['percorso_documento'];
+            if (is_file($filePath)) {
+                @unlink($filePath);
+            }
+        }
+    }
 
-if ($stmt && $stmt->affected_rows === 1) {
-    // Redirect con messaggio di successo
-    header("Location: lavoratori.php?delete_success=1");
-    exit;
-} else {
-    // Redirect con messaggio di errore
-    $error = ($stmt && $stmt->affected_rows === 0)
-        ? "Lavoratore non trovato o già eliminato."
-        : "Errore durante l'eliminazione del lavoratore.";
-    header("Location: lavoratori.php?delete_error=" . urlencode($error));
+    // Elimina record correlati
+    executeQuery("DELETE FROM documenti_lavoratori WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+    executeQuery("DELETE FROM pagamenti_quote WHERE iscrizione_id IN (SELECT id FROM iscrizioni WHERE lavoratore_id = ?)", [$lavoratore_id], 'i');
+    executeQuery("DELETE FROM iscrizioni WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+    executeQuery("DELETE FROM storico_aziende_lavoratori WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+    executeQuery("DELETE FROM calendario_lavoratori WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+
+    // Elimina il lavoratore
+    $stmt = executeQuery("DELETE FROM lavoratori WHERE id = ?", [$lavoratore_id], 'i');
+
+    if ($stmt && $stmt->affected_rows === 1) {
+        $mysqli->commit();
+        header("Location: lavoratori.php?delete_success=1");
+        exit;
+    } else {
+        $mysqli->rollback();
+        $error = ($stmt && $stmt->affected_rows === 0)
+            ? "Lavoratore non trovato o già eliminato."
+            : "Errore durante l'eliminazione del lavoratore.";
+        header("Location: lavoratori.php?delete_error=" . urlencode($error));
+        exit;
+    }
+} catch (Exception $e) {
+    $mysqli->rollback();
+    error_log("Errore eliminazione lavoratore ID $lavoratore_id: " . $e->getMessage());
+    header("Location: lavoratori.php?delete_error=" . urlencode("Errore durante l'eliminazione del lavoratore."));
     exit;
 }
 ?>

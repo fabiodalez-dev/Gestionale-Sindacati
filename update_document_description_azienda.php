@@ -54,6 +54,7 @@ if (isset($_POST['doc_id']) && isset($_POST['description'])) {
         ]);
     }
 } else {
+    http_response_code(400);
     echo json_encode([
         'success' => false,
         'message' => 'Dati mancanti.'

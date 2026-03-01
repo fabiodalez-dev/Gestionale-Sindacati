@@ -149,7 +149,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'download' && isset($_GET['file
 $backupMessage = "";
 
 // Se la pagina viene chiamata dal cron (ad esempio, backup.php?cron=1)
-if (isset($_GET['cron']) && $_GET['cron'] == 1) {
+if ($is_cron) {
     $dump = generateBackupDump($mysqli, $db);
     if ($dump !== false) {
         $result = saveBackupToFile($dump, $cronBackupDir, $db);

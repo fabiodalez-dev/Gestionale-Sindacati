@@ -86,9 +86,8 @@ if (isset($_POST['document_ids']) && is_array($_POST['document_ids']) && count($
     
     $zip->close();
     
-    // Costruisci il link assoluto per il file ZIP
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-    $downloadLink = $protocol . $_SERVER['HTTP_HOST'] . '/downloads/' . $zipFilename;
+    // Costruisci il link assoluto per il file ZIP usando $base_url
+    $downloadLink = rtrim($base_url, '/') . '/downloads/' . $zipFilename;
     
     // Salva il link in sessione per renderlo persistente
     $_SESSION['zip_link'] = $downloadLink;
