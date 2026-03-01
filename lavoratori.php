@@ -2289,7 +2289,7 @@ generateCsrfToken();
 
             var formData = new FormData();
             formData.append('import_file', file);
-            formData.append('csrf_token', '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>');
+            formData.append('csrf_token', <?= json_encode($_SESSION['csrf_token'] ?? '') ?>);
 
             $.ajax({
                 url: 'import_lavoratori_ajax.php',

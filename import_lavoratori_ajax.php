@@ -52,9 +52,13 @@ $allowedMimeTypes = [
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 ];
 $finfo = finfo_open(FILEINFO_MIME_TYPE);
+if ($finfo === false) {
+    echo json_encode(['success' => false, 'error' => 'Errore nella verifica del tipo file.']);
+    exit;
+}
 $detectedMime = finfo_file($finfo, $fileTmpPath);
 finfo_close($finfo);
-if ($detectedMime !== false && !in_array($detectedMime, $allowedMimeTypes)) {
+if ($detectedMime === false || !in_array($detectedMime, $allowedMimeTypes)) {
     echo json_encode(['success' => false, 'error' => 'Tipo file non valido. Contenuto non corrisponde all\'estensione.']);
     exit;
 }

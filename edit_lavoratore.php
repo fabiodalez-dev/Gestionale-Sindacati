@@ -755,7 +755,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     }
                                 } else {
                                     if ($("#unita_operativa").next(".alert").length === 0) {
-                                        $('<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">' + sanitizeForHTML(response.message) + '<button type="button" class="close" data-dismiss="alert" aria-label="Chiudi"><span aria-hidden="true">&times;</span></button></div>').insertAfter("#unita_operativa");
+                                        var $alert = $('<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert"><span class="alert-message"></span><button type="button" class="close" data-dismiss="alert" aria-label="Chiudi"><span aria-hidden="true">&times;</span></button></div>');
+                                        $alert.find('.alert-message').text(response.message || 'Errore sconosciuto');
+                                        $alert.insertAfter("#unita_operativa");
                                     }
                                     $("#unita_operativa").val('');
                                     $("#unita_operativa_id").val(0);

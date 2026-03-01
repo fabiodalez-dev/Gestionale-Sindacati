@@ -54,7 +54,7 @@ try {
     $delStmt = executeQuery("DELETE FROM documenti_lavoratori WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
     if ($delStmt === false) { throw new Exception("Errore eliminazione documenti_lavoratori."); }
 
-    $delStmt = executeQuery("DELETE FROM pagamenti_quote WHERE iscrizione_id IN (SELECT id FROM iscrizioni WHERE lavoratore_id = ?)", [$lavoratore_id], 'i');
+    $delStmt = executeQuery("DELETE FROM pagamenti_quote WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
     if ($delStmt === false) { throw new Exception("Errore eliminazione pagamenti_quote."); }
 
     $delStmt = executeQuery("DELETE FROM iscrizioni WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
@@ -62,6 +62,9 @@ try {
 
     $delStmt = executeQuery("DELETE FROM storico_aziende_lavoratori WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
     if ($delStmt === false) { throw new Exception("Errore eliminazione storico_aziende_lavoratori."); }
+
+    $delStmt = executeQuery("DELETE FROM event_exceptions WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+    if ($delStmt === false) { throw new Exception("Errore eliminazione event_exceptions."); }
 
     $delStmt = executeQuery("DELETE FROM calendario_lavoratori WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
     if ($delStmt === false) { throw new Exception("Errore eliminazione calendario_lavoratori."); }

@@ -18,7 +18,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($lavoratore_id > 0) {
         global $mysqli;
-        $mysqli->begin_transaction();
+        if (!$mysqli->begin_transaction()) {
+            echo json_encode(['success' => false, 'message' => 'Impossibile avviare la transazione.']);
+            exit;
+        }
         try {
             // Raccogli i percorsi dei file da eliminare dopo il commit
             $filesToDelete = [];
@@ -41,11 +44,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Errore eliminazione documenti lavoratore");
             }
 
+            // Eliminazione pagamenti_quote via iscrizioni
+            $stmtPagamenti = executeQuery("DELETE FROM pagamenti_quote WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+            if ($stmtPagamenti === false) {
+                throw new Exception("Errore eliminazione pagamenti_quote");
+            }
+
             // Eliminazione delle iscrizioni
             $deleteIscrizioniQuery = "DELETE FROM iscrizioni WHERE lavoratore_id = ?";
             $stmtIscrizioni = executeQuery($deleteIscrizioniQuery, [$lavoratore_id], 'i');
             if ($stmtIscrizioni === false) {
                 throw new Exception("Errore eliminazione iscrizioni lavoratore");
+            }
+
+            // Eliminazione storico aziende
+            $stmtStorico = executeQuery("DELETE FROM storico_aziende_lavoratori WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+            if ($stmtStorico === false) {
+                throw new Exception("Errore eliminazione storico_aziende_lavoratori");
+            }
+
+            // Eliminazione eccezioni eventi
+            $stmtExceptions = executeQuery("DELETE FROM event_exceptions WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+            if ($stmtExceptions === false) {
+                throw new Exception("Errore eliminazione event_exceptions");
+            }
+
+            // Eliminazione eventi calendario
+            $stmtCalendario = executeQuery("DELETE FROM calendario_lavoratori WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+            if ($stmtCalendario === false) {
+                throw new Exception("Errore eliminazione calendario_lavoratori");
             }
 
             // Eliminazione del lavoratore

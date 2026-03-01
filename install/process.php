@@ -41,7 +41,7 @@ $db_pass = trim($_POST['db_pass'] ?? '');
 
 $admin_username = trim($_POST['admin_username'] ?? '');
 $admin_email = trim($_POST['admin_email'] ?? '');
-$admin_password = trim($_POST['admin_password'] ?? '');
+$admin_password = $_POST['admin_password'] ?? '';
 
 $base_url = trim($_POST['base_url'] ?? '');
 $accepted_file_formats = trim($_POST['accepted_file_formats'] ?? '');

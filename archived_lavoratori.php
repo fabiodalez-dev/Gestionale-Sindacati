@@ -210,7 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uploadsDir = realpath(__DIR__ . '/uploads');
             while ($docRow = $docsResult->fetch_assoc()) {
                 if (!empty($docRow['percorso_documento']) && $uploadsDir !== false) {
-                    $relativePath = ltrim(str_replace('uploads/', '', $docRow['percorso_documento']), '/\\');
+                    $relativePath = ltrim(preg_replace('#^uploads[\\\\/]+#i', '', $docRow['percorso_documento']), '/\\');
                     $candidatePath = $uploadsDir . DIRECTORY_SEPARATOR . $relativePath;
                     $fullPath = realpath($candidatePath);
                     if ($fullPath !== false && strpos($fullPath, $uploadsDir . DIRECTORY_SEPARATOR) === 0 && is_file($fullPath)) {
@@ -226,9 +226,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtDeleteDocs = executeQuery($queryDeleteDocs, $workerIds, $typesForWorkerIds);
             if ($stmtDeleteDocs === false) throw new Exception("Errore eliminazione documenti.");
 
+            $stmtPagamenti = executeQuery("DELETE FROM pagamenti_quote WHERE lavoratore_id IN ($placeholders)", $workerIds, $typesForWorkerIds);
+            if ($stmtPagamenti === false) throw new Exception("Errore eliminazione pagamenti_quote.");
+
             $queryDeleteIscrizioni = "DELETE FROM iscrizioni WHERE lavoratore_id IN ($placeholders)";
             $stmtDeleteIscrizioni = executeQuery($queryDeleteIscrizioni, $workerIds, $typesForWorkerIds);
             if ($stmtDeleteIscrizioni === false) throw new Exception("Errore eliminazione iscrizioni.");
+
+            $stmtStorico = executeQuery("DELETE FROM storico_aziende_lavoratori WHERE lavoratore_id IN ($placeholders)", $workerIds, $typesForWorkerIds);
+            if ($stmtStorico === false) throw new Exception("Errore eliminazione storico_aziende_lavoratori.");
+
+            $stmtExceptions = executeQuery("DELETE FROM event_exceptions WHERE lavoratore_id IN ($placeholders)", $workerIds, $typesForWorkerIds);
+            if ($stmtExceptions === false) throw new Exception("Errore eliminazione event_exceptions.");
+
+            $stmtCalendario = executeQuery("DELETE FROM calendario_lavoratori WHERE lavoratore_id IN ($placeholders)", $workerIds, $typesForWorkerIds);
+            if ($stmtCalendario === false) throw new Exception("Errore eliminazione calendario_lavoratori.");
 
             $queryDelete = "DELETE FROM lavoratori WHERE id IN ($placeholders)";
             $stmtDelete = executeQuery($queryDelete, $workerIds, $typesForWorkerIds);

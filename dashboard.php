@@ -184,7 +184,8 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                     $configuredPort = parse_url($base_url, PHP_URL_PORT);
                                     $ics_scheme = $configuredScheme ?: ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http');
                                     $ics_host = $configuredHost ?: ($_SERVER['SERVER_NAME'] ?? 'localhost');
-                                    if ($configuredPort) { $ics_host .= ':' . $configuredPort; }
+                                    $ics_port = $configuredPort ?: ($_SERVER['SERVER_PORT'] ?? null);
+                                    if ($ics_port && !in_array((int)$ics_port, [80, 443], true)) { $ics_host .= ':' . $ics_port; }
                                     $calendarToken = getSetting('calendar_token');
                                     if (empty($calendarToken)) {
                                         $generatedToken = bin2hex(random_bytes(16));

@@ -388,8 +388,6 @@ test.describe.serial('E2E Complete Flow', () => {
 
     // Usa fetch() dal browser per creare l'evento (condivide esattamente la sessione della pagina)
     const csrfToken = await page.locator('input[name="csrf_token"]').first().getAttribute('value');
-    console.log(`CSRF token: ${csrfToken}`);
-
     const today = new Date();
     const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}T10:00`;
 
@@ -412,7 +410,6 @@ test.describe.serial('E2E Complete Flow', () => {
       return { status: resp.status, body: text };
     }, { csrf: csrfToken, workerId: createdWorkerId, title: `EventoLavoratore${RUN_ID}`, start: startDate });
 
-    console.log(`add_event worker response (${result.status}): ${result.body}`);
     expect(result.status).toBe(200);
     const json = JSON.parse(result.body);
     expect(json.success).toBe(true);
@@ -462,7 +459,6 @@ test.describe.serial('E2E Complete Flow', () => {
       return { status: resp.status, body: text };
     }, { csrf: csrfToken, aziendaId: createdAziendaId, title: `EventoAzienda${RUN_ID}`, start: startDate });
 
-    console.log(`create_event_azienda response (${result.status}): ${result.body}`);
     expect(result.status).toBe(200);
     const json = JSON.parse(result.body);
     expect(json.success).toBe(true);
@@ -531,15 +527,15 @@ test.describe.serial('E2E Complete Flow', () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: formData.toString(),
-          redirect: 'manual'
+          redirect: 'follow'
         });
-        return { status: resp.status, type: resp.type, url: resp.url };
+        const text = await resp.text();
+        return { status: resp.status, url: resp.url, bodySnippet: text.substring(0, 500) };
       }, { csrf: csrfToken1, id: createdWorkerId });
 
-      console.log(`Delete worker result: ${JSON.stringify(delResult)}`);
-      // redirect: 'manual' returns opaqueredirect type with status 0
-      // or if followed, status 200 with redirected URL
-      expect([0, 200, 302, 303]).toContain(delResult.status);
+      // Should redirect to lavoratori.php with delete_success=1
+      expect(delResult.status).toBe(200);
+      expect(delResult.url).toContain('delete_success=1');
     }
 
     // Elimina eventi aziendali residui prima dell'azienda
@@ -547,20 +543,18 @@ test.describe.serial('E2E Complete Flow', () => {
       await page.goto(`${BASE}/aziende.php`);
       const csrfToken2 = await page.locator('input[name="csrf_token"]').first().getAttribute('value');
 
-      const delAzResult = await page.evaluate(async ({ csrf, id }) => {
+      await page.evaluate(async ({ csrf, id }) => {
         const formData = new URLSearchParams();
         formData.append('csrf_token', csrf);
         formData.append('id', id);
-        const resp = await fetch('delete_azienda.php', {
+        await fetch('delete_azienda.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: formData.toString(),
-          redirect: 'manual'
+          redirect: 'follow'
         });
-        return { status: resp.status, type: resp.type };
       }, { csrf: csrfToken2, id: createdAziendaId });
 
-      console.log(`Delete azienda result: ${JSON.stringify(delAzResult)}`);
     }
 
     // Verifica che il lavoratore non sia più nella lista
@@ -575,7 +569,7 @@ test.describe.serial('E2E Complete Flow', () => {
     }
 
     // Verifica che non appaia nella tabella (DataTable filtra server-side)
-    const rows = page.locator('#dataTable tbody tr');
+    const rows = page.locator('#lavoratoriTable tbody tr');
     const rowCount = await rows.count();
     if (rowCount > 0) {
       const firstRowText = await rows.first().textContent();

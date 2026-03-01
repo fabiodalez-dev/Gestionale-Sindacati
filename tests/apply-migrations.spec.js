@@ -48,8 +48,15 @@ test('Apply all pending migrations via migrate.php', async ({ page }) => {
       const submitBtns = page.locator('form button[type="submit"], form input[type="submit"]');
       const submitCount = await submitBtns.count();
       console.log(`Found ${submitCount} submit buttons on page`);
-      // Fail if there are pending migrations but no actionable submit buttons
       expect(submitCount, 'Pending migrations found but no actionable submit buttons available').toBeGreaterThan(0);
+      // Actually apply the pending migrations
+      for (let i = 0; i < submitCount; i++) {
+        const submitBtn = submitBtns.nth(i);
+        const submitText = await submitBtn.textContent();
+        console.log(`Clicking migration submit button (${i + 1}/${submitCount}): ${submitText}`);
+        await submitBtn.click();
+        await page.waitForLoadState('networkidle', { timeout: 30000 });
+      }
     } else {
       console.log('No pending migrations found - all up to date');
     }

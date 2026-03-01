@@ -83,6 +83,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
             echo json_encode(['error' => 'Endpoint non sicuro: usare HTTPS']);
             exit;
         }
+        // SSRF protection: block private/reserved IPs
+        $connHost = parse_url($url, PHP_URL_HOST);
+        $resolvedIp = gethostbyname($connHost);
+        if ($resolvedIp === $connHost || filter_var($resolvedIp, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            echo json_encode(['error' => 'URL non consentito: host irraggiungibile o indirizzo privato']);
+            exit;
+        }
         $stmt = executeQuery(
             "INSERT INTO api_connections (name, endpoint_url, api_key, created_by) VALUES (?, ?, ?, ?)",
             [$name, $url, $key, $_SESSION['user_id']],
@@ -130,6 +137,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
         $scheme = strtolower((string) parse_url($endpointBase, PHP_URL_SCHEME));
         if ($scheme !== 'https') {
             echo json_encode(['error' => 'Endpoint non sicuro: usare HTTPS']);
+            exit;
+        }
+        // SSRF protection: block private/reserved IPs
+        $testHost = parse_url($endpointBase, PHP_URL_HOST);
+        $testResolvedIp = gethostbyname($testHost);
+        if ($testResolvedIp === $testHost || filter_var($testResolvedIp, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            echo json_encode(['error' => 'URL non consentito: host irraggiungibile o indirizzo privato']);
             exit;
         }
         $separator = (parse_url($endpointBase, PHP_URL_QUERY) !== null) ? '&' : '?';

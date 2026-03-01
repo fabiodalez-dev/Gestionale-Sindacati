@@ -18,7 +18,8 @@ SET @sepa_exists = IF(@col_exists = 0, 1, (
 
 SET @legacy_count = IF(@col_exists = 0, 0, (
     SELECT COUNT(*) FROM iscrizioni
-    WHERE metodo_pagamento NOT IN ('trattenuta in busta paga','rinnovo annuale','sepa')
+    WHERE metodo_pagamento IS NOT NULL
+    AND metodo_pagamento NOT IN ('trattenuta in busta paga','rinnovo annuale','sepa')
 ));
 
 SET @sql = IF(@col_exists = 1 AND @sepa_exists = 0 AND @legacy_count = 0,

@@ -120,6 +120,13 @@ if ($delete_stmt === false) {
     exit;
 }
 
+if ($delete_stmt->affected_rows === 0) {
+    error_log("Nessun evento eliminato (affected_rows=0). ID evento: $id, Lavoratore ID: $lavoratore_id");
+    echo json_encode(['success' => false, 'error' => 'Evento non trovato o già eliminato.']);
+    $delete_stmt->close();
+    exit;
+}
+
 error_log("Evento singolo eliminato con successo. ID evento: $id");
 echo json_encode(['success' => true, 'message' => 'Evento eliminato con successo.']);
 

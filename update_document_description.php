@@ -41,7 +41,13 @@ if (isset($_POST['doc_id']) && isset($_POST['description'])) {
     // Operatori con sede_id = NULL hanno accesso globale a tutte le sedi.
     // L'accesso viene negato solo quando sede_id dell'utente è impostato e non corrisponde
     // alla sede_id del lavoratore associato al documento.
+    $allowedRoles = ['admin', 'operatore'];
     $currentRole = $_SESSION['user_role'] ?? ($_SESSION['user']['role'] ?? null);
+    if (!in_array($currentRole, $allowedRoles, true)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Ruolo non autorizzato.']);
+        exit;
+    }
     if ($currentRole !== 'admin') {
         $docRow = $checkResult->fetch_assoc();
         $sedeCheck = executeQuery(

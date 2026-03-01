@@ -135,6 +135,13 @@ if ($action === 'update') {
                 $stmt->close();
             }
             if (empty($error)) {
+                // Verifica che l'utente esista prima dell'aggiornamento
+                $userExists = executeQuery("SELECT id FROM users WHERE id = ?", [$id], 'i');
+                if ($userExists === false || $userExists->get_result()->num_rows === 0) {
+                    $error = "Utente non trovato.";
+                }
+            }
+            if (empty($error)) {
                 $newPassword = !empty($password) ? $password : null;
                 // Si presume che updateUser() accetti anche il parametro sede_id
                 if (updateUser($id, $username, $email, $role, $newPassword, $sede_id)) {

@@ -51,7 +51,7 @@ test.describe('Creazione lavoratore', () => {
     // --- DATI PERSONALI ---
     await page.fill('#nome', `TestNome${RUN_ID}`);
     await page.fill('#cognome', `TestCognome${RUN_ID}`);
-    await page.fill('#codice_fiscale', 'TSTCGN90A01H501Z');
+    await page.fill('#codice_fiscale', `TSTCGN${RUN_ID}A01Z`);
     await page.fill('#data_nascita', '1990-01-01');
     await page.locator('[name="paese_nascita"]').fill('Italia');
     await page.locator('[name="nazionalita"]').fill('Italiana');
@@ -285,7 +285,7 @@ test.describe('Modifica lavoratore', () => {
     // --- Modify DATI PERSONALI ---
     await page.fill('[name="nome"]', `ModNome${RUN_ID}`);
     await page.fill('[name="cognome"]', `ModCognome${RUN_ID}`);
-    await page.fill('[name="codice_fiscale"]', 'MDTCGN85B02H501X');
+    await page.fill('[name="codice_fiscale"]', `MDTCGN${RUN_ID}B02X`);
     await page.locator('[name="data_nascita"]').fill('1985-02-02');
     await page.locator('[name="paese_nascita"]').fill('Germania');
     await page.locator('[name="nazionalita"]').fill('Tedesca');

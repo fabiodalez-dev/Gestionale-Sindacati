@@ -21,14 +21,18 @@ function checkLoginRateLimit($ip) {
         $data = ['attempts' => []];
     }
     $now = time();
-    $data['attempts'] = array_values(array_filter($data['attempts'], fn($t) => $t > $now - 900));
+    $data['attempts'] = array_values(array_filter($data['attempts'], function($entry) use ($now) {
+        $t = is_array($entry) ? ($entry['time'] ?? 0) : $entry;
+        return $t > $now - 900;
+    }));
     if (count($data['attempts']) >= 5) {
         flock($fh, LOCK_UN);
         fclose($fh);
         return false;
     }
-    // Reserve a slot atomically
-    $data['attempts'][] = $now;
+    // Reserve a slot atomically with unique attempt ID
+    $attemptId = uniqid('', true);
+    $data['attempts'][] = ['time' => $now, 'id' => $attemptId];
     $json = json_encode($data);
     if (ftruncate($fh, 0) === false || rewind($fh) === false || fwrite($fh, $json) === false || fflush($fh) === false) {
         error_log("Rate limiter: errore scrittura file per IP hash: " . md5($ip));
@@ -38,14 +42,14 @@ function checkLoginRateLimit($ip) {
     }
     flock($fh, LOCK_UN);
     fclose($fh);
-    return true;
+    return $attemptId;
 }
 
 /**
- * Rollback last reserved login attempt slot on infrastructure failure.
- * This prevents penalizing users when the system itself fails.
+ * Rollback a specific reserved login attempt slot on infrastructure failure.
+ * Uses attempt ID for deterministic removal under concurrency.
  */
-function rollbackReservedLoginAttempt($ip) {
+function rollbackReservedLoginAttempt($ip, $attemptId = null) {
     $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
     if (!file_exists($lockFile)) return true;
     $fh = fopen($lockFile, 'c+');
@@ -54,7 +58,15 @@ function rollbackReservedLoginAttempt($ip) {
     $raw = stream_get_contents($fh);
     $data = json_decode($raw, true);
     if (is_array($data) && !empty($data['attempts'])) {
-        array_pop($data['attempts']);
+        if ($attemptId !== null) {
+            // Remove the specific attempt by ID
+            $data['attempts'] = array_values(array_filter($data['attempts'], function($entry) use ($attemptId) {
+                return !is_array($entry) || ($entry['id'] ?? '') !== $attemptId;
+            }));
+        } else {
+            // Fallback: remove last entry (legacy format)
+            array_pop($data['attempts']);
+        }
         $json = json_encode($data);
         if (ftruncate($fh, 0) === false || rewind($fh) === false || fwrite($fh, $json) === false || fflush($fh) === false) {
             error_log("Rate limiter rollback: errore scrittura file per IP hash: " . md5($ip));
@@ -107,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($rateLimitResult === null) {
             $error = 'Servizio temporaneamente non disponibile. Riprova.';
         } else {
+            $attemptId = $rateLimitResult;
             $email = sanitizeInput($_POST['email']);
             $password = $_POST['password'];
             $remember_me = isset($_POST['remember_me']) ? true : false;
@@ -146,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Email o password errati.';
                 }
             } else {
-                if (!rollbackReservedLoginAttempt($clientIp)) {
+                if (!rollbackReservedLoginAttempt($clientIp, $attemptId)) {
                     error_log("Rollback rate limiter fallito per IP hash: " . md5($clientIp));
                 }
                 $error = 'Errore nella connessione al database.';

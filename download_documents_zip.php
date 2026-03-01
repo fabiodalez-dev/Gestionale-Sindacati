@@ -14,6 +14,7 @@ header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
+    header('Allow: POST');
     ob_clean();
     echo json_encode(['success' => false, 'message' => 'Metodo non consentito.']);
     exit;

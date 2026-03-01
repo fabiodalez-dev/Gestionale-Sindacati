@@ -8,7 +8,7 @@ $cron_key = $_ENV['CRON_KEY'] ?? getenv('CRON_KEY') ?: '';
 $is_cron = isset($_GET['cron']) && $_GET['cron'] == 1;
 
 if ($is_cron) {
-    $provided_key = $_GET['key'] ?? '';
+    $provided_key = $_SERVER['HTTP_X_CRON_KEY'] ?? $_GET['key'] ?? '';
     if (!is_string($provided_key) || empty($cron_key) || !hash_equals($cron_key, $provided_key)) {
         http_response_code(403);
         die('Accesso negato. Chiave cron non valida.');
