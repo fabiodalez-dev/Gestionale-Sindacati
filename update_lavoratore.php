@@ -549,11 +549,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                       'alignleft aligncenter alignright alignjustify | ' +
                       'bullist numlist outdent indent | removeformat | help',
             entity_encoding: 'raw',
-            forced_root_block: '',
+            forced_root_block: 'p',
             toolbar_mode: 'floating',
             menubar: false,
             branding: false,
             height: 300,
+            base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce',
+            suffix: '.min',
+            license_key: 'gpl',
             setup: function (editor) {
                 editor.on('init', function () {
                     this.getContainer().style.zIndex = 1040;

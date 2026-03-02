@@ -1088,12 +1088,14 @@ generateCsrfToken();
                       'alignleft aligncenter alignright alignjustify | ' +
                       'bullist numlist outdent indent | removeformat | help',
             entity_encoding: 'raw',
-            forced_root_block: '',
+            forced_root_block: 'p',
             toolbar_mode: 'floating',
             menubar: false,
             branding: false,
             height: 300,
-            license_key: 'gpl', // Aggiunto per risolvere l'avviso di licenza
+            base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce',
+            suffix: '.min',
+            license_key: 'gpl',
             setup: function (editor) {
                 editor.on('init', function () {
                     // Imposta il z-index di TinyMCE inferiore a quello del modale Bootstrap (1050)

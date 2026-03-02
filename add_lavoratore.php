@@ -659,6 +659,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 menubar: false,
                 branding: false,
                 height: 300,
+                base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce',
+                suffix: '.min',
                 license_key: 'gpl',
                 setup: function (editor) {
                     editor.on('init', function () {

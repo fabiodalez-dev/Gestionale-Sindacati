@@ -971,7 +971,7 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
                       'alignleft aligncenter alignright alignjustify | ' +
                       'bullist numlist outdent indent | removeformat | help',
             entity_encoding: 'raw',
-            forced_root_block: '',
+            forced_root_block: 'p',
             toolbar_mode: 'floating',
             menubar: false,
             branding: false,

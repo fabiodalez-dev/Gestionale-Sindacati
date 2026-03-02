@@ -225,6 +225,10 @@ generateCsrfToken();
             menubar: false,
             branding: false,
             height: 300,
+            entity_encoding: 'raw',
+            forced_root_block: 'p',
+            base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce',
+            suffix: '.min',
             license_key: 'gpl',
             setup: function (editor) {
                 editor.on('init', function () {

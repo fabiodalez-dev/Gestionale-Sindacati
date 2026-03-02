@@ -300,21 +300,29 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
     <!-- TinyMCE -->
     <script src="<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce/tinymce.min.js"></script>
 
-    <!-- Inizializzazione di TinyMCE -->
+    <!-- Inizializzazione di TinyMCE (deferred fino a quando il template è visibile) -->
     <script>
-        if (typeof tinymce !== 'undefined') { tinymce.init({
-            selector: '#body',
-            height: 300,
-            plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
-            toolbar: 'undo redo | formatselect | bold italic backcolor | ' +
-                     'alignleft aligncenter alignright alignjustify | ' +
-                     'bullist numlist outdent indent | removeformat | help',
-            menubar: false,
-            branding: false,
-            base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce',
-            suffix: '.min',
-            license_key: 'gpl',
-        }); }
+        var tinymceBodyInitialized = false;
+        function initTinyMCEBody() {
+            if (!tinymceBodyInitialized && typeof tinymce !== 'undefined') {
+                tinymce.init({
+                    selector: '#body',
+                    height: 300,
+                    plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
+                    toolbar: 'undo redo | formatselect | bold italic backcolor | ' +
+                             'alignleft aligncenter alignright alignjustify | ' +
+                             'bullist numlist outdent indent | removeformat | help',
+                    menubar: false,
+                    branding: false,
+                    entity_encoding: 'raw',
+                    forced_root_block: 'p',
+                    base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce',
+                    suffix: '.min',
+                    license_key: 'gpl',
+                });
+                tinymceBodyInitialized = true;
+            }
+        }
     </script>
 
     <!-- Script per Gestire la Visualizzazione degli Editor -->
@@ -325,6 +333,8 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
             if (templateCard.classList.contains('hidden-editor')) {
                 templateCard.classList.remove('hidden-editor');
                 this.textContent = 'Nascondi Messaggio Reminder di Iscrizione';
+                // Inizializza TinyMCE solo dopo che il contenitore è visibile
+                initTinyMCEBody();
             } else {
                 templateCard.classList.add('hidden-editor');
                 this.textContent = 'Mostra Messaggio Reminder di Iscrizione';

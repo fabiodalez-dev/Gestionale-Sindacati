@@ -449,22 +449,30 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
 <script src="<?php echo $base_url; ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
 <script src="<?php echo $base_url; ?>theme/js/sb-admin-2.min.js"></script>
 
-<!-- TinyMCE Init -->
+<!-- TinyMCE Init (deferred to modal shown event) -->
 <script>
-if (typeof tinymce !== 'undefined') { tinymce.init({
-    selector: '#messaggio_admin_editor',
-    plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
-    toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat',
-    height: 300,
-    menubar: false,
-    branding: false,
-    entity_encoding: 'raw',
-    forced_root_block: 'false',
-    toolbar_mode: 'floating',
-    base_url: '<?php echo $base_url; ?>vendor/tinymce',
-    suffix: '.min',
-    license_key: 'gpl',
-}); }
+(function() {
+    var tinymceInitialized = false;
+    $('#editMessaggioModal').on('shown.bs.modal', function () {
+        if (!tinymceInitialized && typeof tinymce !== 'undefined') {
+            tinymce.init({
+                selector: '#messaggio_admin_editor',
+                plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
+                toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat',
+                height: 300,
+                menubar: false,
+                branding: false,
+                entity_encoding: 'raw',
+                forced_root_block: 'p',
+                toolbar_mode: 'floating',
+                base_url: '<?php echo $base_url; ?>vendor/tinymce',
+                suffix: '.min',
+                license_key: 'gpl',
+            });
+            tinymceInitialized = true;
+        }
+    });
+})();
 </script>
 
 <!-- FullCalendar Init -->

@@ -684,7 +684,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
                 toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
                 entity_encoding: 'raw',
-                forced_root_block: '',
+                forced_root_block: 'p',
                 toolbar_mode: 'floating',
                 menubar: false,
                 branding: false,
@@ -695,6 +695,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     });
                 },
                 inline: false,
+                base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce',
+                suffix: '.min',
                 license_key: 'gpl'
             });
         }
@@ -789,6 +791,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $("#unita_operativa_id").val(0);
                             }
                         });
+                    }
+                }
+            });
+
+            $("#ccnl").autocomplete({
+                source: "<?php echo sanitizeForHTML($base_url); ?>autocomplete_ccnl.php",
+                minLength: 2,
+                select: function(event, ui) {
+                    console.log("CCNL selezionato:", ui.item);
+                },
+                change: function(event, ui) {
+                    if (!ui.item) {
+                        console.log("CCNL non selezionato da autocomplete.");
                     }
                 }
             });
