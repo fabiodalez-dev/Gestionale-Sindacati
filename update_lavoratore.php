@@ -231,13 +231,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Aggiornamento Lavoratore - CRM Admin</title>
     <!-- SB Admin 2 CSS -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.5" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.6" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- jQuery UI CSS per l'autocomplete -->
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.5" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.6" rel="stylesheet">
     <!-- TinyMCE -->
     <script src="<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
     <style>
@@ -538,7 +538,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Inizializzazione di TinyMCE -->
     <script>
-        tinymce.init({
+        if (typeof tinymce !== 'undefined') { tinymce.init({
             selector: '#note',
             plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
             toolbar: 'undo redo | formatselect | bold italic backcolor | ' +
@@ -552,13 +552,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             height: 300,
             setup: function (editor) {
                 editor.on('init', function () {
-                    // Imposta il z-index di TinyMCE inferiore a quello del modale Bootstrap (1050)
                     this.getContainer().style.zIndex = 1040;
                 });
             },
-            // Aggiungi questa opzione per gestire i modali correttamente
             inline: false
-        });
+        }); }
     </script>
 
     <script>

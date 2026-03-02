@@ -292,11 +292,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <title>Aggiungi Lavoratore - CRM Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.5" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.6" rel="stylesheet">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.5" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.6" rel="stylesheet">
     <style>
         .ui-autocomplete {
             z-index: 1051 !important;
@@ -648,24 +648,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Inizializzazione di TinyMCE -->
     <script src="<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
     <script>
-        tinymce.init({
-            selector: '#note',
-            plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
-            toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
-            entity_encoding: 'raw',
-            forced_root_block: 'p',
-            toolbar_mode: 'floating',
-            menubar: false,
-            branding: false,
-            height: 300,
-            license_key: 'gpl',
-            setup: function (editor) {
-                editor.on('init', function () {
-                    this.getContainer().style.zIndex = 1040;
-                });
-            },
-            inline: false
-        });
+        if (typeof tinymce !== 'undefined') {
+            tinymce.init({
+                selector: '#note',
+                plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
+                toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+                entity_encoding: 'raw',
+                forced_root_block: 'p',
+                toolbar_mode: 'floating',
+                menubar: false,
+                branding: false,
+                height: 300,
+                license_key: 'gpl',
+                setup: function (editor) {
+                    editor.on('init', function () {
+                        this.getContainer().style.zIndex = 1040;
+                    });
+                },
+                inline: false
+            });
+        }
         $(document).ready(function() {
             function sanitizeForHTML(str) {
                 return $('<div>').text(str).html();

@@ -189,13 +189,13 @@ generateCsrfToken();
     <!-- Meta viewport per la responsività -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.5" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.6" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- jQuery UI CSS -->
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.5" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.6" rel="stylesheet">
     <!-- FullCalendar CSS -->
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/common.min.css">
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/daygrid.min.css">
@@ -1081,7 +1081,7 @@ generateCsrfToken();
 
     <!-- Inizializzazione di TinyMCE -->
     <script>
-        tinymce.init({
+        if (typeof tinymce !== 'undefined') { tinymce.init({
             selector: '#note, #description, #eventDescription', // Selettore per i campi di testo
             plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
             toolbar: 'undo redo | formatselect | bold italic backcolor | ' +
@@ -1102,7 +1102,7 @@ generateCsrfToken();
             },
             // Aggiungi questa opzione per gestire i modali correttamente
             inline: false
-        });
+        }); }
     </script>
 
     <!-- Inizializzazione del Calendario -->

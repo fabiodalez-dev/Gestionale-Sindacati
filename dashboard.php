@@ -60,8 +60,8 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
     <title>Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.5" rel="stylesheet">
-    <link href="<?php echo $base_url; ?>styles.css?v=2.5" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.6" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>styles.css?v=2.6" rel="stylesheet">
     <!-- FullCalendar CSS (local) -->
     <link rel="stylesheet" href="<?php echo $base_url; ?>theme/vendor/fullcalendar/common.min.css">
     <link rel="stylesheet" href="<?php echo $base_url; ?>theme/vendor/fullcalendar/daygrid.min.css">
@@ -451,7 +451,7 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
 
 <!-- TinyMCE Init -->
 <script>
-tinymce.init({
+if (typeof tinymce !== 'undefined') { tinymce.init({
     selector: '#messaggio_admin_editor',
     plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
     toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat',
@@ -464,7 +464,7 @@ tinymce.init({
     base_url: '<?php echo $base_url; ?>vendor/tinymce',
     suffix: '.min',
     license_key: 'gpl',
-});
+}); }
 </script>
 
 <!-- FullCalendar Init -->

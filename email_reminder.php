@@ -134,9 +134,9 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SB Admin 2 CSS (includes Bootstrap) -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.5" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.6" rel="stylesheet">
     <!-- Custom CSS (se necessario) -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.5" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.6" rel="stylesheet">
     <style>
         /* Stili personalizzati */
         .hidden-editor {
@@ -302,7 +302,7 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
 
     <!-- Inizializzazione di TinyMCE -->
     <script>
-        tinymce.init({
+        if (typeof tinymce !== 'undefined') { tinymce.init({
             selector: '#body',
             height: 300,
             plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
@@ -311,10 +311,10 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
                      'bullist numlist outdent indent | removeformat | help',
             menubar: false,
             branding: false,
-            base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce', // Percorso base corretto
-            suffix: '.min', // Suffisso del file
+            base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce',
+            suffix: '.min',
             license_key: 'gpl',
-        });
+        }); }
     </script>
 
     <!-- Script per Gestire la Visualizzazione degli Editor -->

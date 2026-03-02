@@ -58,6 +58,7 @@ RewriteRule ^$ /login.php [L,R=302]
 
 # === Security: Block access to backup and vendor directories ===
 <IfModule mod_rewrite.c>
+    RewriteRule ^vendor/tinymce/ - [L]
     RewriteRule ^vendor/ - [F,L]
     RewriteRule ^backup/ - [F,L]
     RewriteRule ^sessions/ - [F,L]
