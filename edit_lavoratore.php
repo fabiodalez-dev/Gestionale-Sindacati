@@ -215,11 +215,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $data_fine_iscrizione = null;
             }
             
+            // Imposta automaticamente iscritto in base al tipo_tessera
+            $iscritto = ($tipo_tessera === 'trattenuta in busta paga' || $tipo_tessera === 'sepa') ? 1 : 0;
+
             // Aggiorna i dati del lavoratore (incluso il campo sede_id)
             $query = "
                 UPDATE lavoratori SET
                     nome = ?, cognome = ?, codice_fiscale = ?, data_nascita = ?, nazionalita = ?, paese_nascita = ?, genere = ?, data_iscrizione = ?,
-                    ccnl = ?, tipo_tessera = ?, settore = ?, vertenze = ?,
+                    ccnl = ?, tipo_tessera = ?, settore = ?, vertenze = ?, iscritto = ?,
                     indirizzo_via = ?, indirizzo_numero_civico = ?, indirizzo_cap = ?, indirizzo_citta = ?, indirizzo_provincia = ?,
                     telefono = ?, email = ?, ruolo = ?, azienda_id = ?, unita_operativa_id = ?, contratto = ?, orario_contratto = ?, data_assunzione = ?, data_fine_contratto = ?,
                     ore_settimanali = ?, ral = ?, note = ?, sede_id = ?
@@ -227,7 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ";
             $params = [
                 $nome, $cognome, $codice_fiscale, $data_nascita, $nazionalita, $paese_nascita, $genere, $data_iscrizione,
-                $ccnl, $tipo_tessera, $settore, $vertenze,
+                $ccnl, $tipo_tessera, $settore, $vertenze, $iscritto,
                 $indirizzo_via, $indirizzo_numero_civico, $indirizzo_cap, $indirizzo_citta, $indirizzo_provincia,
                 $telefono, $email, $ruolo, $azienda_id, $unita_operativa_id, $contratto, $orario_contratto, $data_assunzione, $data_fine_contratto,
                 $ore_settimanali, $ral, $note_pulito,

@@ -829,6 +829,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             toggleDateFields();
             $("#tipo_tessera").on('change', function() {
                 toggleDateFields();
+                // Auto-imposta "Attivo = Sì" per trattenuta e SEPA
+                var tipo = $(this).val();
+                if (tipo === 'trattenuta in busta paga' || tipo === 'sepa') {
+                    $("#iscritto").val('1');
+                }
             });
             $("#data_inizio").on("change", function() {
                 var tipo = $("#tipo_tessera").val();

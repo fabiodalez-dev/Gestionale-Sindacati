@@ -50,6 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $settore = isset($_POST['settore']) ? sanitizeForDatabase($_POST['settore']) : 'privato';
     $vertenze = isset($_POST['vertenze']) ? intval($_POST['vertenze']) : 0;
     $iscritto = isset($_POST['iscritto']) ? intval($_POST['iscritto']) : 0;
+    // Forza iscritto = 1 per trattenuta in busta paga e SEPA
+    if ($tipo_tessera === 'trattenuta in busta paga' || $tipo_tessera === 'sepa') {
+        $iscritto = 1;
+    }
     $indirizzo_via = !empty($_POST['indirizzo_via']) ? sanitizeForDatabase($_POST['indirizzo_via']) : null;
     $indirizzo_numero_civico = !empty($_POST['indirizzo_numero_civico']) ? sanitizeForDatabase($_POST['indirizzo_numero_civico']) : null;
     $indirizzo_cap = !empty($_POST['indirizzo_cap']) ? sanitizeForDatabase($_POST['indirizzo_cap']) : null;
@@ -679,6 +683,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             });
                         }
                     });
+                }
+            });
+            // Auto-imposta "Attivo = Sì" per trattenuta e SEPA
+            $("#tipo_tessera").on('change', function() {
+                var tipo = $(this).val();
+                if (tipo === 'trattenuta in busta paga' || tipo === 'sepa') {
+                    $("#iscritto").val('1');
                 }
             });
         });

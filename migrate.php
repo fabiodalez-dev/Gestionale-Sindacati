@@ -218,6 +218,109 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_indexes'])) {
         }
     }
 }
+// ── Sincronizzazione Stato Iscrizioni ─────────────────────────────────
+
+$sync_messages = [];
+$sync_errors = [];
+
+// Conta lo stato attuale per l'anteprima
+$sync_preview = [];
+
+// SEPA/Trattenuta non archiviati con iscritto = 0
+$r = $mysqli->query("SELECT COUNT(*) AS cnt FROM lavoratori WHERE tipo_tessera IN ('trattenuta in busta paga', 'sepa') AND archiviato <> 1 AND (iscritto = 0 OR iscritto IS NULL)");
+$sync_preview['sepa_trattenuta_da_attivare'] = $r ? (int)$r->fetch_assoc()['cnt'] : 0;
+
+// Rinnovo annuale non archiviati con iscrizione valida ma iscritto = 0
+$r = $mysqli->query("SELECT COUNT(*) AS cnt FROM lavoratori l
+    WHERE l.tipo_tessera = 'rinnovo annuale' AND l.archiviato <> 1 AND (l.iscritto = 0 OR l.iscritto IS NULL)
+    AND EXISTS (SELECT 1 FROM iscrizioni i WHERE i.lavoratore_id = l.id AND i.data_fine >= CURDATE())");
+$sync_preview['rinnovo_da_attivare'] = $r ? (int)$r->fetch_assoc()['cnt'] : 0;
+
+// Rinnovo annuale non archiviati con iscritto = 1 ma nessuna iscrizione valida
+$r = $mysqli->query("SELECT COUNT(*) AS cnt FROM lavoratori l
+    WHERE l.tipo_tessera = 'rinnovo annuale' AND l.archiviato <> 1 AND l.iscritto = 1
+    AND NOT EXISTS (SELECT 1 FROM iscrizioni i WHERE i.lavoratore_id = l.id AND i.data_fine >= CURDATE())");
+$sync_preview['rinnovo_da_disattivare'] = $r ? (int)$r->fetch_assoc()['cnt'] : 0;
+
+// SEPA/Trattenuta non archiviati senza record in iscrizioni
+$r = $mysqli->query("SELECT COUNT(*) AS cnt FROM lavoratori l
+    WHERE l.tipo_tessera IN ('trattenuta in busta paga', 'sepa') AND l.archiviato <> 1
+    AND NOT EXISTS (SELECT 1 FROM iscrizioni i WHERE i.lavoratore_id = l.id)");
+$sync_preview['senza_iscrizione'] = $r ? (int)$r->fetch_assoc()['cnt'] : 0;
+
+$sync_total_changes = $sync_preview['sepa_trattenuta_da_attivare'] + $sync_preview['rinnovo_da_attivare'] + $sync_preview['rinnovo_da_disattivare'] + $sync_preview['senza_iscrizione'];
+
+// Esegui sincronizzazione se richiesto
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sync_iscritti'])) {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        $sync_errors[] = "Token CSRF non valido.";
+    } else {
+        $mysqli->begin_transaction();
+        try {
+            // 1. SEPA e Trattenuta: attiva
+            $q1 = $mysqli->query("UPDATE lavoratori SET iscritto = 1 WHERE tipo_tessera IN ('trattenuta in busta paga', 'sepa') AND archiviato <> 1 AND (iscritto = 0 OR iscritto IS NULL)");
+            $count_attivati_sepa = $mysqli->affected_rows;
+
+            // 2. Rinnovo annuale con iscrizione valida: attiva
+            $q2 = $mysqli->query("UPDATE lavoratori l
+                INNER JOIN iscrizioni i ON i.lavoratore_id = l.id AND i.data_fine >= CURDATE()
+                SET l.iscritto = 1
+                WHERE l.tipo_tessera = 'rinnovo annuale' AND l.archiviato <> 1 AND (l.iscritto = 0 OR l.iscritto IS NULL)");
+            $count_attivati_rinnovo = $mysqli->affected_rows;
+
+            // 3. Rinnovo annuale senza iscrizione valida: disattiva
+            $q3 = $mysqli->query("UPDATE lavoratori l
+                SET l.iscritto = 0
+                WHERE l.tipo_tessera = 'rinnovo annuale' AND l.archiviato <> 1 AND l.iscritto = 1
+                AND NOT EXISTS (SELECT 1 FROM iscrizioni i WHERE i.lavoratore_id = l.id AND i.data_fine >= CURDATE())");
+            $count_disattivati_rinnovo = $mysqli->affected_rows;
+
+            // 4. Crea record iscrizione per SEPA/Trattenuta che non ne hanno uno
+            $r_missing = $mysqli->query("SELECT l.id, l.tipo_tessera FROM lavoratori l
+                WHERE l.tipo_tessera IN ('trattenuta in busta paga', 'sepa') AND l.archiviato <> 1
+                AND NOT EXISTS (SELECT 1 FROM iscrizioni i WHERE i.lavoratore_id = l.id)");
+            $count_iscrizioni_create = 0;
+            if ($r_missing) {
+                $stmt_ins = $mysqli->prepare("INSERT INTO iscrizioni (lavoratore_id, metodo_pagamento, data_inizio, created_at, updated_at) VALUES (?, ?, CURDATE(), NOW(), NOW())");
+                while ($row_m = $r_missing->fetch_assoc()) {
+                    $stmt_ins->bind_param('is', $row_m['id'], $row_m['tipo_tessera']);
+                    $stmt_ins->execute();
+                    $count_iscrizioni_create++;
+                }
+                $stmt_ins->close();
+            }
+
+            $mysqli->commit();
+
+            if ($count_attivati_sepa > 0) {
+                $sync_messages[] = "<strong>" . (int)$count_attivati_sepa . "</strong> lavoratori SEPA/Trattenuta attivati";
+            }
+            if ($count_attivati_rinnovo > 0) {
+                $sync_messages[] = "<strong>" . (int)$count_attivati_rinnovo . "</strong> lavoratori Rinnovo Annuale attivati (iscrizione valida)";
+            }
+            if ($count_disattivati_rinnovo > 0) {
+                $sync_messages[] = "<strong>" . (int)$count_disattivati_rinnovo . "</strong> lavoratori Rinnovo Annuale disattivati (iscrizione scaduta)";
+            }
+            if ($count_iscrizioni_create > 0) {
+                $sync_messages[] = "<strong>" . (int)$count_iscrizioni_create . "</strong> record iscrizione creati per SEPA/Trattenuta";
+            }
+            $total = $count_attivati_sepa + $count_attivati_rinnovo + $count_disattivati_rinnovo + $count_iscrizioni_create;
+            if ($total === 0) {
+                $sync_messages[] = "Nessuna modifica necessaria. I dati erano gia' coerenti.";
+            }
+
+            // Ricalcola anteprima dopo sync
+            $sync_preview['sepa_trattenuta_da_attivare'] = 0;
+            $sync_preview['rinnovo_da_attivare'] = 0;
+            $sync_preview['rinnovo_da_disattivare'] = 0;
+            $sync_preview['senza_iscrizione'] = 0;
+            $sync_total_changes = 0;
+        } catch (Exception $e) {
+            $mysqli->rollback();
+            $sync_errors[] = "Errore durante la sincronizzazione: " . $e->getMessage();
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -376,6 +479,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_indexes'])) {
                                         </table>
                                     </div>
                                 </details>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Card Sincronizzazione Stato Iscrizioni -->
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold"><i class="fas fa-sync-alt mr-1"></i> Sincronizzazione Stato Iscrizioni</h6>
+                            <span class="badge badge-<?php echo $sync_total_changes === 0 ? 'success' : 'warning'; ?>">
+                                <?php echo $sync_total_changes === 0 ? 'Coerente' : (int)$sync_total_changes . ' da correggere'; ?>
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-3">
+                                Verifica e corregge lo stato di iscrizione dei lavoratori in base al tipo di tessera:
+                                <strong>SEPA</strong> e <strong>Trattenuta in busta paga</strong> vengono impostati come iscritti,
+                                <strong>Rinnovo annuale</strong> viene verificato in base alla data di scadenza dell'iscrizione.
+                                I lavoratori archiviati non vengono modificati.
+                            </p>
+
+                            <?php foreach ($sync_messages as $msg): ?>
+                                <div class="alert alert-success py-2 small"><?php echo $msg; ?></div>
+                            <?php endforeach; ?>
+                            <?php foreach ($sync_errors as $err): ?>
+                                <div class="alert alert-danger py-2 small"><?php echo sanitizeForHTML($err); ?></div>
+                            <?php endforeach; ?>
+
+                            <?php if ($sync_total_changes > 0): ?>
+                                <div class="table-responsive mb-3">
+                                    <table class="table table-sm table-bordered mb-0" style="font-size: 0.85rem;">
+                                        <thead style="background: #f8fafc;">
+                                            <tr>
+                                                <th>Azione</th>
+                                                <th>Tipo Tessera</th>
+                                                <th class="text-center">Lavoratori</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if ($sync_preview['sepa_trattenuta_da_attivare'] > 0): ?>
+                                            <tr>
+                                                <td><span class="badge badge-success">Imposta Iscritto</span></td>
+                                                <td>SEPA / Trattenuta in busta paga</td>
+                                                <td class="text-center"><strong><?php echo (int)$sync_preview['sepa_trattenuta_da_attivare']; ?></strong></td>
+                                            </tr>
+                                            <?php endif; ?>
+                                            <?php if ($sync_preview['rinnovo_da_attivare'] > 0): ?>
+                                            <tr>
+                                                <td><span class="badge badge-success">Imposta Iscritto</span></td>
+                                                <td>Rinnovo Annuale (iscrizione valida)</td>
+                                                <td class="text-center"><strong><?php echo (int)$sync_preview['rinnovo_da_attivare']; ?></strong></td>
+                                            </tr>
+                                            <?php endif; ?>
+                                            <?php if ($sync_preview['rinnovo_da_disattivare'] > 0): ?>
+                                            <tr>
+                                                <td><span class="badge badge-danger">Imposta Non Iscritto</span></td>
+                                                <td>Rinnovo Annuale (iscrizione scaduta)</td>
+                                                <td class="text-center"><strong><?php echo (int)$sync_preview['rinnovo_da_disattivare']; ?></strong></td>
+                                            </tr>
+                                            <?php endif; ?>
+                                            <?php if ($sync_preview['senza_iscrizione'] > 0): ?>
+                                            <tr>
+                                                <td><span class="badge badge-warning">Crea Iscrizione</span></td>
+                                                <td>SEPA / Trattenuta senza record iscrizione</td>
+                                                <td class="text-center"><strong><?php echo (int)$sync_preview['senza_iscrizione']; ?></strong></td>
+                                            </tr>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <form method="POST">
+                                    <?php csrfInputField(); ?>
+                                    <input type="hidden" name="sync_iscritti" value="1">
+                                    <button type="submit" class="btn btn-info" onclick="return confirm('Sincronizzare lo stato di <?php echo (int)$sync_total_changes; ?> lavoratori?');">
+                                        <i class="fas fa-sync-alt"></i> Sincronizza <?php echo (int)$sync_total_changes; ?> Lavoratori
+                                    </button>
+                                </form>
+                            <?php else: ?>
+                                <div class="alert alert-success mb-0">
+                                    <i class="fas fa-check-circle"></i> Tutti gli stati di iscrizione sono coerenti con il tipo di tessera.
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>
