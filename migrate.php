@@ -293,16 +293,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sync_iscritti'])) {
             $mysqli->commit();
 
             if ($count_attivati_sepa > 0) {
-                $sync_messages[] = "<strong>" . (int)$count_attivati_sepa . "</strong> lavoratori SEPA/Trattenuta attivati";
+                $sync_messages[] = (int)$count_attivati_sepa . " lavoratori SEPA/Trattenuta attivati";
             }
             if ($count_attivati_rinnovo > 0) {
-                $sync_messages[] = "<strong>" . (int)$count_attivati_rinnovo . "</strong> lavoratori Rinnovo Annuale attivati (iscrizione valida)";
+                $sync_messages[] = (int)$count_attivati_rinnovo . " lavoratori Rinnovo Annuale attivati (iscrizione valida)";
             }
             if ($count_disattivati_rinnovo > 0) {
-                $sync_messages[] = "<strong>" . (int)$count_disattivati_rinnovo . "</strong> lavoratori Rinnovo Annuale disattivati (iscrizione scaduta)";
+                $sync_messages[] = (int)$count_disattivati_rinnovo . " lavoratori Rinnovo Annuale disattivati (iscrizione scaduta)";
             }
             if ($count_iscrizioni_create > 0) {
-                $sync_messages[] = "<strong>" . (int)$count_iscrizioni_create . "</strong> record iscrizione creati per SEPA/Trattenuta";
+                $sync_messages[] = (int)$count_iscrizioni_create . " record iscrizione creati per SEPA/Trattenuta";
             }
             $total = $count_attivati_sepa + $count_attivati_rinnovo + $count_disattivati_rinnovo + $count_iscrizioni_create;
             if ($total === 0) {
@@ -500,7 +500,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sync_iscritti'])) {
                             </p>
 
                             <?php foreach ($sync_messages as $msg): ?>
-                                <div class="alert alert-success py-2 small"><?php echo $msg; ?></div>
+                                <div class="alert alert-success py-2 small"><?php echo sanitizeForHTML($msg); ?></div>
                             <?php endforeach; ?>
                             <?php foreach ($sync_errors as $err): ?>
                                 <div class="alert alert-danger py-2 small"><?php echo sanitizeForHTML($err); ?></div>

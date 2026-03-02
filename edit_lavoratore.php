@@ -215,8 +215,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $data_fine_iscrizione = null;
             }
             
-            // Imposta automaticamente iscritto in base al tipo_tessera
-            $iscritto = ($tipo_tessera === 'trattenuta in busta paga' || $tipo_tessera === 'sepa') ? 1 : 0;
+            // Imposta iscritto in base al tipo_tessera:
+            // - SEPA/Trattenuta: sempre iscritto
+            // - Rinnovo annuale: verifica se ha un'iscrizione valida (non scaduta)
+            if ($tipo_tessera === 'trattenuta in busta paga' || $tipo_tessera === 'sepa') {
+                $iscritto = 1;
+            } else {
+                // Per rinnovo annuale: controlla se esiste un'iscrizione con data_fine >= oggi
+                $stmt_check_valid = executeQuery(
+                    "SELECT 1 FROM iscrizioni WHERE lavoratore_id = ? AND data_fine >= CURDATE() LIMIT 1",
+                    [$lavoratore_id], 'i'
+                );
+                $has_valid = $stmt_check_valid && $stmt_check_valid->get_result()->num_rows > 0;
+                if ($stmt_check_valid) $stmt_check_valid->close();
+                $iscritto = $has_valid ? 1 : 0;
+            }
 
             // Aggiorna i dati del lavoratore (incluso il campo sede_id)
             $query = "
