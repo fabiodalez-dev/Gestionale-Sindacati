@@ -1,9 +1,5 @@
 <?php
 // edit_lavoratore.php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 require_once 'config.php'; // Inclusione sicura di config.php
 
 checkLogin(); // Verifica se l'utente è loggato
@@ -219,11 +215,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $data_fine_iscrizione = null;
             }
             
+            // Imposta iscritto in base al tipo_tessera:
+            // - SEPA/Trattenuta: sempre iscritto
+            // - Rinnovo annuale: verifica se ha un'iscrizione valida (non scaduta)
+            if ($tipo_tessera === 'trattenuta in busta paga' || $tipo_tessera === 'sepa') {
+                $iscritto = 1;
+            } else {
+                // Per rinnovo annuale: controlla se esiste un'iscrizione con data_fine >= oggi
+                $stmt_check_valid = executeQuery(
+                    "SELECT 1 FROM iscrizioni WHERE lavoratore_id = ? AND data_fine >= CURDATE() LIMIT 1",
+                    [$lavoratore_id], 'i'
+                );
+                $has_valid = $stmt_check_valid && $stmt_check_valid->get_result()->num_rows > 0;
+                if ($stmt_check_valid) $stmt_check_valid->close();
+                $iscritto = $has_valid ? 1 : 0;
+            }
+
             // Aggiorna i dati del lavoratore (incluso il campo sede_id)
             $query = "
                 UPDATE lavoratori SET
                     nome = ?, cognome = ?, codice_fiscale = ?, data_nascita = ?, nazionalita = ?, paese_nascita = ?, genere = ?, data_iscrizione = ?,
-                    ccnl = ?, tipo_tessera = ?, settore = ?, vertenze = ?,
+                    ccnl = ?, tipo_tessera = ?, settore = ?, vertenze = ?, iscritto = ?,
                     indirizzo_via = ?, indirizzo_numero_civico = ?, indirizzo_cap = ?, indirizzo_citta = ?, indirizzo_provincia = ?,
                     telefono = ?, email = ?, ruolo = ?, azienda_id = ?, unita_operativa_id = ?, contratto = ?, orario_contratto = ?, data_assunzione = ?, data_fine_contratto = ?,
                     ore_settimanali = ?, ral = ?, note = ?, sede_id = ?
@@ -231,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ";
             $params = [
                 $nome, $cognome, $codice_fiscale, $data_nascita, $nazionalita, $paese_nascita, $genere, $data_iscrizione,
-                $ccnl, $tipo_tessera, $settore, $vertenze,
+                $ccnl, $tipo_tessera, $settore, $vertenze, $iscritto,
                 $indirizzo_via, $indirizzo_numero_civico, $indirizzo_cap, $indirizzo_citta, $indirizzo_provincia,
                 $telefono, $email, $ruolo, $azienda_id, $unita_operativa_id, $contratto, $orario_contratto, $data_assunzione, $data_fine_contratto,
                 $ore_settimanali, $ral, $note_pulito,
@@ -370,11 +382,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <title>Modifica Lavoratore - CRM Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
     <style>
         .ui-autocomplete {
             z-index: 1051 !important;
@@ -666,23 +678,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Inizializzazione di TinyMCE -->
     <script src="<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce/tinymce.min.js"></script>
     <script>
-        tinymce.init({
-            selector: '#note',
-            plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
-            toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
-            entity_encoding: 'raw',
-            forced_root_block: '',
-            toolbar_mode: 'floating',
-            menubar: false,
-            branding: false,
-            height: 300,
-            setup: function (editor) {
-                editor.on('init', function () {
-                    this.getContainer().style.zIndex = 1040;
-                });
-            },
-            inline: false
-        });
+        if (typeof tinymce !== 'undefined') {
+            tinymce.init({
+                selector: '#note',
+                plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
+                toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+                entity_encoding: 'raw',
+                forced_root_block: 'p',
+                toolbar_mode: 'floating',
+                menubar: false,
+                branding: false,
+                height: 300,
+                setup: function (editor) {
+                    editor.on('init', function () {
+                        this.getContainer().style.zIndex = 1040;
+                    });
+                },
+                inline: false,
+                base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce',
+                suffix: '.min',
+                license_key: 'gpl'
+            });
+        }
         $(document).ready(function() {
             $("#azienda").autocomplete({
                 source: "<?php echo sanitizeForHTML($base_url); ?>autocomplete_aziende.php",
@@ -758,7 +775,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     }
                                 } else {
                                     if ($("#unita_operativa").next(".alert").length === 0) {
-                                        $('<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">' + sanitizeForHTML(response.message) + '<button type="button" class="close" data-dismiss="alert" aria-label="Chiudi"><span aria-hidden="true">&times;</span></button></div>').insertAfter("#unita_operativa");
+                                        var $alert = $('<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert"><span class="alert-message"></span><button type="button" class="close" data-dismiss="alert" aria-label="Chiudi"><span aria-hidden="true">&times;</span></button></div>');
+                                        $alert.find('.alert-message').text(response.message || 'Errore sconosciuto');
+                                        $alert.insertAfter("#unita_operativa");
                                     }
                                     $("#unita_operativa").val('');
                                     $("#unita_operativa_id").val(0);
@@ -772,6 +791,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $("#unita_operativa_id").val(0);
                             }
                         });
+                    }
+                }
+            });
+
+            $("#ccnl").autocomplete({
+                source: "<?php echo sanitizeForHTML($base_url); ?>autocomplete_ccnl.php",
+                minLength: 2,
+                select: function(event, ui) {
+                    console.log("CCNL selezionato:", ui.item);
+                },
+                change: function(event, ui) {
+                    if (!ui.item) {
+                        console.log("CCNL non selezionato da autocomplete.");
                     }
                 }
             });

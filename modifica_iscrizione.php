@@ -1,10 +1,6 @@
 <?php
 // modifica_iscrizione.php
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 // Inclusione della configurazione e delle funzioni necessarie
 require 'config.php';
 checkLogin();
@@ -55,8 +51,16 @@ if ($result->num_rows === 0) {
 $iscrizione = $result->fetch_assoc();
 $stmt->close();
 
+// Inizializza array errori (usato anche nel template)
+$errors = [];
+
 // Gestione della richiesta POST per aggiornare l'iscrizione
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'modifica_iscrizione') {
+    // Verifica CSRF token prima di qualsiasi elaborazione
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Token CSRF non valido.';
+    }
+
     // Recupera e sanitizza i dati del modulo
     $lavoratore_id = isset($_POST['lavoratore_id']) ? intval($_POST['lavoratore_id']) : 0;
     $tipo_tessera = isset($_POST['tipo_tessera']) ? trim($_POST['tipo_tessera']) : '';
@@ -65,7 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $nota_pagamento = trim($_POST['nota_pagamento']) ?: NULL;
 
     // Validazioni di base
-    $errors = [];
     if ($lavoratore_id <= 0) {
         $errors[] = "Lavoratore non valido. Assicurati di selezionare un lavoratore esistente.";
     }
@@ -224,11 +227,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SB Admin 2 CSS (includes Bootstrap) -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <!-- jQuery UI CSS -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css" rel="stylesheet">
     <!-- Custom CSS (se necessario) -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
     <!-- SweetAlert2 CSS -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
 </head>

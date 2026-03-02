@@ -3,20 +3,34 @@
 
 require 'config.php';
 checkLogin();
+checkUserRole('admin');
 
-// Recupera l'ID dell'iscrizione da eliminare
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+// Richiede metodo POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: gestione_iscrizioni.php");
     exit;
 }
 
-$iscrizione_id = intval($_GET['id']);
+// Verifica token CSRF
+if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+    header("Location: gestione_iscrizioni.php?error=" . urlencode("Token CSRF non valido."));
+    exit;
+}
 
-// Recupera i dettagli dell'iscrizione per ottenere lavoratore_id e metodo_pagamento
-$query = "SELECT lavoratore_id, metodo_pagamento FROM iscrizioni WHERE id = ?";
-$stmt = $mysqli->prepare($query);
-$stmt->bind_param('i', $iscrizione_id);
-$stmt->execute();
+// Recupera l'ID dell'iscrizione da eliminare
+if (!isset($_POST['id']) || !is_scalar($_POST['id']) || !ctype_digit((string)$_POST['id'])) {
+    header("Location: gestione_iscrizioni.php");
+    exit;
+}
+
+$iscrizione_id = intval($_POST['id']);
+
+// Recupera i dettagli dell'iscrizione per ottenere lavoratore_id
+$stmt = executeQuery("SELECT lavoratore_id FROM iscrizioni WHERE id = ?", [$iscrizione_id], 'i');
+if ($stmt === false) {
+    header("Location: gestione_iscrizioni.php?error=" . urlencode("Errore nel recupero dell'iscrizione."));
+    exit;
+}
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
@@ -26,45 +40,45 @@ if ($result->num_rows === 0) {
 
 $row = $result->fetch_assoc();
 $lavoratore_id = $row['lavoratore_id'];
-$metodo_pagamento = $row['metodo_pagamento'];
-$stmt->close();
 
-// Elimina l'iscrizione
-$delete_query = "DELETE FROM iscrizioni WHERE id = ?";
-$stmt = $mysqli->prepare($delete_query);
-$stmt->bind_param('i', $iscrizione_id);
-if ($stmt->execute()) {
-    // Controlla se il lavoratore ha altre iscrizioni attive
-    $check_query = "SELECT COUNT(*) AS count FROM iscrizioni WHERE lavoratore_id = ? AND (metodo_pagamento IN ('trattenuta in busta paga', 'sepa') OR (metodo_pagamento = 'rinnovo annuale' AND data_fine >= ?))";
-    $oggi = date('Y-m-d');
-    $stmt_check = $mysqli->prepare($check_query);
-    $stmt_check->bind_param('is', $lavoratore_id, $oggi);
-    $stmt_check->execute();
-    $result_check = $stmt_check->get_result();
-    $count = $result_check->fetch_assoc()['count'];
-    $stmt_check->close();
-
-    if ($count == 0) {
-        // Se non ci sono altre iscrizioni attive, aggiorna lo stato 'iscritto' a 0
-        $update_lavoratore = "UPDATE lavoratori SET iscritto = 0 WHERE id = ?";
-        $stmt_update = $mysqli->prepare($update_lavoratore);
-        $stmt_update->bind_param('i', $lavoratore_id);
-        $stmt_update->execute();
-        $stmt_update->close();
+// Elimina l'iscrizione e aggiorna stato lavoratore in transazione
+global $mysqli;
+$mysqli->begin_transaction();
+try {
+    $delStmt = executeQuery("DELETE FROM iscrizioni WHERE id = ?", [$iscrizione_id], 'i');
+    if ($delStmt === false || $delStmt->affected_rows === 0) {
+        throw new Exception("Iscrizione non trovata o già eliminata.");
     }
 
-    $success_message = "Iscrizione eliminata con successo.";
-} else {
-    $error_message = "Errore nell'eliminazione dell'iscrizione: " . $stmt->error;
-}
-$stmt->close();
+    // Controlla se il lavoratore ha altre iscrizioni attive
+    $oggi = date('Y-m-d');
+    $checkStmt = executeQuery(
+        "SELECT COUNT(*) AS count FROM iscrizioni WHERE lavoratore_id = ? AND (metodo_pagamento IN ('trattenuta in busta paga', 'sepa') OR (metodo_pagamento = 'rinnovo annuale' AND data_fine >= ?))",
+        [$lavoratore_id, $oggi],
+        'is'
+    );
+    if ($checkStmt === false) {
+        throw new Exception("Errore verifica iscrizioni attive.");
+    }
+    $count = $checkStmt->get_result()->fetch_assoc()['count'];
 
-// Reindirizza con messaggio di successo o errore
-if (isset($success_message)) {
-    header("Location: gestione_iscrizioni.php?success=" . urlencode($success_message));
+    if ($count == 0) {
+        $updStmt = executeQuery("UPDATE lavoratori SET iscritto = 0 WHERE id = ?", [$lavoratore_id], 'i');
+        if ($updStmt === false) {
+            throw new Exception("Errore aggiornamento stato lavoratore.");
+        }
+    }
+
+    if (!$mysqli->commit()) {
+        throw new Exception("Commit transazione fallito.");
+    }
+
+    header("Location: gestione_iscrizioni.php?success=" . urlencode("Iscrizione eliminata con successo."));
     exit;
-} elseif (isset($error_message)) {
-    header("Location: gestione_iscrizioni.php?error=" . urlencode($error_message));
+} catch (Exception $e) {
+    $mysqli->rollback();
+    error_log("Errore eliminazione iscrizione (id={$iscrizione_id}): " . $e->getMessage());
+    header("Location: gestione_iscrizioni.php?error=" . urlencode("Errore nell'eliminazione dell'iscrizione."));
     exit;
 }
 ?>

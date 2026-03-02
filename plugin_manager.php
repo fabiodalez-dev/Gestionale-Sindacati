@@ -199,11 +199,11 @@ $new_available_plugins = array_diff($available_plugin_dirs, $installed_plugin_na
     <meta charset="UTF-8">
     <title>Plugin Manager - CRM Admin</title>
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <!-- FontAwesome -->
-    <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- Custom CSS -->
-    <link href="<?php echo $base_url; ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
 </head>
 <body id="page-top">
 
@@ -417,20 +417,20 @@ $new_available_plugins = array_diff($available_plugin_dirs, $installed_plugin_na
                 <div class="modal-body">Sei pronto a terminare la tua sessione corrente?</div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" type="button" data-dismiss="modal">Annulla</button>
-                    <a class="btn btn-primary" href="<?php echo $base_url; ?>logout.php">Logout</a>
+                    <a class="btn btn-primary" href="<?php echo sanitizeForHTML($base_url); ?>logout.php">Logout</a>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Bootstrap core JavaScript-->
-    <script src="<?php echo $base_url; ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <!-- Core plugin JavaScript-->
-    <script src="<?php echo $base_url; ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
 
     <!-- SB Admin 2 JavaScript-->
-    <script src="<?php echo $base_url; ?>theme/js/sb-admin-2.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
 
 </body>
 </html>

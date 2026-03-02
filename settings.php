@@ -1,5 +1,6 @@
 <?php
 require 'config.php';
+
 checkLogin();
 checkUserRole('admin');
 
@@ -77,6 +78,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
             echo json_encode(['error' => 'URL non valido']);
             exit;
         }
+        $connScheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+        if ($connScheme !== 'https') {
+            echo json_encode(['error' => 'Endpoint non sicuro: usare HTTPS']);
+            exit;
+        }
+        // SSRF protection: block private/reserved IPs
+        $connHost = parse_url($url, PHP_URL_HOST);
+        $resolvedIp = gethostbyname($connHost);
+        if ($resolvedIp === $connHost || filter_var($resolvedIp, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            echo json_encode(['error' => 'URL non consentito: host irraggiungibile o indirizzo privato']);
+            exit;
+        }
         $stmt = executeQuery(
             "INSERT INTO api_connections (name, endpoint_url, api_key, created_by) VALUES (?, ?, ?, ?)",
             [$name, $url, $key, $_SESSION['user_id']],
@@ -120,7 +133,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
             exit;
         }
 
-        $url = rtrim($conn['endpoint_url'], '/') . '?action=ping';
+        $endpointBase = rtrim($conn['endpoint_url'], '/');
+        $scheme = strtolower((string) parse_url($endpointBase, PHP_URL_SCHEME));
+        if ($scheme !== 'https') {
+            echo json_encode(['error' => 'Endpoint non sicuro: usare HTTPS']);
+            exit;
+        }
+        // SSRF protection: block private/reserved IPs
+        $testHost = parse_url($endpointBase, PHP_URL_HOST);
+        $testResolvedIp = gethostbyname($testHost);
+        if ($testResolvedIp === $testHost || filter_var($testResolvedIp, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            echo json_encode(['error' => 'URL non consentito: host irraggiungibile o indirizzo privato']);
+            exit;
+        }
+        $separator = (parse_url($endpointBase, PHP_URL_QUERY) !== null) ? '&' : '?';
+        $url = $endpointBase . $separator . 'action=ping';
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
@@ -129,7 +156,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
                 'X-API-Key: ' . $conn['api_key'],
                 'Accept: application/json'
             ],
-            CURLOPT_SSL_VERIFYPEER => false
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2
         ]);
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -251,8 +279,8 @@ generateCsrfToken();
     <title>Impostazioni - CRM Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
     <style>
         .form-group { margin-bottom: 15px; }
@@ -402,8 +430,35 @@ generateCsrfToken();
                                 <div class="card-body">
                                     <p class="text-muted mb-3">
                                         Le chiavi API permettono ad altri CRM di accedere ai dati di questo gestionale.
-                                        Condividi una chiave con l'amministratore del CRM remoto.
+                                        Condividi una chiave e l'endpoint con l'amministratore del CRM remoto.
                                     </p>
+                                    <div class="alert alert-info d-flex align-items-center mb-3">
+                                        <i class="fas fa-link mr-2"></i>
+                                        <div>
+                                            <strong>Endpoint API:</strong>
+                                            <code id="apiEndpointUrl"><?php
+                                                if (preg_match('#^https?://#', $base_url)) {
+                                                    echo sanitizeForHTML(rtrim($base_url, '/') . '/api.php');
+                                                } else {
+                                                    $configuredOrigin = rtrim($_ENV['APP_URL'] ?? '', '/');
+                                                    if ($configuredOrigin === '') {
+                                                        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                                                        $configuredOrigin = $protocol . '://' . ($_SERVER['SERVER_NAME'] ?? 'localhost');
+                                                    }
+                                                    $basePath = trim($base_url, '/');
+                                                    $endpointUrl = rtrim($configuredOrigin, '/');
+                                                    if ($basePath !== '') {
+                                                        $endpointUrl .= '/' . $basePath;
+                                                    }
+                                                    $endpointUrl .= '/api.php';
+                                                    echo sanitizeForHTML($endpointUrl);
+                                                }
+                                            ?></code>
+                                            <button class="btn btn-sm btn-outline-secondary ml-2" id="copyEndpointBtn" title="Copia endpoint">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div id="apiKeysList">
                                         <?php if (empty($api_keys)): ?>
                                             <p class="text-muted text-center py-4">Nessuna chiave API creata.</p>
@@ -613,7 +668,7 @@ generateCsrfToken();
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.js"></script>
     <script>
-    var csrfToken = '<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>';
+    var csrfToken = <?php echo json_encode($_SESSION['csrf_token']); ?>;
 
     function apiPost(action, data, callback) {
         data.ajax_action = action;
@@ -638,18 +693,30 @@ generateCsrfToken();
         });
     });
 
+    function copyToClipboard(text, message) {
+        message = message || 'Copiato!';
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(function() {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: message, showConfirmButton: false, timer: 1500 });
+            });
+        } else {
+            var temp = $('<textarea>').val(text).appendTo('body').select();
+            document.execCommand('copy');
+            temp.remove();
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: message, showConfirmButton: false, timer: 1500 });
+        }
+    }
+
+    $('#copyEndpointBtn').on('click', function() {
+        copyToClipboard($('#apiEndpointUrl').text().trim(), 'Endpoint copiato!');
+    });
+
     $('#copyNewKeyBtn').on('click', function() {
-        var key = $('#newKeyDisplay').text();
-        navigator.clipboard.writeText(key).then(function() {
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Chiave copiata!', showConfirmButton: false, timer: 1500 });
-        });
+        copyToClipboard($('#newKeyDisplay').text(), 'Chiave copiata!');
     });
 
     $(document).on('click', '.copy-key-btn', function() {
-        var key = $(this).data('key');
-        navigator.clipboard.writeText(key).then(function() {
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Chiave copiata!', showConfirmButton: false, timer: 1500 });
-        });
+        copyToClipboard($(this).data('key'), 'Chiave copiata!');
     });
 
     $(document).on('click', '.toggle-key-btn', function() {

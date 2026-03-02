@@ -26,7 +26,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     show_error('Richiesta non valida.');
 }
 
-// Raccogli i dati del modulo
+// Raccogli i dati del modulo con validazione tipo
+foreach (['db_host', 'db_name', 'db_user', 'db_pass', 'admin_username', 'admin_email', 'admin_password', 'base_url', 'accepted_file_formats'] as $_field) {
+    if (isset($_POST[$_field]) && !is_string($_POST[$_field])) {
+        show_error("Il campo $_field deve essere una stringa.");
+    }
+}
+unset($_field);
+
 $db_host = trim($_POST['db_host'] ?? '');
 $db_name = trim($_POST['db_name'] ?? '');
 $db_user = trim($_POST['db_user'] ?? '');
@@ -34,7 +41,7 @@ $db_pass = trim($_POST['db_pass'] ?? '');
 
 $admin_username = trim($_POST['admin_username'] ?? '');
 $admin_email = trim($_POST['admin_email'] ?? '');
-$admin_password = trim($_POST['admin_password'] ?? '');
+$admin_password = $_POST['admin_password'] ?? '';
 
 $base_url = trim($_POST['base_url'] ?? '');
 $accepted_file_formats = trim($_POST['accepted_file_formats'] ?? '');
@@ -42,6 +49,11 @@ $accepted_file_formats = trim($_POST['accepted_file_formats'] ?? '');
 // Validazione dei dati
 if (empty($db_host) || empty($db_name) || empty($db_user) || empty($admin_username) || empty($admin_email) || empty($admin_password) || empty($base_url) || empty($accepted_file_formats)) {
     show_error('Tutti i campi contrassegnati sono obbligatori.');
+}
+
+// Validazione della password admin
+if (strlen($admin_password) < 8) {
+    show_error('La password dell\'amministratore deve contenere almeno 8 caratteri.');
 }
 
 // Validazione dell'email admin
@@ -181,6 +193,7 @@ function sanitizeForHTML(\$data) {
 function generateCsrfToken() {
     if (empty(\$_SESSION['csrf_token'])) {
         \$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        \$_SESSION['csrf_token_time'] = time();
     }
     return \$_SESSION['csrf_token'];
 }
@@ -381,7 +394,18 @@ function checkUserRole(\$required_role) {
  * @return bool True se il token è valido, False altrimenti
  */
 function verifyCsrfToken(\$token) {
-    return isset(\$_SESSION['csrf_token']) && hash_equals(\$_SESSION['csrf_token'], \$token);
+    if (!is_string(\$token) || !isset(\$_SESSION['csrf_token'], \$_SESSION['csrf_token_time'])) {
+        return false;
+    }
+    if (!is_string(\$_SESSION['csrf_token'])) {
+        return false;
+    }
+    // Token scade dopo 1 ora
+    if ((time() - (int)\$_SESSION['csrf_token_time']) > 3600) {
+        unset(\$_SESSION['csrf_token'], \$_SESSION['csrf_token_time']);
+        return false;
+    }
+    return hash_equals(\$_SESSION['csrf_token'], \$token);
 }
 
 /**
@@ -526,10 +550,10 @@ function checkLogin() {
             if (\$row = \$result->fetch_assoc()) {
                 \$_SESSION['user_role'] = \$row['role'];
             } else {
-                \$_SESSION['user_role'] = 'operator'; // Ruolo predefinito
+                \$_SESSION['user_role'] = 'operatore'; // Ruolo predefinito
             }
         } else {
-            \$_SESSION['user_role'] = 'operator';
+            \$_SESSION['user_role'] = 'operatore';
         }
     }
 }

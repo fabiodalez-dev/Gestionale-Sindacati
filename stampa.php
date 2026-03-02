@@ -8,6 +8,11 @@ use Mpdf\Mpdf;
 
 // Verifica se un lavoratore è stato selezionato per generare il PDF
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lavoratore_id'])) {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
+        die('Token CSRF non valido.');
+    }
+
     $lavoratore_id = intval($_POST['lavoratore_id']);
 
     // Recupera i dati del lavoratore selezionato
@@ -130,6 +135,7 @@ $result = $mysqli->query($sql);
 <body>
     <h1>Scarica PDF Lavoratore</h1>
     <form method="POST" action="">
+        <?php csrfInputField(); ?>
         <label for="lavoratore_id">Seleziona un lavoratore:</label>
         <select name="lavoratore_id" id="lavoratore_id" required>
             <option value="">-- Seleziona --</option>

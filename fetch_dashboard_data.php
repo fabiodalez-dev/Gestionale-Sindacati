@@ -43,18 +43,22 @@ function dashQuery($sql, $params, $types) {
     return $stmt->get_result();
 }
 
-// ── Summary counts ──
-$sql_total = "SELECT COUNT(*) AS total FROM lavoratori l $where";
-$r = dashQuery($sql_total, $params, $types);
-$totale_lavoratori = $r ? (int)$r->fetch_assoc()['total'] : 0;
-
-$sql_iscritti = "SELECT COUNT(*) AS total FROM lavoratori l $where AND l.iscritto = 1";
-$r = dashQuery($sql_iscritti, $params, $types);
-$totale_iscritti = $r ? (int)$r->fetch_assoc()['total'] : 0;
-
-$sql_non_iscritti = "SELECT COUNT(*) AS total FROM lavoratori l $where AND l.iscritto = 0";
-$r = dashQuery($sql_non_iscritti, $params, $types);
-$totale_non_iscritti = $r ? (int)$r->fetch_assoc()['total'] : 0;
+// ── Summary counts (single query with conditional aggregation) ──
+$sql_counts = "SELECT
+    COUNT(*) AS totale,
+    SUM(CASE WHEN l.iscritto = 1 THEN 1 ELSE 0 END) AS iscritti,
+    SUM(CASE WHEN l.iscritto = 0 OR l.iscritto IS NULL THEN 1 ELSE 0 END) AS non_iscritti
+FROM lavoratori l $where";
+$r = dashQuery($sql_counts, $params, $types);
+if ($r && ($row = $r->fetch_assoc())) {
+    $totale_lavoratori = (int)$row['totale'];
+    $totale_iscritti = (int)$row['iscritti'];
+    $totale_non_iscritti = (int)$row['non_iscritti'];
+} else {
+    $totale_lavoratori = 0;
+    $totale_iscritti = 0;
+    $totale_non_iscritti = 0;
+}
 
 // ── Settore ──
 $sql = "SELECT l.settore AS label, COUNT(*) AS value FROM lavoratori l $where AND l.settore IS NOT NULL AND l.settore != '' GROUP BY l.settore ORDER BY value DESC";
@@ -109,15 +113,7 @@ if (!empty($nazionalita_rest)) {
 }
 
 // ── Aziende (top 20) ──
-$where_az = "WHERE 1=1";
-$params_az = [];
-$types_az = '';
-if ($sede_id > 0) {
-    // For aziende, filter by lavoratori that belong to this sede
-    $sql = "SELECT a.nome_azienda AS label, COUNT(l.id) AS value FROM aziende a JOIN lavoratori l ON a.id = l.azienda_id $where GROUP BY a.nome_azienda ORDER BY value DESC LIMIT 20";
-} else {
-    $sql = "SELECT a.nome_azienda AS label, COUNT(l.id) AS value FROM aziende a JOIN lavoratori l ON a.id = l.azienda_id $where GROUP BY a.nome_azienda ORDER BY value DESC LIMIT 20";
-}
+$sql = "SELECT a.nome_azienda AS label, COUNT(l.id) AS value FROM aziende a JOIN lavoratori l ON a.id = l.azienda_id $where GROUP BY a.id, a.nome_azienda ORDER BY value DESC LIMIT 20";
 $r = dashQuery($sql, $params, $types);
 $aziende = [];
 if ($r) while ($row = $r->fetch_assoc()) $aziende[] = $row;

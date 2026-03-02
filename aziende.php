@@ -1,17 +1,7 @@
 <?php
 // aziende.php - Versione Corretta e Migliorata con DataTables
 
-// Configurazione per debugging (disabilitare in produzione)
-$debug_mode = (bool)(getenv('APP_DEBUG') ?: false);
-if (!$debug_mode) {
-    ini_set('display_errors', 0);
-    ini_set('display_startup_errors', 0);
-    error_reporting(0);
-} else {
-    ini_set('display_errors', 1);
-    ini_set('display_startup_errors', 1);
-    error_reporting(E_ALL);
-}
+// La gestione degli errori e' centralizzata in config.php (controllata via APP_DEBUG in .env)
 
 // Includi il file di configurazione e funzioni comuni
 require_once 'config.php';
@@ -303,11 +293,11 @@ if ($length != -1) {
                     $lavoratori .= '</div>';
                     
                     // Azioni
+                    $aziendaIdSafe = intval($row['id']);
                     $azioni = '<div class="d-flex align-items-center gap-2">'
-                            . '<a href="edit_azienda.php?id=' . intval($row['id']) . '" class="table-action-icon" title="Modifica">'
+                            . '<a href="edit_azienda.php?id=' . $aziendaIdSafe . '" class="table-action-icon" title="Modifica">'
                             . '<i class="fas fa-edit"></i></a>'
-                            . '<a href="delete_azienda.php?id=' . intval($row['id']) . '" '
-                            . 'class="table-action-icon" title="Elimina" onclick="return confirm(\'Sei sicuro di voler eliminare questa azienda?\');">'
+                            . '<a href="#" class="table-action-icon delete-azienda-btn" title="Elimina" data-id="' . $aziendaIdSafe . '">'
                             . '<i class="fas fa-trash"></i></a>'
                             . '</div>';
                     
@@ -375,7 +365,7 @@ generateCsrfToken();
     <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     
     <!-- Bootstrap CSS -->
-    <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
 
     <!-- DataTables CSS -->
     <link rel="stylesheet" type="text/css" href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/datatables/dataTables.bootstrap4.min.css">
@@ -389,7 +379,7 @@ generateCsrfToken();
     <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
     
     <!-- Custom Styles -->
-    <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo htmlspecialchars($base_url, ENT_QUOTES, 'UTF-8'); ?>styles.css?v=2.10" rel="stylesheet">
     
     <style>
         /* Stili migliorati per l'usabilità */
@@ -812,6 +802,12 @@ generateCsrfToken();
         </div>
     </div>
 
+    <!-- Hidden form for delete azienda (POST) -->
+    <form id="deleteAziendaForm" method="POST" action="delete_azienda.php" style="display:none;">
+        <?php csrfInputField(); ?>
+        <input type="hidden" name="id" id="deleteAziendaId">
+    </form>
+
     <!-- Scroll to Top Button -->
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
@@ -1154,6 +1150,31 @@ generateCsrfToken();
             setTimeout(function() {
                 $('.alert').fadeOut(500);
             }, 5000);
+
+            // Eliminazione azienda via POST con conferma SweetAlert2
+            $(document).on('click', '.delete-azienda-btn', function(e) {
+                e.preventDefault();
+                var aziendaId = parseInt($(this).data('id'), 10);
+                if (!Number.isInteger(aziendaId) || aziendaId <= 0) {
+                    Swal.fire('Errore', 'ID azienda non valido.', 'error');
+                    return;
+                }
+                Swal.fire({
+                    title: 'Sei sicuro?',
+                    text: 'Vuoi eliminare questa azienda?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#aaa',
+                    confirmButtonText: 'Sì, elimina!',
+                    cancelButtonText: 'Annulla'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        $('#deleteAziendaId').val(aziendaId);
+                        $('#deleteAziendaForm').submit();
+                    }
+                });
+            });
         });
     </script>
 </body>

@@ -1,9 +1,4 @@
 <?php
-// Abilita la visualizzazione degli errori per la diagnostica (disabilita in produzione)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 require 'config.php';
 checkLogin();
 
@@ -190,7 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <!-- FontAwesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SweetAlert2 CSS -->
@@ -198,10 +193,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- TinyMCE -->
     <script src="<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
-    <!-- jQuery UI (per aggiungere/rimuovere unità operative) -->
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
+    <!-- jQuery UI CSS -->
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
-    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
     <style>
         /* Eventuali stili personalizzati */
         .remove-unita-operativa-btn {
@@ -385,6 +379,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <i class="fas fa-angle-up"></i>
     </a>
 
+    <!-- jQuery UI (per aggiungere/rimuovere unità operative) -->
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
+
     <!-- Bootstrap core JavaScript-->
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
@@ -399,7 +396,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Inizializzazione di TinyMCE -->
     <script>
-        tinymce.init({
+        if (typeof tinymce !== 'undefined') { tinymce.init({
             selector: '#note',
             plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
             toolbar: 'undo redo | formatselect | bold italic backcolor | ' +
@@ -409,13 +406,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             menubar: false,
             branding: false,
             height: 300,
-            license_key: 'gpl', // Aggiungi questa riga per risolvere l'avviso di licenza
+            entity_encoding: 'raw',
+            forced_root_block: 'p',
+            base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce',
+            suffix: '.min',
+            license_key: 'gpl',
             setup: function (editor) {
                 editor.on('init', function () {
                     this.getContainer().style.zIndex = 10000;
                 });
             }
-        });
+        }); }
     </script>
 
     <!-- Script per Gestire l'Aggiunta/Rimozione delle Unità Operative con Feedback Utente -->

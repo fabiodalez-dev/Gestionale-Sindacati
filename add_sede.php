@@ -1,11 +1,6 @@
 <?php
 // add_sede.php
 
-// Abilita la visualizzazione degli errori per lo sviluppo (disabilita in produzione)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 // Includi il file di configurazione e funzioni comuni
 require_once 'config.php'; // Assicurati che questo file contenga: executeQuery(), sanitizeForHTML(), checkLogin(), generateCsrfToken()
 
@@ -15,8 +10,9 @@ checkLogin();
 // Gestione del form di inserimento della sede
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verifica del token CSRF
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die("Token CSRF non valido.");
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        header("Location: sedi.php?error=" . urlencode("Token CSRF non valido."));
+        exit;
     }
     
     // Recupera e pulisci i dati inviati
@@ -62,9 +58,9 @@ generateCsrfToken();
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
 </head>
 <body id="page-top">
     <div id="wrapper">
@@ -84,7 +80,7 @@ generateCsrfToken();
                     <div class="card shadow mb-4">
                         <div class="card-body">
                             <form action="add_sede.php" method="POST">
-                                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                                <?php csrfInputField(); ?>
                                 <div class="form-group">
                                     <label for="nome">Nome Sede <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="nome" name="nome" required>

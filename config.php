@@ -4,11 +4,6 @@
 // Avvio del buffer di output per prevenire invio accidentale di output prima delle intestazioni
 ob_start();
 
-// Impostazioni di visualizzazione degli errori (disabilitare in produzione)
-//ini_set('display_errors', 1);
-//ini_set('display_startup_errors', 1);
-//error_reporting(E_ALL);
-
 // Carica le variabili dal file .env
 function loadEnv($path) {
     if (!file_exists($path)) {
@@ -34,6 +29,19 @@ function loadEnv($path) {
 }
 loadEnv(__DIR__ . '/.env');
 
+// Gestione errori centralizzata (controllata via APP_DEBUG in .env)
+$app_debug = ($_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG') ?: '0') === '1';
+$debug_mode = $app_debug; // backward-compatibility alias
+if ($app_debug) {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+} else {
+    ini_set('display_errors', 0);
+    ini_set('display_startup_errors', 0);
+    error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+}
+
 // Definizione delle funzioni di utilità
 function sanitizeForHTML($data) {
     return htmlspecialchars($data ?? '', ENT_QUOTES, 'UTF-8');
@@ -46,21 +54,28 @@ function sanitizeForHTML($data) {
  * @return string L'HTML sanitizzato
  */
 function sanitizeHTML($data) {
-    // Definisci i tag e gli attributi consentiti
-    // Puoi personalizzare questi tag secondo le tue necessità
-    $allowed_tags = '<p><a><b><strong><i><em><ul><ol><li><br><hr><span><div><img><h1><h2><h3><h4><h5><h6>';
-
-    // Rimuove tutti i tag non consentiti
-    $data = strip_tags($data, $allowed_tags);
-
-    // Opzionale: Puoi ulteriormente sanitizzare gli attributi, ad esempio per gli href degli <a>
-    // Utilizzando una libreria come HTML Purifier per una sanitizzazione avanzata
-
-    return $data;
+    static $purifier = null;
+    if ($purifier === null) {
+        $config = \HTMLPurifier_Config::createDefault();
+        $config->set('HTML.Allowed', 'p,a[href|target],b,strong,i,em,ul,ol,li,br,hr,span,div,img[src|alt|width|height],h1,h2,h3,h4,h5,h6');
+        $config->set('HTML.TargetBlank', true);
+        $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true]);
+        $cacheDir = __DIR__ . '/cache/htmlpurifier';
+        if (!is_dir($cacheDir) && !mkdir($cacheDir, 0755, true) && !is_dir($cacheDir)) {
+            error_log("Impossibile creare cache HTMLPurifier: $cacheDir");
+            $cacheDir = sys_get_temp_dir();
+        }
+        $config->set('Cache.SerializerPath', $cacheDir);
+        $purifier = new \HTMLPurifier($config);
+    }
+    return $purifier->purify($data ?? '');
 }
 function generateCsrfToken() {
-    if (empty($_SESSION['csrf_token'])) {
+    // Ruota il token ogni ora per limitare la finestra di esposizione
+    $now = time();
+    if (empty($_SESSION['csrf_token']) || empty($_SESSION['csrf_token_time']) || ($now - $_SESSION['csrf_token_time']) > 3600) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $_SESSION['csrf_token_time'] = $now;
     }
     return $_SESSION['csrf_token'];
 }
@@ -134,6 +149,12 @@ function startSecureSession() {
 // Avvio della sessione
 startSecureSession();
 
+// Security headers
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: SAMEORIGIN');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+
 // Includi l'autoload di Composer principale (se presente)
 $main_autoload = __DIR__ . '/vendor/autoload.php';
 if (file_exists($main_autoload)) {
@@ -201,15 +222,26 @@ function executeQuery($query, $params = [], $types = '') {
  * @param string $key La chiave dell'impostazione
  * @return string|null Il valore dell'impostazione o null se non trovato
  */
-function getSetting($key) {
+function getSetting($key, $force_refresh = false) {
+    static $cache = [];
+    if ($force_refresh) {
+        unset($cache[$key]);
+    }
+    if (array_key_exists($key, $cache)) {
+        return $cache[$key];
+    }
     $stmt = executeQuery("SELECT setting_value FROM settings WHERE setting_key = ?", [$key], 's');
     if ($stmt === false) {
+        $cache[$key] = null;
         return null;
     }
     $result = $stmt->get_result();
     if ($result->num_rows > 0) {
-        return $result->fetch_assoc()['setting_value'];
+        $value = $result->fetch_assoc()['setting_value'];
+        $cache[$key] = $value;
+        return $value;
     }
+    $cache[$key] = null;
     return null;
 }
 
@@ -221,6 +253,7 @@ function getSetting($key) {
  * @return bool True se l'operazione ha avuto successo, False altrimenti
  */
 function setSetting($key, $value) {
+    $value = $value ?? '';
     // Verifica se l'impostazione esiste già
     $stmt = executeQuery("SELECT id FROM settings WHERE setting_key = ?", [$key], 's');
     if ($stmt === false) {
@@ -239,7 +272,12 @@ function setSetting($key, $value) {
         $types = 'ss';
     }
     $stmt = executeQuery($query, $params, $types);
-    return $stmt !== false;
+    if ($stmt === false) {
+        return false;
+    }
+    // Invalida la cache di getSetting per questa chiave
+    getSetting($key, true);
+    return true;
 }
 
 /**
@@ -274,7 +312,16 @@ function checkUserRole($required_roles) {
  * @return bool True se il token è valido, False altrimenti
  */
 function verifyCsrfToken($token) {
-    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+    if (!is_string($token) || !isset($_SESSION['csrf_token'], $_SESSION['csrf_token_time'])) {
+        return false;
+    }
+    if (!is_string($_SESSION['csrf_token'])) {
+        return false;
+    }
+    if ((time() - (int)$_SESSION['csrf_token_time']) > 3600) {
+        return false;
+    }
+    return hash_equals($_SESSION['csrf_token'], $token);
 }
 
 /**
@@ -422,21 +469,25 @@ function checkLogin() {
             if ($row = $result->fetch_assoc()) {
                 // Imposta le informazioni in un array "user" in sessione
                 $_SESSION['user'] = [
-                    'role'    => $row['role'] ?? 'operator',
+                    'role'    => $row['role'] ?? 'operatore',
                     'sede_id' => $row['sede_id'] ?? null
                 ];
+                // Sincronizza sempre per garantire coerenza con checkUserRole()
+                $_SESSION['user_role'] = $_SESSION['user']['role'];
             } else {
                 // Se non troviamo l'utente, impostiamo valori di default
                 $_SESSION['user'] = [
-                    'role'    => 'operator',
+                    'role'    => 'operatore',
                     'sede_id' => null
                 ];
+                $_SESSION['user_role'] = 'operatore';
             }
         } else {
             $_SESSION['user'] = [
-                'role'    => 'operator',
+                'role'    => 'operatore',
                 'sede_id' => null
             ];
+            $_SESSION['user_role'] = 'operatore';
         }
     }
 }
@@ -578,7 +629,20 @@ function getSettings(array $keys) {
 }
 
 // Definizione della chiave di crittografia generale per i plugin
-define('GENERAL_ENCRYPTION_KEY', $_ENV['GENERAL_ENCRYPTION_KEY'] ?? getenv('GENERAL_ENCRYPTION_KEY') ?: 'Z0MHmscNKs2mTaFEn4dbNhsYE18fZQetltBB4TrHM2k=');
+$_encryption_key = $_ENV['GENERAL_ENCRYPTION_KEY'] ?? getenv('GENERAL_ENCRYPTION_KEY');
+if (!$_encryption_key) {
+    error_log("FATAL: GENERAL_ENCRYPTION_KEY non configurata in .env");
+    die("Errore di configurazione del server. Chiave di crittografia mancante.");
+}
+// Verifica che la chiave sia base64 valida e decodifichi a 32 byte (AES-256)
+$_decoded_key = base64_decode($_encryption_key, true);
+if ($_decoded_key === false || strlen($_decoded_key) !== 32) {
+    error_log("FATAL: GENERAL_ENCRYPTION_KEY non è una chiave base64 valida di 32 byte");
+    die("Errore di configurazione del server. Chiave di crittografia non valida.");
+}
+unset($_decoded_key);
+define('GENERAL_ENCRYPTION_KEY', $_encryption_key);
+unset($_encryption_key);
 
 /**
  * ===========================
@@ -657,9 +721,7 @@ function loadActivePlugins() {
         $plugin_path = __DIR__ . "/plugins/" . $plugin_name . "/plugin.php";
 
         if (file_exists($plugin_path)) {
-            error_log("Caricamento del plugin: $plugin_name");
             require_once $plugin_path;
-            error_log("Plugin $plugin_name caricato con successo.");
         } else {
             error_log("Il file del plugin '$plugin_name' non esiste.");
         }
@@ -786,7 +848,8 @@ $mysqli = new mysqli($host, $user, $pass, $db);
 
 // Verifica la connessione
 if ($mysqli->connect_error) {
-    die("Connessione fallita: " . $mysqli->connect_error);
+    error_log("Connessione DB fallita: " . $mysqli->connect_error);
+    die("Errore di connessione al database. Contattare l'amministratore.");
 }
 
 // Imposta la codifica dei caratteri per la connessione al database

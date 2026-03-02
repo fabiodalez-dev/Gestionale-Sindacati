@@ -1,28 +1,50 @@
 <?php
 require 'config.php';
 checkLogin();
+checkUserRole('admin');
 
-// Verifica se l'ID dell'unità operativa e dell'azienda sono stati forniti
-if (isset($_GET['id']) && isset($_GET['azienda_id'])) {
-    $unita_operativa_id = intval($_GET['id']);
-    $azienda_id = intval($_GET['azienda_id']);
+// Richiede metodo POST per operazioni di eliminazione
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header("Location: aziende.php");
+    exit;
+}
 
-    // Eliminazione dell'unità operativa
-    $query = "DELETE FROM unita_operativa WHERE id = ? AND azienda_id = ?";
-    $params = [$unita_operativa_id, $azienda_id];
-    $types = 'ii';
+// Verifica token CSRF
+if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+    header("Location: aziende.php?unita_delete_error=" . urlencode("Richiesta non valida."), true, 303);
+    exit;
+}
 
-    $stmt = executeQuery($query, $params, $types);
-    if ($stmt) {
-        header("Location: azienda.php?id=$azienda_id&unita_delete_success=1");
-        exit;
-    } else {
-        $error = "Errore durante l'eliminazione dell'unità operativa: " . sanitizeForHTML($mysqli->error);
-        header("Location: azienda.php?id=$azienda_id&unita_delete_error=" . urlencode($error));
-        exit;
-    }
+// Validazione parametri POST
+if (
+    !isset($_POST['id'], $_POST['azienda_id']) ||
+    !is_scalar($_POST['id']) || !is_scalar($_POST['azienda_id']) ||
+    !ctype_digit((string)$_POST['id']) || !ctype_digit((string)$_POST['azienda_id'])
+) {
+    header("Location: aziende.php?unita_delete_error=" . urlencode("Parametri mancanti."), true, 303);
+    exit();
+}
+
+$unita_operativa_id = (int) $_POST['id'];
+$azienda_id = (int) $_POST['azienda_id'];
+
+if ($unita_operativa_id <= 0 || $azienda_id <= 0) {
+    header("Location: aziende.php?unita_delete_error=" . urlencode("Parametri mancanti."), true, 303);
+    exit();
+}
+
+// Eliminazione dell'unità operativa
+$query = "DELETE FROM unita_operativa WHERE id = ? AND azienda_id = ?";
+$params = [$unita_operativa_id, $azienda_id];
+$types = 'ii';
+
+$stmt = executeQuery($query, $params, $types);
+if ($stmt && $stmt->affected_rows > 0) {
+    header("Location: azienda.php?id=$azienda_id&unita_delete_success=1");
+    exit;
 } else {
-    echo "Parametri mancanti.";
+    $error = "Errore durante l'eliminazione dell'unità operativa.";
+    header("Location: azienda.php?id=$azienda_id&unita_delete_error=" . urlencode($error));
     exit;
 }
 ?>

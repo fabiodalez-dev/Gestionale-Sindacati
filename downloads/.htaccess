@@ -1,0 +1,16 @@
+# Blocca l'esecuzione di script PHP in questa cartella.
+# Permette l'accesso diretto ai file scaricabili.
+<FilesMatch "\.(php|phtml|php[345s]|pht)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Disabilita l'esecuzione PHP anche se il file viene rinominato
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>

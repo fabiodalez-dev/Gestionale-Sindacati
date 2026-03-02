@@ -60,8 +60,8 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
     <title>Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
-    <link href="<?php echo $base_url; ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
+    <link href="<?php echo $base_url; ?>styles.css?v=2.10" rel="stylesheet">
     <!-- FullCalendar CSS (local) -->
     <link rel="stylesheet" href="<?php echo $base_url; ?>theme/vendor/fullcalendar/common.min.css">
     <link rel="stylesheet" href="<?php echo $base_url; ?>theme/vendor/fullcalendar/daygrid.min.css">
@@ -96,10 +96,7 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
         .chart-container { position: relative; height: 350px; }
         .chart-container-lg { position: relative; height: 400px; }
         .chart-container-xl { position: relative; height: 500px; }
-        .stat-card { border-radius: 0.75rem; transition: transform 0.15s ease, box-shadow 0.15s ease; }
-        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08) !important; }
-        .stat-number { font-size: 2rem; font-weight: 700; line-height: 1; }
-        .stat-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; }
+        /* stat-card styles now in styles.css */
         .filter-bar { background: #fff; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); padding: 1rem 1.25rem; }
         .chart-card { border: none; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
         .chart-card .card-header { background: #fff; border-bottom: 1px solid #f0f0f0; font-weight: 600; font-size: 0.9rem; padding: 1rem 1.25rem; border-radius: 0.75rem 0.75rem 0 0 !important; }
@@ -181,10 +178,33 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                     </span>
                                 </div>
                                 <?php
-                                    $ics_scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-                                    $ics_host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-                                    $ics_absolute_url = $ics_scheme . '://' . $ics_host . rtrim($base_url, '/') . '/calendar_feed.php?days=365';
+                                    $ics_absolute_url = null;
+                                    $configuredHost = parse_url($base_url, PHP_URL_HOST);
+                                    $configuredScheme = parse_url($base_url, PHP_URL_SCHEME);
+                                    $configuredPort = parse_url($base_url, PHP_URL_PORT);
+                                    $ics_scheme = $configuredScheme ?: ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http');
+                                    $ics_host = $configuredHost ?: ($_SERVER['SERVER_NAME'] ?? 'localhost');
+                                    $ics_port = $configuredPort ?: ($_SERVER['SERVER_PORT'] ?? null);
+                                    if ($ics_port && !in_array((int)$ics_port, [80, 443], true)) { $ics_host .= ':' . $ics_port; }
+                                    $calendarToken = getSetting('calendar_token');
+                                    if (empty($calendarToken)) {
+                                        $generatedToken = bin2hex(random_bytes(16));
+                                        if (setSetting('calendar_token', $generatedToken)) {
+                                            $calendarToken = $generatedToken;
+                                        } else {
+                                            error_log("Impossibile salvare calendar_token nelle impostazioni.");
+                                            $calendarToken = null;
+                                        }
+                                    }
+                                    if ($calendarToken !== null) {
+                                        $configuredPath = parse_url($base_url, PHP_URL_PATH);
+                                        $basePath = ($configuredPath !== null && $configuredPath !== false) ? $configuredPath : '/';
+                                        $basePath = '/' . trim($basePath, '/');
+                                        if ($basePath === '/') { $basePath = ''; }
+                                        $ics_absolute_url = $ics_scheme . '://' . $ics_host . $basePath . '/calendar_feed.php?days=365&token=' . urlencode($calendarToken);
+                                    }
                                 ?>
+                                <?php if (!empty($ics_absolute_url)): ?>
                                 <input type="text" id="icsUrlInput" class="form-control form-control-sm"
                                        value="<?php echo sanitizeForHTML($ics_absolute_url); ?>"
                                        readonly style="font-size:0.75rem; background:#f8f9fa; cursor:text;">
@@ -198,6 +218,10 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                                class="btn btn-sm btn-outline-secondary" download="calendar.ics" title="Scarica file ICS">
                                 <i class="fas fa-download"></i>
                             </a>
+                                <?php else: ?>
+                                <span class="form-control form-control-sm text-muted" style="font-size:0.75rem; background:#f8f9fa;">Feed ICS non disponibile</span>
+                                </div>
+                                <?php endif; ?>
                         </div>
                         </div>
                     </div>
@@ -264,46 +288,54 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
                 <!-- KPI Cards -->
                 <div class="row mb-4" id="kpiRow">
                     <div class="col-12 col-sm-6 col-lg-3 mb-3">
-                        <div class="card stat-card shadow-sm h-100 border-0" style="border-left:4px solid #000 !important;">
-                            <div class="card-body d-flex align-items-center justify-content-between">
-                                <div>
-                                    <div class="stat-label text-dark">Totale Lavoratori</div>
-                                    <div class="stat-number" id="kpiTotal">-</div>
+                        <div class="card stat-card stat-card--dark shadow-sm h-100">
+                            <div class="card-body py-3 px-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="stat-icon-wrap mr-3">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div class="stat-label mb-0">Totale Lavoratori</div>
                                 </div>
-                                <i class="fas fa-users fa-2x" style="opacity:0.15;"></i>
+                                <div class="stat-number" id="kpiTotal">-</div>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-3 mb-3">
-                        <div class="card stat-card shadow-sm h-100 border-0" style="border-left:4px solid #22c55e !important;">
-                            <div class="card-body d-flex align-items-center justify-content-between">
-                                <div>
-                                    <div class="stat-label" style="color:#22c55e;">Iscritti</div>
-                                    <div class="stat-number" id="kpiIscritti" style="color:#22c55e;">-</div>
+                        <div class="card stat-card stat-card--green shadow-sm h-100">
+                            <div class="card-body py-3 px-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="stat-icon-wrap mr-3">
+                                        <i class="fas fa-user-check"></i>
+                                    </div>
+                                    <div class="stat-label mb-0">Iscritti</div>
                                 </div>
-                                <i class="fas fa-user-check fa-2x" style="opacity:0.15;"></i>
+                                <div class="stat-number stat-number--green" id="kpiIscritti">-</div>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-3 mb-3">
-                        <div class="card stat-card shadow-sm h-100 border-0" style="border-left:4px solid #ef4444 !important;">
-                            <div class="card-body d-flex align-items-center justify-content-between">
-                                <div>
-                                    <div class="stat-label" style="color:#ef4444;">Non Iscritti</div>
-                                    <div class="stat-number" id="kpiNonIscritti" style="color:#ef4444;">-</div>
+                        <div class="card stat-card stat-card--red shadow-sm h-100">
+                            <div class="card-body py-3 px-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="stat-icon-wrap mr-3">
+                                        <i class="fas fa-user-times"></i>
+                                    </div>
+                                    <div class="stat-label mb-0">Non Iscritti</div>
                                 </div>
-                                <i class="fas fa-user-times fa-2x" style="opacity:0.15;"></i>
+                                <div class="stat-number stat-number--red" id="kpiNonIscritti">-</div>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-3 mb-3">
-                        <div class="card stat-card shadow-sm h-100 border-0" style="border-left:4px solid #3b82f6 !important;">
-                            <div class="card-body d-flex align-items-center justify-content-between">
-                                <div>
-                                    <div class="stat-label" style="color:#3b82f6;">Tasso Iscrizione</div>
-                                    <div class="stat-number" id="kpiRate" style="color:#3b82f6;">-</div>
+                        <div class="card stat-card stat-card--blue shadow-sm h-100">
+                            <div class="card-body py-3 px-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="stat-icon-wrap mr-3">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <div class="stat-label mb-0">Tasso Iscrizione</div>
                                 </div>
-                                <i class="fas fa-percentage fa-2x" style="opacity:0.15;"></i>
+                                <div class="stat-number stat-number--blue" id="kpiRate">-</div>
                             </div>
                         </div>
                     </div>
@@ -417,22 +449,30 @@ if ($r_sedi) while ($row = $r_sedi->fetch_assoc()) $sedi[] = $row;
 <script src="<?php echo $base_url; ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
 <script src="<?php echo $base_url; ?>theme/js/sb-admin-2.min.js"></script>
 
-<!-- TinyMCE Init -->
+<!-- TinyMCE Init (deferred to modal shown event) -->
 <script>
-tinymce.init({
-    selector: '#messaggio_admin_editor',
-    plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
-    toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat',
-    height: 300,
-    menubar: false,
-    branding: false,
-    entity_encoding: 'raw',
-    forced_root_block: 'false',
-    toolbar_mode: 'floating',
-    base_url: '<?php echo $base_url; ?>vendor/tinymce',
-    suffix: '.min',
-    license_key: 'gpl',
-});
+(function() {
+    var tinymceInitialized = false;
+    $('#editMessaggioModal').on('shown.bs.modal', function () {
+        if (!tinymceInitialized && typeof tinymce !== 'undefined') {
+            tinymce.init({
+                selector: '#messaggio_admin_editor',
+                plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
+                toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat',
+                height: 300,
+                menubar: false,
+                branding: false,
+                entity_encoding: 'raw',
+                forced_root_block: 'p',
+                toolbar_mode: 'floating',
+                base_url: '<?php echo $base_url; ?>vendor/tinymce',
+                suffix: '.min',
+                license_key: 'gpl',
+            });
+            tinymceInitialized = true;
+        }
+    });
+})();
 </script>
 
 <!-- FullCalendar Init -->

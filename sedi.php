@@ -1,11 +1,6 @@
 <?php
 // sedi.php - Versione migliorata con conteggio lavoratori e link ai filtri
 
-// Abilita la visualizzazione degli errori per lo sviluppo (disabilita in produzione)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 // Includi il file di configurazione e funzioni comuni
 require_once 'config.php';
 
@@ -99,9 +94,9 @@ if ($statsStmt) {
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <!-- Custom Styles -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
     <!-- DataTables CSS -->
     <link rel="stylesheet" type="text/css" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/dataTables.bootstrap4.min.css">
     <link rel="stylesheet" type="text/css" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/extensions/responsive/responsive.bootstrap4.min.css">
@@ -109,12 +104,7 @@ if ($statsStmt) {
     
     <!-- Custom CSS -->
     <style>
-        .stats-card {
-            transition: transform 0.2s;
-        }
-        .stats-card:hover {
-            transform: translateY(-5px);
-        }
+        /* stat-card styles now in styles.css */
         .sede-name {
             font-weight: 600;
             color: #5a5c69;
@@ -200,65 +190,45 @@ if ($statsStmt) {
                         </div>
                     </div>
 
-                    <!-- Statistiche generali (SOLO 3 CARD, senza "Senza sede") -->
+                    <!-- Statistiche generali -->
                     <?php if (!empty($stats)): ?>
                     <div class="row mb-4">
-                        <div class="col-xl-4 col-md-6 mb-4">
-                            <div class="card border-left-primary shadow h-100 py-2 stats-card">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                Totale Sedi
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                <?php echo number_format($stats['totale_sedi']); ?>
-                                            </div>
+                        <div class="col-xl-4 col-md-6 mb-3">
+                            <div class="card stat-card stat-card--blue shadow-sm h-100">
+                                <div class="card-body py-3 px-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="stat-icon-wrap mr-3">
+                                            <i class="fas fa-building"></i>
                                         </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-building fa-2x text-gray-300"></i>
-                                        </div>
+                                        <div class="stat-label">Totale Sedi</div>
                                     </div>
+                                    <div class="stat-number"><?php echo number_format($stats['totale_sedi']); ?></div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="col-xl-4 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2 stats-card">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Lavoratori Attivi
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                <?php echo number_format($stats['lavoratori_attivi']); ?>
-                                            </div>
+                        <div class="col-xl-4 col-md-6 mb-3">
+                            <div class="card stat-card stat-card--green shadow-sm h-100">
+                                <div class="card-body py-3 px-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="stat-icon-wrap mr-3">
+                                            <i class="fas fa-users"></i>
                                         </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-users fa-2x text-gray-300"></i>
-                                        </div>
+                                        <div class="stat-label">Lavoratori Attivi</div>
                                     </div>
+                                    <div class="stat-number"><?php echo number_format($stats['lavoratori_attivi']); ?></div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="col-xl-4 col-md-6 mb-4">
-                            <div class="card border-left-info shadow h-100 py-2 stats-card">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                                Totale Lavoratori
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                <?php echo number_format($stats['totale_lavoratori']); ?>
-                                            </div>
+                        <div class="col-xl-4 col-md-6 mb-3">
+                            <div class="card stat-card stat-card--cyan shadow-sm h-100">
+                                <div class="card-body py-3 px-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="stat-icon-wrap mr-3">
+                                            <i class="fas fa-user-friends"></i>
                                         </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-user-friends fa-2x text-gray-300"></i>
-                                        </div>
+                                        <div class="stat-label">Totale Lavoratori</div>
                                     </div>
+                                    <div class="stat-number"><?php echo number_format($stats['totale_lavoratori']); ?></div>
                                 </div>
                             </div>
                         </div>
@@ -410,12 +380,14 @@ if ($statsStmt) {
                                                                title="Modifica sede">
                                                                 <i class="fas fa-edit"></i>
                                                             </a>
-                                                            <a href="delete_sede.php?id=<?php echo sanitizeForHTML($sede['id']); ?>&csrf_token=<?php echo $_SESSION['csrf_token']; ?>"
-                                                               class="table-action-icon"
-                                                               onclick="return confirm('Sei sicuro di voler eliminare questa sede? I lavoratori associati perderanno il riferimento alla sede.');"
-                                                               title="Elimina sede">
-                                                                <i class="fas fa-trash"></i>
-                                                            </a>
+                                                            <form method="POST" action="delete_sede.php" style="display:inline;"
+                                                                  onsubmit="return confirm('Sei sicuro di voler eliminare questa sede? I lavoratori associati perderanno il riferimento alla sede.');">
+                                                                <input type="hidden" name="id" value="<?php echo intval($sede['id']); ?>">
+                                                                <?php csrfInputField(); ?>
+                                                                <button type="submit" class="table-action-icon" title="Elimina sede" aria-label="Elimina sede" style="border:none;background:none;cursor:pointer;">
+                                                                    <i class="fas fa-trash" aria-hidden="true"></i>
+                                                                </button>
+                                                            </form>
                                                         </div>
                                                     </td>
                                                 </tr>

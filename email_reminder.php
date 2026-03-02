@@ -5,6 +5,7 @@
 
 require 'config.php';
 checkLogin();
+checkUserRole('admin');
 
 // Includi PHPMailer tramite Composer
 require 'vendor/autoload.php';
@@ -30,7 +31,9 @@ $smtpStmt->close();
 
 // Gestione della richiesta POST per aggiornare il template o SMTP
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['action'])) {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        $error_message = 'Token CSRF non valido.';
+    } elseif (isset($_POST['action'])) {
         if ($_POST['action'] === 'update_template') {
             // Aggiorna il template email
             $subject = trim($_POST['subject']);
@@ -115,7 +118,8 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
         $mail->send();
         return true;
     } catch (Exception $e) {
-        error_log("Errore nell'invio dell'email a {$lavoratore['email']}: {$mail->ErrorInfo}");
+        $workerId = isset($lavoratore['id']) ? (int)$lavoratore['id'] : 0;
+        error_log("Errore nell'invio dell'email a lavoratore ID {$workerId}: {$mail->ErrorInfo}");
         return false;
     }
 }
@@ -128,11 +132,11 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
     <!-- Meta viewport per la responsività -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- Font Awesome -->
-    <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SB Admin 2 CSS (includes Bootstrap) -->
-    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <!-- Custom CSS (se necessario) -->
-    <link href="<?php echo $base_url; ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
     <style>
         /* Stili personalizzati */
         .hidden-editor {
@@ -285,32 +289,40 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
     </a>
 
     <!-- Bootstrap core JavaScript-->
-    <script src="<?php echo $base_url; ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <!-- Core plugin JavaScript-->
-    <script src="<?php echo $base_url; ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
 
     <!-- SB Admin 2 JavaScript-->
-    <script src="<?php echo $base_url; ?>theme/js/sb-admin-2.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
 
     <!-- TinyMCE -->
-    <script src="<?php echo $base_url; ?>vendor/tinymce/tinymce.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce/tinymce.min.js"></script>
 
-    <!-- Inizializzazione di TinyMCE -->
+    <!-- Inizializzazione di TinyMCE (deferred fino a quando il template è visibile) -->
     <script>
-        tinymce.init({
-            selector: '#body',
-            height: 300,
-            plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
-            toolbar: 'undo redo | formatselect | bold italic backcolor | ' +
-                     'alignleft aligncenter alignright alignjustify | ' +
-                     'bullist numlist outdent indent | removeformat | help',
-            menubar: false,
-            branding: false,
-            base_url: '<?php echo $base_url; ?>vendor/tinymce', // Percorso base corretto
-            suffix: '.min', // Suffisso del file
-            license_key: 'gpl',
-        });
+        var tinymceBodyInitialized = false;
+        function initTinyMCEBody() {
+            if (!tinymceBodyInitialized && typeof tinymce !== 'undefined') {
+                tinymce.init({
+                    selector: '#body',
+                    height: 300,
+                    plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
+                    toolbar: 'undo redo | formatselect | bold italic backcolor | ' +
+                             'alignleft aligncenter alignright alignjustify | ' +
+                             'bullist numlist outdent indent | removeformat | help',
+                    menubar: false,
+                    branding: false,
+                    entity_encoding: 'raw',
+                    forced_root_block: 'p',
+                    base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce',
+                    suffix: '.min',
+                    license_key: 'gpl',
+                });
+                tinymceBodyInitialized = true;
+            }
+        }
     </script>
 
     <!-- Script per Gestire la Visualizzazione degli Editor -->
@@ -321,6 +333,8 @@ function sendReminderEmail($lavoratore, $smtpSettings, $template) {
             if (templateCard.classList.contains('hidden-editor')) {
                 templateCard.classList.remove('hidden-editor');
                 this.textContent = 'Nascondi Messaggio Reminder di Iscrizione';
+                // Inizializza TinyMCE solo dopo che il contenitore è visibile
+                initTinyMCEBody();
             } else {
                 templateCard.classList.add('hidden-editor');
                 this.textContent = 'Mostra Messaggio Reminder di Iscrizione';

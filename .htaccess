@@ -12,3 +12,59 @@ RewriteRule ^$ /login.php [L,R=302]
 <Files "config.php">
     Require all denied
 </Files>
+
+# Protegge i file .env e varianti (.env.local, .env.production, ecc.)
+<FilesMatch "^\.env(\..+)?$">
+    Require all denied
+</FilesMatch>
+
+# Protegge i file di log
+<FilesMatch "\.(log)$">
+    Require all denied
+</FilesMatch>
+<Files "error_log">
+    Require all denied
+</Files>
+
+# Protegge i file lock e di configurazione composer/npm
+<FilesMatch "^(composer\.json|composer\.lock|package\.json|package-lock\.json)$">
+    Require all denied
+</FilesMatch>
+
+# Protegge zip.md e altri file markdown
+<FilesMatch "\.(md)$">
+    Require all denied
+</FilesMatch>
+
+# === Performance: Gzip compression ===
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json text/xml application/xml
+</IfModule>
+
+# === Performance: Browser caching ===
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+</IfModule>
+
+# === Security: Block access to backup and vendor directories ===
+<IfModule mod_rewrite.c>
+    RewriteRule ^vendor/tinymce/ - [L]
+    RewriteRule ^vendor/ - [F,L]
+    RewriteRule ^backup/ - [F,L]
+    RewriteRule ^sessions/ - [F,L]
+    RewriteRule ^downloads/.*\.php$ - [F,L]
+    RewriteRule ^plugins/ - [F,L]
+    RewriteRule ^migrations/ - [F,L]
+    RewriteRule ^install/ - [F,L]
+    RewriteRule ^install\.php$ - [F,L]
+</IfModule>

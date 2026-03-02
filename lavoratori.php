@@ -1,11 +1,6 @@
 <?php
 // lavoratori.php - Versione Avanzata con DataTables, Cognome/Nome e Filtri Completi
 
-// Abilita la visualizzazione degli errori per lo sviluppo (disabilitare in produzione)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 // Includi il file di configurazione e funzioni comuni
 require_once 'config.php';
 
@@ -44,6 +39,18 @@ if ($paesiNascitaStmt !== false) {
     }
 }
 
+// Recupera i CCNL per il filtro
+$ccnlList = [];
+$ccnlStmt = executeQuery("SELECT DISTINCT ccnl FROM lavoratori WHERE ccnl IS NOT NULL AND ccnl <> '' AND archiviato = 0 ORDER BY ccnl ASC", [], '');
+if ($ccnlStmt !== false) {
+    $ccnlResult = $ccnlStmt->get_result();
+    while ($row = $ccnlResult->fetch_assoc()) {
+        $ccnlList[] = $row['ccnl'];
+    }
+    $ccnlResult->free();
+    $ccnlStmt->close();
+}
+
 // Leggi parametri URL per i filtri - gestisce sia azienda_filter che azienda_id
 $urlFilters = [
     'azienda_filter' => isset($_GET['azienda_filter']) ? intval($_GET['azienda_filter']) : (isset($_GET['azienda_id']) ? intval($_GET['azienda_id']) : null),
@@ -54,17 +61,27 @@ $urlFilters = [
     'vertenza_filter' => isset($_GET['vertenza_filter']) ? sanitizeForHTML($_GET['vertenza_filter']) : '',
     'settore_filter' => isset($_GET['settore_filter']) ? sanitizeForHTML($_GET['settore_filter']) : '',
     'tipo_tessera_filter' => isset($_GET['tipo_tessera_filter']) ? sanitizeForHTML($_GET['tipo_tessera_filter']) : '',
-    'ruolo_filter' => isset($_GET['ruolo_filter']) ? sanitizeForHTML($_GET['ruolo_filter']) : ''
+    'ruolo_filter' => isset($_GET['ruolo_filter']) ? sanitizeForHTML($_GET['ruolo_filter']) : '',
+    'ccnl_filter' => isset($_GET['ccnl_filter']) ? trim($_GET['ccnl_filter']) : ''
 ];
 
 // Gestione richieste POST per aggiornamenti in batch
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verifica CSRF token
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
         echo json_encode(["error" => "Token CSRF non valido."]);
         exit;
     }
-    
+
+    // Tutte le operazioni bulk richiedono ruolo admin
+    $currentRole = $_SESSION['user_role'] ?? ($_SESSION['user']['role'] ?? null);
+    if ($currentRole !== 'admin') {
+        http_response_code(403);
+        echo json_encode(["error" => "Operazione riservata agli amministratori."]);
+        exit;
+    }
+
     $workerIds = [];
     if (isset($_POST['worker_ids'])) {
         if (is_array($_POST['worker_ids'])) {
@@ -88,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(["error" => "ID Azienda non valido per il cambio."]);
             exit;
         }
-        $queryUpdate = "UPDATE lavoratori SET azienda_id = ? WHERE id IN ($placeholders)";
+        $queryUpdate = "UPDATE lavoratori SET azienda_id = ? WHERE id IN ($placeholders) AND archiviato = 0";
         $paramsUpdate = array_merge([$newAziendaId], $workerIds);
         $typesUpdate = 'i' . $typesForWorkerIds;
         $stmtUpdate = executeQuery($queryUpdate, $paramsUpdate, $typesUpdate);
@@ -99,18 +116,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(["success" => "Azienda aggiornata con successo per i lavoratori selezionati."]);
         exit;
     }
-    
+
     // Aggiornamento sede per i lavoratori selezionati
     if (isset($_POST['update_sede'])) {
         $newSedeId = isset($_POST['new_sede_id']) && $_POST['new_sede_id'] !== '' ? intval($_POST['new_sede_id']) : null;
         if ($newSedeId === 0) $newSedeId = null;
 
         if ($newSedeId === null) {
-            $queryUpdate = "UPDATE lavoratori SET sede_id = NULL WHERE id IN ($placeholders)";
+            $queryUpdate = "UPDATE lavoratori SET sede_id = NULL WHERE id IN ($placeholders) AND archiviato = 0";
             $paramsUpdate = $workerIds;
             $typesUpdate = $typesForWorkerIds;
         } else {
-            $queryUpdate = "UPDATE lavoratori SET sede_id = ? WHERE id IN ($placeholders)";
+            $queryUpdate = "UPDATE lavoratori SET sede_id = ? WHERE id IN ($placeholders) AND archiviato = 0";
             $paramsUpdate = array_merge([$newSedeId], $workerIds);
             $typesUpdate = 'i' . $typesForWorkerIds;
         }
@@ -122,7 +139,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(["success" => "Sede aggiornata con successo per i lavoratori selezionati."]);
         exit;
     }
-    
+
+    // Aggiornamento CCNL per i lavoratori selezionati
+    if (isset($_POST['update_ccnl'])) {
+        $newCcnl = isset($_POST['new_ccnl']) ? trim($_POST['new_ccnl']) : '';
+        if ($newCcnl === '') {
+            echo json_encode(["error" => "Seleziona un CCNL valido."]);
+            exit;
+        }
+        $queryUpdate = "UPDATE lavoratori SET ccnl = ? WHERE id IN ($placeholders) AND archiviato = 0";
+        $paramsUpdate = array_merge([$newCcnl], $workerIds);
+        $typesUpdate = 's' . $typesForWorkerIds;
+        $stmtUpdate = executeQuery($queryUpdate, $paramsUpdate, $typesUpdate);
+        if ($stmtUpdate === false) {
+            echo json_encode(["error" => "Errore nell'aggiornamento del CCNL per i lavoratori selezionati."]);
+            exit;
+        }
+        echo json_encode(["success" => "CCNL aggiornato con successo per i lavoratori selezionati."]);
+        exit;
+    }
+
+    // Aggiornamento Settore per i lavoratori selezionati
+    if (isset($_POST['update_settore'])) {
+        $newSettore = isset($_POST['new_settore']) ? trim($_POST['new_settore']) : '';
+        $allowedSettori = ['pubblico', 'privato'];
+        if (!in_array($newSettore, $allowedSettori, true)) {
+            echo json_encode(["error" => "Seleziona un settore valido."]);
+            exit;
+        }
+        $queryUpdate = "UPDATE lavoratori SET settore = ? WHERE id IN ($placeholders) AND archiviato = 0";
+        $paramsUpdate = array_merge([$newSettore], $workerIds);
+        $typesUpdate = 's' . $typesForWorkerIds;
+        $stmtUpdate = executeQuery($queryUpdate, $paramsUpdate, $typesUpdate);
+        if ($stmtUpdate === false) {
+            echo json_encode(["error" => "Errore nell'aggiornamento del settore per i lavoratori selezionati."]);
+            exit;
+        }
+        echo json_encode(["success" => "Settore aggiornato con successo per i lavoratori selezionati."]);
+        exit;
+    }
+
+    // Aggiornamento Tipo Tessera per i lavoratori selezionati
+    if (isset($_POST['update_tipo_tessera'])) {
+        $newTipoTessera = isset($_POST['new_tipo_tessera']) ? trim($_POST['new_tipo_tessera']) : '';
+        $allowedTipi = ['rinnovo annuale', 'trattenuta in busta paga', 'sepa'];
+        if (!in_array($newTipoTessera, $allowedTipi, true)) {
+            echo json_encode(["error" => "Seleziona un tipo tessera valido."]);
+            exit;
+        }
+        $queryUpdate = "UPDATE lavoratori SET tipo_tessera = ? WHERE id IN ($placeholders) AND archiviato = 0";
+        $paramsUpdate = array_merge([$newTipoTessera], $workerIds);
+        $typesUpdate = 's' . $typesForWorkerIds;
+        $stmtUpdate = executeQuery($queryUpdate, $paramsUpdate, $typesUpdate);
+        if ($stmtUpdate === false) {
+            echo json_encode(["error" => "Errore nell'aggiornamento del tipo tessera per i lavoratori selezionati."]);
+            exit;
+        }
+        echo json_encode(["success" => "Tipo tessera aggiornato con successo per i lavoratori selezionati."]);
+        exit;
+    }
+
     // Archiviazione in batch
     if (isset($_POST['archive_workers'])) {
         $queryArchive = "UPDATE lavoratori SET archiviato = 1 WHERE id IN ($placeholders)";
@@ -140,6 +216,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Eliminazione in batch
     if (isset($_POST['delete_workers'])) {
         global $mysqli;
+
+        // Recupera file fisici da eliminare prima del delete DB
+        $queryGetDocs = "SELECT percorso_documento FROM documenti_lavoratori WHERE lavoratore_id IN ($placeholders)";
+        $stmtGetDocs = executeQuery($queryGetDocs, $workerIds, $typesForWorkerIds);
+        $filesToDelete = [];
+        if ($stmtGetDocs !== false) {
+            $docsResult = $stmtGetDocs->get_result();
+            $uploadsDir = realpath(__DIR__ . '/uploads');
+            while ($docRow = $docsResult->fetch_assoc()) {
+                if (!empty($docRow['percorso_documento']) && $uploadsDir !== false) {
+                    $relativePath = ltrim($docRow['percorso_documento'], '/\\');
+                    $relativePath = preg_replace('#^uploads[\\/]+#', '', $relativePath);
+                    $candidatePath = $uploadsDir . DIRECTORY_SEPARATOR . $relativePath;
+                    $fullPath = realpath($candidatePath);
+                    if ($fullPath !== false && strpos($fullPath, $uploadsDir . DIRECTORY_SEPARATOR) === 0 && is_file($fullPath)) {
+                        $filesToDelete[] = $fullPath;
+                    }
+                }
+            }
+        }
+
         $mysqli->begin_transaction();
         try {
             $queryDeleteDocs = "DELETE FROM documenti_lavoratori WHERE lavoratore_id IN ($placeholders)";
@@ -149,12 +246,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $queryDeleteIscrizioni = "DELETE FROM iscrizioni WHERE lavoratore_id IN ($placeholders)";
             $stmtDeleteIscrizioni = executeQuery($queryDeleteIscrizioni, $workerIds, $typesForWorkerIds);
             if ($stmtDeleteIscrizioni === false) throw new Exception("Errore eliminazione iscrizioni.");
-            
+
             $queryDelete = "DELETE FROM lavoratori WHERE id IN ($placeholders)";
             $stmtDelete = executeQuery($queryDelete, $workerIds, $typesForWorkerIds);
             if ($stmtDelete === false) throw new Exception("Errore eliminazione lavoratori.");
 
             $mysqli->commit();
+
+            // Elimina file fisici dopo il commit DB
+            foreach ($filesToDelete as $filePath) {
+                if (!unlink($filePath)) {
+                    error_log("Impossibile eliminare il file: $filePath");
+                }
+            }
+
             echo json_encode(["success" => "Lavoratori eliminati con successo."]);
         } catch (Exception $e) {
             $mysqli->rollback();
@@ -204,8 +309,9 @@ if (isset($_GET['datatables_ajax']) && $_GET['datatables_ajax'] == 1) {
     $settoreFilter = isset($_GET['settore_filter']) && $_GET['settore_filter'] !== '' ? $_GET['settore_filter'] : '';
     $tipoTesseraFilter = isset($_GET['tipo_tessera_filter']) && $_GET['tipo_tessera_filter'] !== '' ? $_GET['tipo_tessera_filter'] : '';
     $ruoloFilter = isset($_GET['ruolo_filter']) && $_GET['ruolo_filter'] !== '' ? $_GET['ruolo_filter'] : '';
+    $ccnlFilter = isset($_GET['ccnl_filter']) ? trim($_GET['ccnl_filter']) : '';
     $sedeFilter = isset($_GET['sede_filter']) && $_GET['sede_filter'] !== '' ? intval($_GET['sede_filter']) : null;
-    
+
     // Filtri individuali per colonna DataTables
     $columnFilters = [];
     for ($i = 0; $i < 12; $i++) {
@@ -299,7 +405,12 @@ if (isset($_GET['datatables_ajax']) && $_GET['datatables_ajax'] == 1) {
             $types .= 's';
         }
     }
-    
+    if ($ccnlFilter !== '') {
+        $baseQuery .= " AND l.ccnl = ?";
+        $params[] = $ccnlFilter;
+        $types .= 's';
+    }
+
     // Ricerca globale
     if (!empty($searchValue)) {
         $baseQuery .= " AND (l.nome LIKE ? OR l.cognome LIKE ? OR l.note LIKE ? OR s.nome LIKE ? OR a.nome_azienda LIKE ?)";
@@ -486,9 +597,8 @@ if (isset($_GET['datatables_ajax']) && $_GET['datatables_ajax'] == 1) {
             $azioni = '<div class="d-flex align-items-center gap-2">'
                     . '<a href="edit_lavoratore.php?id=' . sanitizeForHTML($row['id']) . '" class="table-action-icon" title="Modifica">'
                     . '<i class="fas fa-edit"></i></a>'
-                    . '<a href="delete_lavoratore.php?id=' . sanitizeForHTML($row['id']) . '&csrf_token=' . $_SESSION['csrf_token'] . '" '
-                    . 'class="table-action-icon" title="Elimina" onclick="return confirm(\'Sei sicuro di voler eliminare questo lavoratore?\');">'
-                    . '<i class="fas fa-trash"></i></a>'
+                    . '<button type="button" class="table-action-icon delete-lavoratore-btn" data-id="' . sanitizeForHTML($row['id']) . '" title="Elimina" aria-label="Elimina lavoratore">'
+                    . '<i class="fas fa-trash" aria-hidden="true"></i></button>'
                     . '</div>';
             
             // ORDINE COLONNE: checkbox, COGNOME, NOME, resto...
@@ -549,7 +659,7 @@ generateCsrfToken();
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     
     <!-- Bootstrap CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
 
     <!-- DataTables CSS -->
     <link rel="stylesheet" type="text/css" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/dataTables.bootstrap4.min.css">
@@ -561,7 +671,7 @@ generateCsrfToken();
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
     
     <!-- Custom Styles -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
     <style>
         .table th {
             vertical-align: middle;
@@ -933,6 +1043,18 @@ generateCsrfToken();
                                             <option value="Delegato" <?php echo ($urlFilters['ruolo_filter'] == 'Delegato') ? 'selected' : ''; ?>>Delegato (RSU/RSA/RLS)</option>
                                         </select>
                                     </div>
+                                    <div class="col-12 col-md-3 mb-3">
+                                        <label for="ccnl_filter" class="form-label">CCNL</label>
+                                        <select name="ccnl_filter" id="ccnl_filter" class="form-control">
+                                            <option value="">Tutti i CCNL</option>
+                                            <?php foreach ($ccnlList as $ccnl): ?>
+                                                <option value="<?= sanitizeForHTML($ccnl) ?>"
+                                                    <?= ($urlFilters['ccnl_filter'] == $ccnl) ? 'selected' : '' ?>>
+                                                    <?= sanitizeForHTML($ccnl) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="d-flex flex-wrap">
                                     <button type="button" id="applyFilters" class="btn btn-primary me-2 mb-2">
@@ -991,6 +1113,15 @@ generateCsrfToken();
                                     </button>
                                     <button id="updateSedeBtn" class="btn btn-sm btn-info d-none">
                                         <i class="fas fa-map-marker-alt"></i> Modifica Sede
+                                    </button>
+                                    <button id="updateCcnlBtn" class="btn btn-sm btn-primary d-none">
+                                        <i class="fas fa-file-contract"></i> Modifica CCNL
+                                    </button>
+                                    <button id="updateSettoreBtn" class="btn btn-sm btn-success d-none">
+                                        <i class="fas fa-industry"></i> Modifica Settore
+                                    </button>
+                                    <button id="updateTipoTesseraBtn" class="btn btn-sm btn-dark d-none">
+                                        <i class="fas fa-id-card"></i> Modifica Tipo Tessera
                                     </button>
                                     <button id="archiveWorkersBtn" class="btn btn-sm btn-secondary d-none">
                                         <i class="fas fa-archive"></i> Archivia
@@ -1058,7 +1189,7 @@ generateCsrfToken();
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <input type="hidden" name="csrf_token_modal_azienda" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <?php csrfInputField(); ?>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1098,7 +1229,7 @@ generateCsrfToken();
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <input type="hidden" name="csrf_token_modal_sede" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <?php csrfInputField(); ?>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1112,6 +1243,127 @@ generateCsrfToken();
             </div>
         </div>
     </div>
+
+    <!-- Modal per aggiornamento CCNL -->
+    <div class="modal fade" id="updateCcnlModal" tabindex="-1" role="dialog" aria-labelledby="updateCcnlModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updateCcnlModalLabel">
+                        <i class="fas fa-file-contract"></i> Modifica CCNL Lavoratori Selezionati
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Chiudi">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateCcnlFormModal">
+                        <div class="form-group">
+                            <label for="newCcnlSelect">Seleziona il nuovo CCNL</label>
+                            <select id="newCcnlSelect" name="new_ccnl" class="form-control" required>
+                                <option value="">Seleziona...</option>
+                                <?php foreach ($ccnlList as $ccnl): ?>
+                                    <option value="<?= sanitizeForHTML($ccnl) ?>">
+                                        <?= sanitizeForHTML($ccnl) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <?php csrfInputField(); ?>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Annulla
+                    </button>
+                    <button type="button" id="confirmUpdateCcnl" class="btn btn-primary">
+                        <i class="fas fa-check"></i> Conferma Cambio CCNL
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal per aggiornamento Settore -->
+    <div class="modal fade" id="updateSettoreModal" tabindex="-1" role="dialog" aria-labelledby="updateSettoreModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updateSettoreModalLabel">
+                        <i class="fas fa-industry"></i> Modifica Settore Lavoratori Selezionati
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Chiudi">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateSettoreFormModal">
+                        <div class="form-group">
+                            <label for="newSettoreSelect">Seleziona il nuovo Settore</label>
+                            <select id="newSettoreSelect" name="new_settore" class="form-control" required>
+                                <option value="">Seleziona...</option>
+                                <option value="pubblico">Pubblico</option>
+                                <option value="privato">Privato</option>
+                            </select>
+                        </div>
+                        <?php csrfInputField(); ?>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Annulla
+                    </button>
+                    <button type="button" id="confirmUpdateSettore" class="btn btn-success">
+                        <i class="fas fa-check"></i> Conferma Cambio Settore
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal per aggiornamento Tipo Tessera -->
+    <div class="modal fade" id="updateTipoTesseraModal" tabindex="-1" role="dialog" aria-labelledby="updateTipoTesseraModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updateTipoTesseraModalLabel">
+                        <i class="fas fa-id-card"></i> Modifica Tipo Tessera Lavoratori Selezionati
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Chiudi">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateTipoTesseraFormModal">
+                        <div class="form-group">
+                            <label for="newTipoTesseraSelect">Seleziona il nuovo Tipo Tessera</label>
+                            <select id="newTipoTesseraSelect" name="new_tipo_tessera" class="form-control" required>
+                                <option value="">Seleziona...</option>
+                                <option value="rinnovo annuale">Rinnovo Annuale</option>
+                                <option value="trattenuta in busta paga">Trattenuta in Busta Paga</option>
+                                <option value="sepa">SEPA</option>
+                            </select>
+                        </div>
+                        <?php csrfInputField(); ?>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Annulla
+                    </button>
+                    <button type="button" id="confirmUpdateTipoTessera" class="btn btn-dark">
+                        <i class="fas fa-check"></i> Conferma Cambio Tipo Tessera
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden form per eliminazione singolo lavoratore (POST con CSRF) -->
+    <form id="deleteLavoratoreForm" method="POST" action="delete_lavoratore.php" style="display:none;">
+        <?php csrfInputField(); ?>
+        <input type="hidden" name="id" id="deleteLavoratoreId">
+    </form>
 
     <!-- Scroll to Top Button -->
     <a class="scroll-to-top rounded" href="#page-top">
@@ -1144,7 +1396,7 @@ generateCsrfToken();
     <script>
         $(document).ready(function() {
             var selectedWorkers = {};
-            var csrfToken = '<?php echo $_SESSION['csrf_token']; ?>';
+            var csrfToken = <?php echo json_encode($_SESSION['csrf_token']); ?>;
             var table;
             var columnFiltersVisible = false;
             var customFiltersVisible = true;
@@ -1190,6 +1442,9 @@ generateCsrfToken();
                 if (urlParams.ruolo_filter) {
                     $('#ruolo_filter').val(urlParams.ruolo_filter);
                 }
+                if (urlParams.ccnl_filter) {
+                    $('#ccnl_filter').val(urlParams.ccnl_filter);
+                }
             }
             
             // Inizializza filtri da URL prima di creare la DataTable
@@ -1213,19 +1468,20 @@ generateCsrfToken();
                         d.settore_filter = $('#settore_filter').val();
                         d.tipo_tessera_filter = $('#tipo_tessera_filter').val();
                         d.ruolo_filter = $('#ruolo_filter').val();
+                        d.ccnl_filter = $('#ccnl_filter').val();
                     }
                 },
                 columns: [
-                    { 
-                        data: 0, 
-                        orderable: false, 
+                    {
+                        data: 0,
+                        orderable: false,
                         searchable: false,
                         className: 'text-center',
                         responsivePriority: 1,
                         exportOptions: { orthogonal: "export" }
                     },
-                    { 
-                        data: 1, 
+                    {
+                        data: 1,
                         name: 'cognome',
                         responsivePriority: 2,
                         exportOptions: { orthogonal: "export" },
@@ -1531,9 +1787,9 @@ generateCsrfToken();
             function toggleBulkActionButtons() {
                 var count = Object.keys(selectedWorkers).length;
                 if (count > 0) {
-                    $('#updateAziendaBtn, #updateSedeBtn, #archiveWorkersBtn, #deleteWorkersBtn').removeClass('d-none');
+                    $('#updateAziendaBtn, #updateSedeBtn, #updateCcnlBtn, #updateSettoreBtn, #updateTipoTesseraBtn, #archiveWorkersBtn, #deleteWorkersBtn').removeClass('d-none');
                 } else {
-                    $('#updateAziendaBtn, #updateSedeBtn, #archiveWorkersBtn, #deleteWorkersBtn').addClass('d-none');
+                    $('#updateAziendaBtn, #updateSedeBtn, #updateCcnlBtn, #updateSettoreBtn, #updateTipoTesseraBtn, #archiveWorkersBtn, #deleteWorkersBtn').addClass('d-none');
                 }
             }
             
@@ -1661,7 +1917,7 @@ generateCsrfToken();
                     csrf_token: csrfToken,
                     worker_ids: worker_ids_array
                 };
-                
+
                 $.ajax({
                     url: 'lavoratori.php',
                     type: 'POST',
@@ -1676,7 +1932,124 @@ generateCsrfToken();
                     }
                 });
             });
-            
+
+            // Modifica CCNL
+            $('#updateCcnlBtn').on('click', function() {
+                if (Object.keys(selectedWorkers).length === 0) {
+                    Swal.fire('Attenzione', 'Seleziona almeno un lavoratore.', 'warning');
+                    return;
+                }
+                $('#updateCcnlModal').modal('show');
+            });
+
+            $('#confirmUpdateCcnl').on('click', function() {
+                var newCcnl = $('#newCcnlSelect').val();
+                if (newCcnl === '') {
+                    Swal.fire('Attenzione', 'Seleziona un CCNL.', 'warning');
+                    return;
+                }
+
+                var worker_ids_array = Object.keys(selectedWorkers);
+                var postData = {
+                    update_ccnl: 1,
+                    new_ccnl: newCcnl,
+                    csrf_token: csrfToken,
+                    worker_ids: worker_ids_array
+                };
+
+                $.ajax({
+                    url: 'lavoratori.php',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: postData,
+                    success: function(response) {
+                        handleBulkActionResponse(response, 'CCNL modificato con successo.');
+                        $('#updateCcnlModal').modal('hide');
+                    },
+                    error: function() {
+                        Swal.fire('Errore', 'Si è verificato un errore durante l\'aggiornamento.', 'error');
+                    }
+                });
+            });
+
+            // Modifica Settore
+            $('#updateSettoreBtn').on('click', function() {
+                if (Object.keys(selectedWorkers).length === 0) {
+                    Swal.fire('Attenzione', 'Seleziona almeno un lavoratore.', 'warning');
+                    return;
+                }
+                $('#updateSettoreModal').modal('show');
+            });
+
+            $('#confirmUpdateSettore').on('click', function() {
+                var newSettore = $('#newSettoreSelect').val();
+                if (newSettore === '') {
+                    Swal.fire('Attenzione', 'Seleziona un settore.', 'warning');
+                    return;
+                }
+
+                var worker_ids_array = Object.keys(selectedWorkers);
+                var postData = {
+                    update_settore: 1,
+                    new_settore: newSettore,
+                    csrf_token: csrfToken,
+                    worker_ids: worker_ids_array
+                };
+
+                $.ajax({
+                    url: 'lavoratori.php',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: postData,
+                    success: function(response) {
+                        handleBulkActionResponse(response, 'Settore modificato con successo.');
+                        $('#updateSettoreModal').modal('hide');
+                    },
+                    error: function() {
+                        Swal.fire('Errore', 'Si è verificato un errore durante l\'aggiornamento.', 'error');
+                    }
+                });
+            });
+
+            // Modifica Tipo Tessera
+            $('#updateTipoTesseraBtn').on('click', function() {
+                if (Object.keys(selectedWorkers).length === 0) {
+                    Swal.fire('Attenzione', 'Seleziona almeno un lavoratore.', 'warning');
+                    return;
+                }
+                $('#updateTipoTesseraModal').modal('show');
+            });
+
+            $('#confirmUpdateTipoTessera').on('click', function() {
+                var newTipoTessera = $('#newTipoTesseraSelect').val();
+                if (newTipoTessera === '') {
+                    Swal.fire('Attenzione', 'Seleziona un tipo tessera.', 'warning');
+                    return;
+                }
+
+                var worker_ids_array = Object.keys(selectedWorkers);
+                var postData = {
+                    update_tipo_tessera: 1,
+                    new_tipo_tessera: newTipoTessera,
+                    csrf_token: csrfToken,
+                    worker_ids: worker_ids_array
+                };
+
+                $.ajax({
+                    url: 'lavoratori.php',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: postData,
+                    success: function(response) {
+                        handleBulkActionResponse(response, 'Tipo tessera modificato con successo.');
+                        $('#updateTipoTesseraModal').modal('hide');
+                    },
+                    error: function() {
+                        Swal.fire('Errore', 'Si è verificato un errore durante l\'aggiornamento.', 'error');
+                    }
+                });
+            });
+
             // Archivia lavoratori
             $('#archiveWorkersBtn').on('click', function() {
                 confirmAndExecuteBulkAction(
@@ -1698,6 +2071,25 @@ generateCsrfToken();
                 );
             });
             
+            // Elimina singolo lavoratore via POST form
+            $(document).on('click', '.delete-lavoratore-btn', function() {
+                var workerId = $(this).data('id');
+                Swal.fire({
+                    title: 'Sei sicuro di voler eliminare questo lavoratore?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sì, elimina!',
+                    cancelButtonText: 'Annulla',
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#aaa'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        document.getElementById('deleteLavoratoreId').value = workerId;
+                        document.getElementById('deleteLavoratoreForm').submit();
+                    }
+                });
+            });
+
             function confirmAndExecuteBulkAction(action, title, confirmButtonText, successMessage, iconType = 'warning') {
                 if (Object.keys(selectedWorkers).length === 0) {
                     Swal.fire('Attenzione', 'Seleziona almeno un lavoratore.', 'warning');
@@ -1897,7 +2289,7 @@ generateCsrfToken();
 
             var formData = new FormData();
             formData.append('import_file', file);
-            formData.append('csrf_token', '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>');
+            formData.append('csrf_token', <?= json_encode($_SESSION['csrf_token'] ?? '') ?>);
 
             $.ajax({
                 url: 'import_lavoratori_ajax.php',

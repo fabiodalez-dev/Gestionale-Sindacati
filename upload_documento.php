@@ -3,7 +3,11 @@ require 'config.php';
 checkLogin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-   
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Token CSRF non valido.']);
+        exit;
+    }
 
     $lavoratore_id = intval($_POST['lavoratore_id']);
     $descrizione = $_POST['descrizione_documento'];
@@ -22,8 +26,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!in_array($fileExtension, $allowedExtensions)) {
             $error = "Tipo di file non supportato. Sono permessi solo immagini e PDF.";
         } else {
+            // Verifica il MIME type reale del file
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $actualMime = $finfo->file($fileTmpPath);
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+            if (!in_array($actualMime, $allowedMimes)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Il tipo MIME del file non corrisponde a un formato consentito.']);
+                exit;
+            }
             // Sanifica il nome del file
-            $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
+            $newFileName = bin2hex(random_bytes(16)) . '.' . $fileExtension;
 
             // Directory di destinazione
 $uploadFileDir = __DIR__ . '/uploads/';
@@ -48,10 +61,14 @@ $dest_path = $uploadFileDir . $newFileName;
                     echo json_encode(['success' => true]);
                     exit;
                 } else {
-                    $error = "Errore durante il salvataggio nel database.";
+                    http_response_code(500);
+                    echo json_encode(['error' => 'Errore durante il salvataggio nel database.']);
+                    exit;
                 }
             } else {
-                $error = "Errore durante il caricamento del file.";
+                http_response_code(500);
+                echo json_encode(['error' => 'Errore durante il caricamento del file.']);
+                exit;
             }
         }
     } else {
@@ -59,6 +76,7 @@ $dest_path = $uploadFileDir . $newFileName;
     }
 
     // Restituisci una risposta JSON con l'errore
+    http_response_code(400);
     echo json_encode(['error' => $error]);
     exit;
 } else {

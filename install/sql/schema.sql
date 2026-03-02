@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS documenti_aziende (
     azienda_id INT NOT NULL,
     descrizione_documento VARCHAR(255),
     percorso_documento VARCHAR(255),
-    data_caricamento TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+    data_caricamento TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    KEY idx_doc_az (azienda_id)
 );
 
 CREATE TABLE IF NOT EXISTS documenti_lavoratori (
@@ -42,7 +43,8 @@ CREATE TABLE IF NOT EXISTS documenti_lavoratori (
     lavoratore_id INT NOT NULL,
     descrizione_documento VARCHAR(255),
     percorso_documento VARCHAR(255),
-    data_caricamento TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+    data_caricamento TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    KEY idx_doc_lav (lavoratore_id)
 );
 
 CREATE TABLE IF NOT EXISTS email_templates (
@@ -64,12 +66,14 @@ CREATE TABLE IF NOT EXISTS iscrizioni (
     id INT AUTO_INCREMENT PRIMARY KEY,
     lavoratore_id INT NOT NULL,
     numero_tessera VARCHAR(50),
-    metodo_pagamento ENUM('carta', 'bonifico', 'contanti') NOT NULL,
+    metodo_pagamento ENUM('trattenuta in busta paga','rinnovo annuale','sepa') NOT NULL,
     nota_pagamento TEXT,
     data_inizio DATE NOT NULL,
     data_fine DATE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    KEY idx_isc_lavoratore (lavoratore_id),
+    KEY idx_isc_lav_fine (lavoratore_id, data_fine)
 );
 
 CREATE TABLE IF NOT EXISTS lavoratori (
@@ -101,10 +105,22 @@ CREATE TABLE IF NOT EXISTS lavoratori (
     data_iscrizione DATE,
     paese_nascita VARCHAR(100),
     ccnl VARCHAR(100),
-    tipo_tessera ENUM('tipo1', 'tipo2', 'tipo3'),
+    tipo_tessera ENUM('trattenuta in busta paga', 'rinnovo annuale', 'sepa'),
     vertenze TINYINT DEFAULT 0,
     orario_contratto VARCHAR(20) NOT NULL,
-    unita_operativa_id INT
+    unita_operativa_id INT,
+    archiviato TINYINT NOT NULL DEFAULT 0,
+    sede_id INT DEFAULT NULL,
+    KEY idx_lav_azienda (azienda_id),
+    KEY idx_lav_sede (sede_id),
+    KEY idx_lav_unita (unita_operativa_id),
+    KEY idx_lav_archiviato (archiviato),
+    KEY idx_lav_iscritto (iscritto),
+    KEY idx_lav_cognome_nome (cognome, nome),
+    KEY idx_lav_settore (settore),
+    KEY idx_lav_data_iscrizione (data_iscrizione),
+    KEY idx_lav_arch_sede (archiviato, sede_id),
+    KEY idx_lav_arch_azienda (archiviato, azienda_id)
 );
 
 CREATE TABLE IF NOT EXISTS locks (
@@ -112,7 +128,8 @@ CREATE TABLE IF NOT EXISTS locks (
     table_name VARCHAR(50) NOT NULL,
     record_id INT NOT NULL,
     user_id INT NOT NULL,
-    locked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+    locked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    KEY idx_lock_table_record (table_name, record_id)
 );
 
 CREATE TABLE IF NOT EXISTS pagamenti_quote (
@@ -120,7 +137,20 @@ CREATE TABLE IF NOT EXISTS pagamenti_quote (
     lavoratore_id INT NOT NULL,
     anno INT NOT NULL,
     importo_pagato DECIMAL(10,2) NOT NULL,
-    data_pagamento DATE NOT NULL
+    data_pagamento DATE NOT NULL,
+    KEY idx_pag_lav (lavoratore_id)
+);
+
+CREATE TABLE IF NOT EXISTS sedi (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    indirizzo VARCHAR(255),
+    citta VARCHAR(100),
+    provincia VARCHAR(2),
+    cap VARCHAR(5),
+    telefono VARCHAR(20),
+    email VARCHAR(100),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
 );
 
 CREATE TABLE IF NOT EXISTS settings (
@@ -147,7 +177,9 @@ CREATE TABLE IF NOT EXISTS storico_aziende_lavoratori (
     lavoratore_id INT NOT NULL,
     azienda_id INT NOT NULL,
     data_inizio DATE NOT NULL,
-    data_fine DATE
+    data_fine DATE,
+    KEY idx_storico_lav (lavoratore_id),
+    KEY idx_storico_az (azienda_id)
 );
 
 CREATE TABLE IF NOT EXISTS unita_operativa (

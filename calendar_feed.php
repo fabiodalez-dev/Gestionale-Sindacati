@@ -16,6 +16,23 @@ date_default_timezone_set('Europe/Rome');
 // Includi la configurazione e le funzioni di utilità
 require_once 'config.php';
 
+// Autenticazione basata su token (i client calendario non possono fare login con sessione)
+$token = $_GET['token'] ?? '';
+$token = is_string($token) ? $token : '';
+$expected = getSetting('calendar_token');
+if (empty($expected)) {
+    // Genera e salva un token casuale al primo utilizzo
+    $expected = bin2hex(random_bytes(16));
+    if (!setSetting('calendar_token', $expected)) {
+        http_response_code(500);
+        die('Errore interno: inizializzazione token non riuscita.');
+    }
+}
+if ($token === '' || !hash_equals($expected, $token)) {
+    http_response_code(403);
+    die('Accesso negato. Token non valido.');
+}
+
 // Parametri per l'intervallo degli eventi
 $days = isset($_GET['days']) ? intval($_GET['days']) : 30;
 $year = isset($_GET['year']) ? intval($_GET['year']) : 0;

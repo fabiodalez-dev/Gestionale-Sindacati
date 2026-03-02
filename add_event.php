@@ -59,13 +59,19 @@ if (!$is_company_event) {
         $query_lavoratore = "SELECT azienda_id FROM lavoratori WHERE id = ?";
         $stmt_lavoratore = executeQuery($query_lavoratore, [$lavoratore_id], 'i');
 
-        if ($stmt_lavoratore && $stmt_lavoratore->get_result()->num_rows > 0) {
-            $row = $stmt_lavoratore->get_result()->fetch_assoc();
+        if ($stmt_lavoratore === false) {
+            error_log("Errore DB nel recupero azienda per lavoratore $lavoratore_id: " . $mysqli->error);
+            echo json_encode(['success' => false, 'error' => 'Errore nel recupero dei dati del lavoratore.']);
+            exit;
+        }
+        $lav_result = $stmt_lavoratore->get_result();
+        if ($lav_result && $lav_result->num_rows > 0) {
+            $row = $lav_result->fetch_assoc();
             $azienda_id = intval($row['azienda_id']);
             error_log("Azienda ID recuperato per lavoratore $lavoratore_id: $azienda_id");
         } else {
-            error_log("Lavoratore non trovato o non associato a nessuna azienda. ID lavoratore: $lavoratore_id");
-            echo json_encode(['success' => false, 'error' => 'Lavoratore non trovato o non associato a nessuna azienda.']);
+            error_log("Lavoratore non trovato. ID lavoratore: $lavoratore_id");
+            echo json_encode(['success' => false, 'error' => 'Lavoratore non trovato.']);
             exit;
         }
     }

@@ -19,8 +19,8 @@
 
   // ── Settings ──
   var EASE = 'power2.out';
-  var DURATION = 0.45;
-  var STAGGER = 0.05;
+  var DURATION = 0.3;
+  var STAGGER = 0.03;
 
   // ── Page Load: Staggered reveal ──
   function initPageReveal() {
@@ -38,62 +38,22 @@
       });
     }
 
-    // Stat cards (dashboard KPI)
+    // Stat cards (dashboard KPI) — subtle fade only
     var stats = document.querySelectorAll('.stat-card, .stats-card');
     if (stats.length) {
-      gsap.set(stats, { opacity: 0, y: 12, scale: 0.97 });
+      gsap.set(stats, { opacity: 0 });
       gsap.to(stats, {
         opacity: 1,
-        y: 0,
-        scale: 1,
-        duration: 0.4,
-        stagger: 0.07,
-        ease: 'back.out(1.2)',
-        clearProps: 'transform'
-      });
-    }
-
-    // Page title
-    var titles = document.querySelectorAll('.container-fluid > .h3, .container-fluid > h1');
-    if (titles.length) {
-      gsap.set(titles, { opacity: 0, x: -10 });
-      gsap.to(titles, {
-        opacity: 1,
-        x: 0,
-        duration: 0.35,
-        ease: EASE,
-        clearProps: 'transform'
-      });
-    }
-
-    // Alerts
-    var alerts = document.querySelectorAll('.alert');
-    if (alerts.length) {
-      gsap.set(alerts, { opacity: 0, x: -8 });
-      gsap.to(alerts, {
-        opacity: 1,
-        x: 0,
-        duration: 0.3,
-        ease: EASE,
-        clearProps: 'transform'
+        duration: DURATION,
+        stagger: STAGGER,
+        ease: EASE
       });
     }
   }
 
-  // ── Sidebar entrance animation ──
+  // ── Sidebar: nessuna animazione (navigazione istantanea) ──
   function initSidebar() {
-    var navItems = document.querySelectorAll('.sidebar .nav-item');
-    if (navItems.length) {
-      gsap.set(navItems, { opacity: 0, x: -8 });
-      gsap.to(navItems, {
-        opacity: 1,
-        x: 0,
-        duration: 0.25,
-        stagger: 0.02,
-        ease: EASE,
-        clearProps: 'transform'
-      });
-    }
+    // La sidebar non ha animazioni: la navigazione deve essere immediata e professionale.
   }
 
   // ── ScrollTrigger: Reveal on scroll ──
@@ -123,19 +83,18 @@
     });
   }
 
-  // ── Modal animation ──
+  // ── Modal animation — subtle fade ──
   function initModalAnimations() {
     if (typeof $ === 'undefined') return;
     $(document).on('show.bs.modal', function(e) {
       var modal = e.target.querySelector('.modal-content');
       if (modal) {
-        gsap.set(modal, { opacity: 0, y: -16, scale: 0.97 });
+        gsap.set(modal, { opacity: 0, y: -8 });
         gsap.to(modal, {
           opacity: 1,
           y: 0,
-          scale: 1,
-          duration: 0.28,
-          ease: 'back.out(1.4)'
+          duration: 0.2,
+          ease: EASE
         });
       }
     });

@@ -20,67 +20,21 @@ function formatDateForDisplay($date, $date_format = 'd-m-Y') {
  * Funzione per aggiornare lo stato 'iscritto' nella tabella 'lavoratori' se la data di fine è passata
  */
 function aggiornaStatoIscrizioni($mysqli) {
-    $oggi = date('Y-m-d');
-
-    // Seleziona tutte le iscrizioni con tipo_tessera 'rinnovo annuale' e data_fine <= oggi e iscritto =1
-    // Rimosso GROUP BY lavoratore_id perché lavoratore_id è unico
-    $query = "SELECT i.lavoratore_id FROM iscrizioni i 
-              JOIN lavoratori l ON i.lavoratore_id = l.id 
-              WHERE l.tipo_tessera = 'rinnovo annuale' 
-              AND i.data_fine <= ? 
-              AND l.iscritto = 1";
-
-    $stmt = $mysqli->prepare($query);
-    if (!$stmt) {
-        error_log("Errore nella preparazione della query di aggiornamento: " . $mysqli->error);
-        return;
+    // Singola query: imposta iscritto = 0 per i lavoratori con tipo_tessera 'rinnovo annuale'
+    // che sono ancora segnati come iscritti ma non hanno alcuna iscrizione attiva
+    // (cioè nessuna iscrizione con data_fine >= oggi)
+    $query = "UPDATE lavoratori l
+              SET l.iscritto = 0
+              WHERE l.tipo_tessera = 'rinnovo annuale'
+              AND l.iscritto = 1
+              AND NOT EXISTS (
+                  SELECT 1 FROM iscrizioni i
+                  WHERE i.lavoratore_id = l.id
+                  AND i.data_fine >= CURDATE()
+              )";
+    if (!$mysqli->query($query)) {
+        error_log("Errore nell'aggiornamento stato iscrizioni: {$mysqli->error} (errno: {$mysqli->errno})");
     }
-    $stmt->bind_param('s', $oggi);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    while ($row = $result->fetch_assoc()) {
-        $lavoratore_id = $row['lavoratore_id'];
-
-        // Controlla se il lavoratore ha altre iscrizioni attive
-        // Con la UNIQUE constraint, questa verifica può essere semplificata
-        $check_query = "SELECT i.id
-                        FROM iscrizioni i
-                        JOIN lavoratori l ON i.lavoratore_id = l.id
-                        WHERE i.lavoratore_id = ? 
-                        AND (
-                            l.tipo_tessera IN ('trattenuta in busta paga', 'sepa')
-                            OR (
-                                l.tipo_tessera = 'rinnovo annuale'
-                                AND i.data_fine >= ?
-                            )
-                        )";
-        $stmt_check = $mysqli->prepare($check_query);
-        if (!$stmt_check) {
-            error_log("Errore nella preparazione della query di controllo: " . $mysqli->error);
-            continue;
-        }
-        $stmt_check->bind_param('is', $lavoratore_id, $oggi);
-        $stmt_check->execute();
-        $result_check = $stmt_check->get_result();
-        $count = $result_check->num_rows;
-        $stmt_check->close();
-
-        if ($count == 0) {
-            // Se non ci sono altre iscrizioni attive, aggiorna lo stato 'iscritto' a 0
-            $update_lavoratore = "UPDATE lavoratori SET iscritto = 0 WHERE id = ?";
-            $stmt_update = $mysqli->prepare($update_lavoratore);
-            if ($stmt_update) {
-                $stmt_update->bind_param('i', $lavoratore_id);
-                $stmt_update->execute();
-                $stmt_update->close();
-            } else {
-                error_log("Errore nella preparazione della query di aggiornamento lavoratore: " . $mysqli->error);
-            }
-        }
-    }
-
-    $stmt->close();
 }
 
 // Esegui l'aggiornamento degli stati
@@ -95,7 +49,16 @@ function validateDate($date, $format = 'Y-m-d') {
 }
 
 // Gestione della richiesta POST per aggiungere una nuova iscrizione
+$errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'aggiungi_iscrizione') {
+    // Verifica token CSRF
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        $errors[] = "Token CSRF non valido.";
+    }
+    if (!empty($errors)) {
+        // CSRF non valido — salta il resto dell'elaborazione
+    } else {
+
     // Recupera e sanitizza i dati del modulo
     $lavoratore_id = isset($_POST['lavoratore_id']) ? intval($_POST['lavoratore_id']) : 0;
     $numero_tessera = trim($_POST['numero_tessera']) ?: NULL; // Permette NULL
@@ -104,7 +67,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $data_fine_input = isset($_POST['data_fine']) && !empty($_POST['data_fine']) ? $_POST['data_fine'] : NULL;
 
     // Validazioni di base
-    $errors = [];
     if ($lavoratore_id <= 0) {
         $errors[] = "Lavoratore non valido. Assicurati di selezionare un lavoratore esistente.";
     }
@@ -180,14 +142,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 throw new Exception("Il lavoratore ha già un'iscrizione attiva. Non è possibile aggiungere un'altra iscrizione.");
             }
 
-            // Inserisci la nuova iscrizione
-            $insert_query = "INSERT INTO iscrizioni (lavoratore_id, numero_tessera, data_inizio, data_fine, nota_pagamento) 
-                             VALUES (?, ?, ?, ?, ?)";
+            // Inserisci la nuova iscrizione con metodo_pagamento dal tipo_tessera del lavoratore
+            $metodo_pagamento = $tipo_tessera;
+            $insert_query = "INSERT INTO iscrizioni (lavoratore_id, numero_tessera, metodo_pagamento, data_inizio, data_fine, nota_pagamento)
+                             VALUES (?, ?, ?, ?, ?, ?)";
             $stmt = $mysqli->prepare($insert_query);
             if (!$stmt) {
                 throw new Exception("Errore nella preparazione della query di inserimento: " . $mysqli->error);
             }
-            $stmt->bind_param('issss', $lavoratore_id, $numero_tessera, $data_inizio, $data_fine, $nota_pagamento);
+            $stmt->bind_param('isssss', $lavoratore_id, $numero_tessera, $metodo_pagamento, $data_inizio, $data_fine, $nota_pagamento);
             if (!$stmt->execute()) {
                 if ($mysqli->errno === 1062) { // Duplicate entry
                     throw new Exception("Il lavoratore ha già un'iscrizione attiva. Non è possibile aggiungere un'altra iscrizione.");
@@ -220,6 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $errors[] = $e->getMessage();
         }
     }
+    } // end else (CSRF valido)
 }
 
 // Recupera le iscrizioni in scadenza (tessere in scadenza)
@@ -319,11 +283,13 @@ if ($result_lavoratori) {
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SB Admin 2 CSS (includes Bootstrap) -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <!-- jQuery UI CSS -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
     <!-- Custom CSS (se necessario) -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
 </head>
 <body id="page-top">
 
@@ -483,7 +449,7 @@ if ($result_lavoratori) {
                                                     <td>
                                                         <!-- Pulsanti per Azioni -->
                                                         <a href="modifica_iscrizione.php?id=<?php echo sanitizeForHTML($scadenza['id']); ?>" class="btn btn-sm btn-info">Modifica</a>
-                                                        <a href="elimina_iscrizione.php?id=<?php echo sanitizeForHTML($scadenza['id']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Sei sicuro di voler eliminare questa iscrizione?');">Elimina</a>
+                                                        <button type="button" class="btn btn-sm btn-danger delete-iscrizione-btn" data-id="<?php echo sanitizeForHTML($scadenza['id']); ?>" onclick="confirmDeleteIscrizione(this.dataset.id)">Elimina</button>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
@@ -535,7 +501,7 @@ if ($result_lavoratori) {
                                                     <td>
                                                         <!-- Pulsanti per Azioni (Modifica, Elimina) -->
                                                         <a href="modifica_iscrizione.php?id=<?php echo sanitizeForHTML($scaduto['id']); ?>" class="btn btn-sm btn-info">Modifica</a>
-                                                        <a href="elimina_iscrizione.php?id=<?php echo sanitizeForHTML($scaduto['id']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Sei sicuro di voler eliminare questa iscrizione?');">Elimina</a>
+                                                        <button type="button" class="btn btn-sm btn-danger delete-iscrizione-btn" data-id="<?php echo sanitizeForHTML($scaduto['id']); ?>" onclick="confirmDeleteIscrizione(this.dataset.id)">Elimina</button>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
@@ -587,7 +553,7 @@ if ($result_lavoratori) {
                                                     <td>
                                                         <!-- Pulsanti per Azioni (Modifica, Elimina) -->
                                                         <a href="modifica_iscrizione.php?id=<?php echo sanitizeForHTML($attivo['id']); ?>" class="btn btn-sm btn-info">Modifica</a>
-                                                        <a href="elimina_iscrizione.php?id=<?php echo sanitizeForHTML($attivo['id']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Sei sicuro di voler eliminare questa iscrizione?');">Elimina</a>
+                                                        <button type="button" class="btn btn-sm btn-danger delete-iscrizione-btn" data-id="<?php echo sanitizeForHTML($attivo['id']); ?>" onclick="confirmDeleteIscrizione(this.dataset.id)">Elimina</button>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
@@ -614,6 +580,21 @@ if ($result_lavoratori) {
     </div>
     <!-- End of Page Wrapper -->
 
+    <!-- Hidden form per eliminazione iscrizioni via POST -->
+    <form id="deleteIscrizioneForm" method="POST" action="elimina_iscrizione.php" style="display:none;">
+        <?php csrfInputField(); ?>
+        <input type="hidden" name="id" id="deleteIscrizioneId" value="">
+    </form>
+
+    <script>
+    function confirmDeleteIscrizione(id) {
+        if (confirm('Sei sicuro di voler eliminare questa iscrizione?')) {
+            document.getElementById('deleteIscrizioneId').value = id;
+            document.getElementById('deleteIscrizioneForm').submit();
+        }
+    }
+    </script>
+
     <!-- jQuery, Popper.js, and Bootstrap JS -->
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     
@@ -622,6 +603,10 @@ if ($result_lavoratori) {
 
     <!-- SB Admin 2 JS -->
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
+
+    <!-- DataTables JS -->
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/jquery.dataTables.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
     <!-- Inizializzazione DataTables e Autocomplete -->
     <script>

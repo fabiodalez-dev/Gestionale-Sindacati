@@ -1,16 +1,27 @@
 <?php
 // backup.php
 
-$cron_key = "RMolEMPSEtea";
-
-
-// Abilita la visualizzazione degli errori per lo sviluppo (disabilita in produzione)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 require_once 'config.php';
-checkLogin();
+
+// Autenticazione: cron via chiave oppure sessione utente
+$cron_key = $_ENV['CRON_KEY'] ?? getenv('CRON_KEY') ?: '';
+$is_cron = isset($_GET['cron']) && $_GET['cron'] == 1;
+
+if ($is_cron) {
+    $provided_key = $_SERVER['HTTP_X_CRON_KEY'] ?? $_GET['key'] ?? '';
+    if (!is_string($provided_key) || empty($cron_key) || !hash_equals($cron_key, $provided_key)) {
+        http_response_code(403);
+        die('Accesso negato. Chiave cron non valida.');
+    }
+    // Cron key è autorizzata solo per il backup; blocca qualsiasi altra azione
+    if (isset($_GET['action']) && $_GET['action'] !== '') {
+        http_response_code(403);
+        die('Accesso negato. Il cron può solo eseguire backup.');
+    }
+} else {
+    checkLogin();
+    checkUserRole('admin');
+}
 
 // Imposta l'encoding della connessione al database
 $mysqli->set_charset("utf8mb4");
@@ -139,7 +150,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'download' && isset($_GET['file
 $backupMessage = "";
 
 // Se la pagina viene chiamata dal cron (ad esempio, backup.php?cron=1)
-if (isset($_GET['cron']) && $_GET['cron'] == 1) {
+if ($is_cron) {
     $dump = generateBackupDump($mysqli, $db);
     if ($dump !== false) {
         $result = saveBackupToFile($dump, $cronBackupDir, $db);
@@ -156,7 +167,7 @@ if (isset($_GET['cron']) && $_GET['cron'] == 1) {
 // Se l'utente preme il pulsante per il backup manuale
 elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup_manual'])) {
     // Verifica CSRF
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         $backupMessage = "Token CSRF non valido.";
     } else {
         $dump = generateBackupDump($mysqli, $db);
@@ -195,9 +206,9 @@ usort($cronBackups, function($a, $b) {
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
 </head>
 <body id="page-top">
 
@@ -226,7 +237,7 @@ usort($cronBackups, function($a, $b) {
                     <!-- Form per il Backup Manuale -->
                     <form method="post" class="mb-4">
                         <input type="hidden" name="backup_manual" value="1">
-                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <?php csrfInputField(); ?>
                         <button type="submit" class="btn btn-primary">Esegui Backup Manuale</button>
                     </form>
 

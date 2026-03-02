@@ -1,7 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 require_once 'config.php';
 checkLogin();
 
@@ -147,13 +144,13 @@ if (isset($_GET['id'])) {
     <!-- Meta viewport per la responsività -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- jQuery UI CSS -->
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
     <!-- FullCalendar CSS -->
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/common.min.css">
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/daygrid.min.css">
@@ -840,7 +837,12 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
           <td><?php echo date('d/m/Y H:i', strtotime($doc['data_caricamento'])); ?></td>
           <td>
             <a href="<?php echo sanitizeForHTML($file_path); ?>" target="_blank" class="btn btn-sm btn-primary">Visualizza</a>
-            <a href="delete_documento.php?id=<?php echo sanitizeForHTML($doc['id']); ?>&lavoratore_id=<?php echo sanitizeForHTML($lavoratore_id); ?>&csrf_token=<?php echo sanitizeForHTML($_SESSION['csrf_token']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Sei sicuro di voler eliminare questo documento?');">Elimina</a>
+            <form action="delete_documento.php" method="POST" style="display:inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo documento?');">
+              <?php csrfInputField(); ?>
+              <input type="hidden" name="id" value="<?php echo sanitizeForHTML($doc['id']); ?>">
+              <input type="hidden" name="lavoratore_id" value="<?php echo sanitizeForHTML($lavoratore_id); ?>">
+              <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
+            </form>
           </td>
         </tr>
       <?php endwhile; ?>
@@ -854,7 +856,7 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
 <?php if(isset($_SESSION['zip_link'])): ?>
   <div id="zipLinkContainer" style="margin-top:20px;">
     <div class="input-group">
-      <input type="text" id="zipLink" class="form-control" readonly value="<?php echo $_SESSION['zip_link']; ?>">
+      <input type="text" id="zipLink" class="form-control" readonly value="<?php echo sanitizeForHTML($_SESSION['zip_link'] ?? ''); ?>">
       <div class="input-group-append">
         <button id="copyZipLinkBtn" class="btn btn-secondary" type="button">Copia Link</button>
         <button id="cancelZipLinkBtn" class="btn btn-danger" type="button">Elimina</button>
@@ -962,14 +964,14 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
 
     <!-- Inizializzazione di TinyMCE -->
     <script>
-        tinymce.init({
+        if (typeof tinymce !== 'undefined') { tinymce.init({
             selector: '#note, #description',
             plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
             toolbar: 'undo redo | formatselect | bold italic backcolor | ' +
                       'alignleft aligncenter alignright alignjustify | ' +
                       'bullist numlist outdent indent | removeformat | help',
             entity_encoding: 'raw',
-            forced_root_block: '',
+            forced_root_block: 'p',
             toolbar_mode: 'floating',
             menubar: false,
             branding: false,
@@ -982,7 +984,7 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
                     this.getContainer().style.zIndex = 9000;
                 });
             }
-        });
+        }); }
     </script>
 
     <!-- Inizializzazione del Calendario -->
@@ -1328,14 +1330,39 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
   function editDescription(docId) {
     var descCell = document.getElementById("desc-" + docId);
     var currentDesc = document.getElementById("desc-text-" + docId).innerText;
-    descCell.innerHTML = `
-      <form action="update_document_description.php" method="POST" onsubmit="return updateDescription(event, ${docId});">
-        <input type="hidden" name="doc_id" value="${docId}">
-        <input type="text" name="description" value="${currentDesc}" required>
-        <button type="submit" class="btn btn-sm btn-secondary">Salva</button>
-        <button type="button" class="btn btn-sm btn-secondary" onclick="cancelEdit(${docId}, '${currentDesc.replace(/'/g, "\\'")}')">Annulla</button>
-      </form>
-    `;
+    descCell.textContent = '';
+    var form = document.createElement('form');
+    form.action = 'update_document_description.php';
+    form.method = 'POST';
+    form.onsubmit = function(e) { return updateDescription(e, docId); };
+    var csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrf_token';
+    csrfInput.value = <?php echo json_encode($_SESSION['csrf_token']); ?>;
+    form.appendChild(csrfInput);
+    var hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'doc_id';
+    hiddenInput.value = docId;
+    form.appendChild(hiddenInput);
+    var textInput = document.createElement('input');
+    textInput.type = 'text';
+    textInput.name = 'description';
+    textInput.value = currentDesc;
+    textInput.required = true;
+    form.appendChild(textInput);
+    var saveBtn = document.createElement('button');
+    saveBtn.type = 'submit';
+    saveBtn.className = 'btn btn-sm btn-secondary';
+    saveBtn.textContent = 'Salva';
+    form.appendChild(saveBtn);
+    var cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn btn-sm btn-secondary';
+    cancelBtn.textContent = 'Annulla';
+    cancelBtn.onclick = function() { cancelEdit(docId, currentDesc); };
+    form.appendChild(cancelBtn);
+    descCell.appendChild(form);
   }
 
   function updateDescription(event, docId) {
@@ -1349,9 +1376,7 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        var descCell = document.getElementById("desc-" + docId);
-        descCell.innerHTML = `<span id="desc-text-${docId}">${data.new_description}</span>
-          <br><button type="button" class="btn btn-sm btn-secondary" onclick="editDescription(${docId})">Modifica</button>`;
+        cancelEdit(docId, data.new_description);
       } else {
         alert("Errore: " + data.message);
       }
@@ -1364,8 +1389,18 @@ $back_text = $is_archived ? 'Indietro agli Archiviati' : 'Indietro ai Lavoratori
 
   function cancelEdit(docId, originalDesc) {
     var descCell = document.getElementById("desc-" + docId);
-    descCell.innerHTML = `<span id="desc-text-${docId}">${originalDesc}</span>
-      <br><button type="button" class="btn btn-sm btn-secondary" onclick="editDescription(${docId})">Modifica</button>`;
+    descCell.textContent = '';
+    var span = document.createElement('span');
+    span.id = 'desc-text-' + docId;
+    span.textContent = originalDesc;
+    descCell.appendChild(span);
+    descCell.appendChild(document.createElement('br'));
+    var editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'btn btn-sm btn-secondary';
+    editBtn.textContent = 'Modifica';
+    editBtn.onclick = function() { editDescription(docId); };
+    descCell.appendChild(editBtn);
   }
 
   // Gestione del click per scaricare i documenti selezionati

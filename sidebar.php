@@ -3,10 +3,9 @@ $settings = getSettings(['logo', 'nome_app']);
 $logo_path = $settings['logo'] ?? 'uploads/default_logo.png';
 $nome_app = $settings['nome_app'] ?? 'Padova';
 
-// Recupera connessioni attive per la sidebar (se la tabella esiste)
+// Recupera connessioni attive per la sidebar (solo admin)
 $active_connections = [];
-$conn_check = $mysqli->query("SHOW TABLES LIKE 'api_connections'");
-if ($conn_check && $conn_check->num_rows > 0) {
+if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin') {
     $conn_stmt = executeQuery("SELECT id, name FROM api_connections WHERE is_active = 1 ORDER BY name ASC", [], '');
     if ($conn_stmt) {
         $conn_result = $conn_stmt->get_result();
@@ -79,7 +78,13 @@ if ($conn_check && $conn_check->num_rows > 0) {
             <span>Gestione Sedi</span></a>
     </li>
 
-    <?php if ($_SESSION['user_role'] === 'admin'): ?>
+    <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+    <!-- Nav Item - Gestione CCNL -->
+    <li class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'gestione_ccnl.php' ? 'active' : ''; ?>">
+        <a class="nav-link" href="<?php echo $base_url; ?>gestione_ccnl.php">
+            <i class="fas fa-fw fa-file-contract"></i>
+            <span>Gestione CCNL</span></a>
+    </li>
         <!-- Nav Item - Gestione Utenti -->
         <li class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'gestione_utenti.php' ? 'active' : ''; ?>">
             <a class="nav-link" href="<?php echo $base_url; ?>gestione_utenti.php">

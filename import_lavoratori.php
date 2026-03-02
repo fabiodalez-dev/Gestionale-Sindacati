@@ -4,7 +4,9 @@ checkLogin();
 
 // Gestione dell'upload del file
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === UPLOAD_ERR_OK) {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        $error = "Token CSRF mancante o non valido.";
+    } elseif (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === UPLOAD_ERR_OK) {
         $fileTmpPath = $_FILES['csv_file']['tmp_name'];
         $fileName = $_FILES['csv_file']['name'];
 
@@ -13,6 +15,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (strtolower($fileExtension) !== 'csv') {
             $error = "Per favore, carica un file CSV valido.";
         } else {
+            // Verifica MIME type lato server
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo ? finfo_file($finfo, $fileTmpPath) : '';
+            if ($finfo) { finfo_close($finfo); }
+            $allowedMimes = ['text/csv', 'text/plain', 'application/vnd.ms-excel'];
+            if (!in_array($mimeType, $allowedMimes, true)) {
+                $error = "Tipo file non consentito.";
+            } else {
             // Processa il file CSV
             $handle = fopen($fileTmpPath, 'r');
             if ($handle !== false) {
@@ -181,6 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $error = "Impossibile aprire il file.";
             }
+            } // end MIME check
         }
     } else {
         $error = "Per favore, seleziona un file CSV da caricare.";
@@ -193,11 +204,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <title>Importa Lavoratori</title>
     <!-- Font Awesome -->
-    <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- Bootstrap CSS -->
-    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <!-- Custom Styles -->
-    <link href="<?php echo $base_url; ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
 </head>
 <body>
     <div class="container mt-5">
@@ -221,6 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         <?php endif; ?>
         <form action="import_lavoratori.php" method="post" enctype="multipart/form-data">
+            <?php csrfInputField(); ?>
             <div class="form-group">
                 <label for="csv_file">Seleziona il file CSV</label>
                 <input type="file" name="csv_file" id="csv_file" class="form-control-file" accept=".csv">

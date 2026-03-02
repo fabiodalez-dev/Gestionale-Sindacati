@@ -50,6 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $settore = isset($_POST['settore']) ? sanitizeForDatabase($_POST['settore']) : 'privato';
     $vertenze = isset($_POST['vertenze']) ? intval($_POST['vertenze']) : 0;
     $iscritto = isset($_POST['iscritto']) ? intval($_POST['iscritto']) : 0;
+    // Forza iscritto = 1 per trattenuta in busta paga e SEPA
+    if ($tipo_tessera === 'trattenuta in busta paga' || $tipo_tessera === 'sepa') {
+        $iscritto = 1;
+    }
     $indirizzo_via = !empty($_POST['indirizzo_via']) ? sanitizeForDatabase($_POST['indirizzo_via']) : null;
     $indirizzo_numero_civico = !empty($_POST['indirizzo_numero_civico']) ? sanitizeForDatabase($_POST['indirizzo_numero_civico']) : null;
     $indirizzo_cap = !empty($_POST['indirizzo_cap']) ? sanitizeForDatabase($_POST['indirizzo_cap']) : null;
@@ -231,15 +235,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Aggiornamento Lavoratore - CRM Admin</title>
     <!-- SB Admin 2 CSS -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="<?php echo $base_url; ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <!-- Font Awesome -->
-    <link href="<?php echo $base_url; ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- jQuery UI CSS per l'autocomplete -->
-    <link rel="stylesheet" href="<?php echo $base_url; ?>theme/vendor/jquery-ui/jquery-ui.min.css">
+    <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
     <!-- Custom CSS -->
-    <link href="<?php echo $base_url; ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
     <!-- TinyMCE -->
-    <script src="<?php echo $base_url; ?>vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
     <style>
         /* Personalizza gli stili dell'autocomplete */
         .ui-autocomplete {
@@ -522,50 +526,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </a>
 
     <!-- Bootstrap core JavaScript-->
-    <script src="<?php echo $base_url; ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <!-- Core plugin JavaScript-->
-    <script src="<?php echo $base_url; ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-easing/jquery.easing.min.js"></script>
 
     <!-- SB Admin 2 JavaScript-->
-    <script src="<?php echo $base_url; ?>theme/js/sb-admin-2.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
 
     <!-- jQuery UI per l'autocomplete -->
-    <script src="<?php echo $base_url; ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.js"></script>
 
     <!-- SweetAlert2 per i messaggi -->
-    <script src="<?php echo $base_url; ?>theme/vendor/sweetalert2/sweetalert2.min.js"></script>
+    <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.js"></script>
 
     <!-- Inizializzazione di TinyMCE -->
     <script>
-        tinymce.init({
+        if (typeof tinymce !== 'undefined') { tinymce.init({
             selector: '#note',
             plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
             toolbar: 'undo redo | formatselect | bold italic backcolor | ' +
                       'alignleft aligncenter alignright alignjustify | ' +
                       'bullist numlist outdent indent | removeformat | help',
             entity_encoding: 'raw',
-            forced_root_block: '',
+            forced_root_block: 'p',
             toolbar_mode: 'floating',
             menubar: false,
             branding: false,
             height: 300,
+            base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce',
+            suffix: '.min',
+            license_key: 'gpl',
             setup: function (editor) {
                 editor.on('init', function () {
-                    // Imposta il z-index di TinyMCE inferiore a quello del modale Bootstrap (1050)
                     this.getContainer().style.zIndex = 1040;
                 });
             },
-            // Aggiungi questa opzione per gestire i modali correttamente
             inline: false
-        });
+        }); }
     </script>
 
     <script>
         $(function() {
             // Autocomplete per il campo Azienda
             $("#azienda").autocomplete({
-                source: "<?php echo $base_url; ?>autocomplete_aziende.php",
+                source: "<?php echo sanitizeForHTML($base_url); ?>autocomplete_aziende.php",
                 minLength: 2,
                 select: function(event, ui) {
                     $("#azienda_id").val(ui.item.id);
@@ -574,7 +579,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $("#unita_operativa").val('');
                     $("#unita_operativa_id").val(0);
                     // Aggiorna l'autocomplete delle unità operative
-                    $("#unita_operativa").autocomplete("option", "source", "<?php echo $base_url; ?>autocomplete_unita_operativa.php?azienda_id=" + ui.item.id);
+                    $("#unita_operativa").autocomplete("option", "source", "<?php echo sanitizeForHTML($base_url); ?>autocomplete_unita_operativa.php?azienda_id=" + ui.item.id);
                 }
             });
 
@@ -587,7 +592,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         return;
                     }
                     $.ajax({
-                        url: "<?php echo $base_url; ?>autocomplete_unita_operativa.php",
+                        url: "<?php echo sanitizeForHTML($base_url); ?>autocomplete_unita_operativa.php",
                         dataType: "json",
                         data: {
                             term: request.term,
@@ -639,7 +644,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if (result.isConfirmed) {
                             // Invia richiesta AJAX per creare la nuova unità operativa
                             $.ajax({
-                                url: "<?php echo $base_url; ?>create_unita_operativa.php",
+                                url: "<?php echo sanitizeForHTML($base_url); ?>create_unita_operativa.php",
                                 type: "POST",
                                 dataType: "json",
                                 data: {
@@ -681,6 +686,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             });
                         }
                     });
+                }
+            });
+            // Auto-imposta "Attivo = Sì" per trattenuta e SEPA
+            $("#tipo_tessera").on('change', function() {
+                var tipo = $(this).val();
+                if (tipo === 'trattenuta in busta paga' || tipo === 'sepa') {
+                    $("#iscritto").val('1');
                 }
             });
         });

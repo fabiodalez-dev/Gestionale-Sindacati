@@ -12,6 +12,33 @@ ob_start();
 
 header('Content-Type: application/json');
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    header('Allow: POST');
+    ob_clean();
+    echo json_encode(['success' => false, 'message' => 'Metodo non consentito.']);
+    exit;
+}
+if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+    http_response_code(403);
+    ob_clean();
+    echo json_encode(['success' => false, 'message' => 'Token CSRF non valido.']);
+    exit;
+}
+
+// Cleanup old ZIP files (older than 1 hour)
+$downloadDir = __DIR__ . '/downloads/';
+if (is_dir($downloadDir)) {
+    foreach ((glob($downloadDir . '*.zip') ?: []) as $file) {
+        $mtime = @filemtime($file);
+        if ($mtime !== false && $mtime < (time() - 3600)) {
+            if (!@unlink($file)) {
+                error_log("Impossibile eliminare ZIP temporaneo: " . $file);
+            }
+        }
+    }
+}
+
 if (isset($_POST['document_ids']) && is_array($_POST['document_ids']) && count($_POST['document_ids']) > 0) {
     $document_ids = $_POST['document_ids'];
 
@@ -60,9 +87,8 @@ if (isset($_POST['document_ids']) && is_array($_POST['document_ids']) && count($
     
     $zip->close();
     
-    // Costruisci il link assoluto per il file ZIP
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-    $downloadLink = $protocol . $_SERVER['HTTP_HOST'] . '/downloads/' . $zipFilename;
+    // Costruisci il link assoluto per il file ZIP usando $base_url
+    $downloadLink = rtrim($base_url, '/') . '/downloads/' . $zipFilename;
     
     // Salva il link in sessione per renderlo persistente
     $_SESSION['zip_link'] = $downloadLink;

@@ -31,6 +31,11 @@ $api_key = $conn['api_key'];
 
 // Funzione per chiamare l'API remota
 function callRemoteApi($endpoint_url, $api_key, $params = []) {
+    $scheme = strtolower((string) parse_url($endpoint_url, PHP_URL_SCHEME));
+    if ($scheme !== 'https') {
+        return ['error' => 'Endpoint API non sicuro: è richiesto HTTPS.'];
+    }
+
     $url = $endpoint_url . '?' . http_build_query($params);
     $ch = curl_init($url);
     curl_setopt_array($ch, [
@@ -40,7 +45,8 @@ function callRemoteApi($endpoint_url, $api_key, $params = []) {
             'X-API-Key: ' . $api_key,
             'Accept: application/json'
         ],
-        CURLOPT_SSL_VERIFYPEER => false
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2
     ]);
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -158,9 +164,9 @@ generateCsrfToken();
     <title>Aziende - <?php echo sanitizeForHTML($conn_name); ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
     <style>
         @media (max-width: 767.98px) { .desktop-table { display: none; } }
         @media (min-width: 768px) { .mobile-cards { display: none; } }

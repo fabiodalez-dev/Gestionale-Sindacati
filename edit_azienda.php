@@ -39,7 +39,7 @@ generateCsrfToken();
     <!-- Meta viewport per la responsività -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- jQuery UI CSS per l'autocomplete -->
@@ -47,7 +47,7 @@ generateCsrfToken();
     <!-- TinyMCE -->
     <script src="<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
 </head>
 <body id="page-top">
 
@@ -215,7 +215,7 @@ generateCsrfToken();
 
     <!-- Inizializzazione di TinyMCE -->
     <script>
-        tinymce.init({
+        if (typeof tinymce !== 'undefined') { tinymce.init({
             selector: '#note',
             plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
             toolbar: 'undo redo | formatselect | bold italic backcolor | ' +
@@ -225,13 +225,17 @@ generateCsrfToken();
             menubar: false,
             branding: false,
             height: 300,
-            license_key: 'gpl', // Aggiunto per risolvere l'avviso di licenza
+            entity_encoding: 'raw',
+            forced_root_block: 'p',
+            base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce',
+            suffix: '.min',
+            license_key: 'gpl',
             setup: function (editor) {
                 editor.on('init', function () {
                     this.getContainer().style.zIndex = 10000;
                 });
             }
-        });
+        }); }
     </script>
 
     <!-- Inizializzazione di jQuery UI Autocomplete (Esempio) -->

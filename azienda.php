@@ -189,13 +189,13 @@ generateCsrfToken();
     <!-- Meta viewport per la responsività -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- SB Admin 2 CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- jQuery UI CSS -->
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/jquery-ui/jquery-ui.min.css">
     <!-- Custom CSS -->
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
     <!-- FullCalendar CSS -->
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/common.min.css">
     <link rel="stylesheet" href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fullcalendar/daygrid.min.css">
@@ -773,7 +773,12 @@ generateCsrfToken();
                                 <td><?php echo sanitizeForHTML(date('d/m/Y H:i', strtotime($doc['data_caricamento'] ?? ''))); ?></td>
                                 <td>
                                     <a href="<?php echo sanitizeForHTML($base_url . 'uploads/' . $doc['percorso_documento']); ?>" target="_blank" class="btn btn-sm btn-primary">Visualizza</a>
-                                    <a href="delete_documento_azienda.php?id=<?php echo sanitizeForHTML($doc['id'] ?? 0); ?>&azienda_id=<?php echo sanitizeForHTML($azienda_id); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Sei sicuro di voler eliminare questo documento?');">Elimina</a>
+                                    <form action="delete_documento_azienda.php" method="POST" style="display:inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo documento?');">
+                                        <?php csrfInputField(); ?>
+                                        <input type="hidden" name="id" value="<?php echo sanitizeForHTML($doc['id'] ?? 0); ?>">
+                                        <input type="hidden" name="azienda_id" value="<?php echo sanitizeForHTML($azienda_id); ?>">
+                                        <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -1076,19 +1081,21 @@ generateCsrfToken();
 
     <!-- Inizializzazione di TinyMCE -->
     <script>
-        tinymce.init({
+        if (typeof tinymce !== 'undefined') { tinymce.init({
             selector: '#note, #description, #eventDescription', // Selettore per i campi di testo
             plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
             toolbar: 'undo redo | formatselect | bold italic backcolor | ' +
                       'alignleft aligncenter alignright alignjustify | ' +
                       'bullist numlist outdent indent | removeformat | help',
             entity_encoding: 'raw',
-            forced_root_block: '',
+            forced_root_block: 'p',
             toolbar_mode: 'floating',
             menubar: false,
             branding: false,
             height: 300,
-            license_key: 'gpl', // Aggiunto per risolvere l'avviso di licenza
+            base_url: '<?php echo sanitizeForHTML($base_url); ?>vendor/tinymce',
+            suffix: '.min',
+            license_key: 'gpl',
             setup: function (editor) {
                 editor.on('init', function () {
                     // Imposta il z-index di TinyMCE inferiore a quello del modale Bootstrap (1050)
@@ -1097,7 +1104,7 @@ generateCsrfToken();
             },
             // Aggiungi questa opzione per gestire i modali correttamente
             inline: false
-        });
+        }); }
     </script>
 
     <!-- Inizializzazione del Calendario -->
@@ -1428,8 +1435,27 @@ document.addEventListener('DOMContentLoaded', function() {
             confirmButtonText: 'Elimina'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Reindirizza alla pagina di eliminazione
-                window.location.href = 'elimina_unita_operativa.php?id=' + id + '&azienda_id=<?php echo sanitizeForHTML($azienda_id); ?>';
+                // Invia richiesta POST per eliminazione
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'elimina_unita_operativa.php';
+                var csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
+                form.appendChild(csrfInput);
+                var idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'id';
+                idInput.value = id;
+                form.appendChild(idInput);
+                var azInput = document.createElement('input');
+                azInput.type = 'hidden';
+                azInput.name = 'azienda_id';
+                azInput.value = '<?php echo (int)$azienda_id; ?>';
+                form.appendChild(azInput);
+                document.body.appendChild(form);
+                form.submit();
             }
         });
     });
@@ -1440,16 +1466,47 @@ function editDescription(docId) {
   // Recupera la cella della descrizione e il testo attuale
   var descCell = document.getElementById("desc-" + docId);
   var currentDesc = document.getElementById("desc-text-" + docId).innerText;
-  
-  // Sostituisce il contenuto della cella con un form di modifica
-  descCell.innerHTML = `
-    <form action=" update_document_description_azienda.php" method="POST" onsubmit="return updateDescription(event, ${docId});">
-      <input type="hidden" name="doc_id" value="${docId}">
-      <input type="text" name="description" value="${currentDesc}" required>
-      <button type="submit" class="btn btn-sm btn-success">Salva</button>
-      <button type="button" class="btn btn-sm btn-warning" onclick="cancelEdit(${docId}, '${currentDesc.replace(/'/g, "\\'")}')">Annulla</button>
-    </form>
-  `;
+
+  // Costruisce il form via DOM API per evitare XSS
+  descCell.textContent = '';
+  var form = document.createElement('form');
+  form.action = 'update_document_description_azienda.php';
+  form.method = 'POST';
+  form.onsubmit = function(e) { return updateDescription(e, docId); };
+
+  var csrfInput = document.createElement('input');
+  csrfInput.type = 'hidden';
+  csrfInput.name = 'csrf_token';
+  csrfInput.value = <?php echo json_encode($_SESSION['csrf_token']); ?>;
+  form.appendChild(csrfInput);
+
+  var docIdInput = document.createElement('input');
+  docIdInput.type = 'hidden';
+  docIdInput.name = 'doc_id';
+  docIdInput.value = docId;
+  form.appendChild(docIdInput);
+
+  var descInput = document.createElement('input');
+  descInput.type = 'text';
+  descInput.name = 'description';
+  descInput.value = currentDesc;
+  descInput.required = true;
+  form.appendChild(descInput);
+
+  var saveBtn = document.createElement('button');
+  saveBtn.type = 'submit';
+  saveBtn.className = 'btn btn-sm btn-success';
+  saveBtn.textContent = 'Salva';
+  form.appendChild(saveBtn);
+
+  var cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'btn btn-sm btn-warning';
+  cancelBtn.textContent = 'Annulla';
+  cancelBtn.onclick = function() { cancelEdit(docId, currentDesc); };
+  form.appendChild(cancelBtn);
+
+  descCell.appendChild(form);
 }
 
 function updateDescription(event, docId) {
@@ -1467,8 +1524,18 @@ function updateDescription(event, docId) {
     if (data.success) {
       // Ripristina la cella con la nuova descrizione e il bottone "Modifica"
       var descCell = document.getElementById("desc-" + docId);
-      descCell.innerHTML = `<span id="desc-text-${docId}">${data.new_description}</span>
-      <br><button type="button" class="btn btn-sm btn-secondary" onclick="editDescription(${docId})">Modifica</button>`;
+      descCell.innerHTML = '';
+      var span = document.createElement('span');
+      span.id = 'desc-text-' + docId;
+      span.textContent = data.new_description;
+      descCell.appendChild(span);
+      descCell.appendChild(document.createElement('br'));
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-sm btn-secondary';
+      btn.onclick = function() { editDescription(docId); };
+      btn.textContent = 'Modifica';
+      descCell.appendChild(btn);
     } else {
       alert("Errore: " + data.message);
     }
@@ -1483,8 +1550,18 @@ function updateDescription(event, docId) {
 function cancelEdit(docId, originalDesc) {
   // Ripristina la visualizzazione originale in caso di annullamento
   var descCell = document.getElementById("desc-" + docId);
-  descCell.innerHTML = `<span id="desc-text-${docId}">${originalDesc}</span>
-  <br><button type="button" class="btn btn-sm btn-secondary" onclick="editDescription(${docId})">Modifica</button>`;
+  descCell.innerHTML = '';
+  var span = document.createElement('span');
+  span.id = 'desc-text-' + docId;
+  span.textContent = originalDesc;
+  descCell.appendChild(span);
+  descCell.appendChild(document.createElement('br'));
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn btn-sm btn-secondary';
+  btn.textContent = 'Modifica';
+  btn.onclick = function () { editDescription(docId); };
+  descCell.appendChild(btn);
 }
 </script>
 

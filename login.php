@@ -1,6 +1,99 @@
 <?php
 require 'config.php';
 
+// --- Rate Limiting Functions (file-based) ---
+
+/**
+ * Atomically check rate limit and reserve a slot for the current attempt.
+ * Returns true if allowed, false if rate-limited, null on I/O error.
+ */
+function checkLoginRateLimit($ip) {
+    $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
+    $fh = fopen($lockFile, 'c+');
+    if ($fh === false || !flock($fh, LOCK_EX)) {
+        if (is_resource($fh)) fclose($fh);
+        error_log("Rate limiter non disponibile per IP hash: " . md5($ip));
+        return null;
+    }
+    $raw = stream_get_contents($fh);
+    $data = json_decode($raw ?: '', true);
+    if (!is_array($data) || !isset($data['attempts']) || !is_array($data['attempts'])) {
+        $data = ['attempts' => []];
+    }
+    $now = time();
+    $data['attempts'] = array_values(array_filter($data['attempts'], function($entry) use ($now) {
+        $t = is_array($entry) ? ($entry['time'] ?? 0) : $entry;
+        return $t > $now - 900;
+    }));
+    if (count($data['attempts']) >= 5) {
+        flock($fh, LOCK_UN);
+        fclose($fh);
+        return false;
+    }
+    // Reserve a slot atomically with unique attempt ID
+    $attemptId = uniqid('', true);
+    $data['attempts'][] = ['time' => $now, 'id' => $attemptId];
+    $json = json_encode($data);
+    if (ftruncate($fh, 0) === false || rewind($fh) === false || fwrite($fh, $json) === false || fflush($fh) === false) {
+        error_log("Rate limiter: errore scrittura file per IP hash: " . md5($ip));
+        flock($fh, LOCK_UN);
+        fclose($fh);
+        return null;
+    }
+    flock($fh, LOCK_UN);
+    fclose($fh);
+    return $attemptId;
+}
+
+/**
+ * Rollback a specific reserved login attempt slot on infrastructure failure.
+ * Uses attempt ID for deterministic removal under concurrency.
+ */
+function rollbackReservedLoginAttempt($ip, $attemptId = null) {
+    $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
+    if (!file_exists($lockFile)) return true;
+    $fh = fopen($lockFile, 'c+');
+    if (!$fh) return false;
+    if (!flock($fh, LOCK_EX)) { fclose($fh); return false; }
+    $raw = stream_get_contents($fh);
+    $data = json_decode($raw, true);
+    if (is_array($data) && !empty($data['attempts'])) {
+        if ($attemptId !== null) {
+            // Remove the specific attempt by ID
+            $data['attempts'] = array_values(array_filter($data['attempts'], function($entry) use ($attemptId) {
+                return !is_array($entry) || ($entry['id'] ?? '') !== $attemptId;
+            }));
+        } else {
+            // Fallback: remove last entry (legacy format)
+            array_pop($data['attempts']);
+        }
+        $json = json_encode($data);
+        if (ftruncate($fh, 0) === false || rewind($fh) === false || fwrite($fh, $json) === false || fflush($fh) === false) {
+            error_log("Rate limiter rollback: errore scrittura file per IP hash: " . md5($ip));
+            flock($fh, LOCK_UN);
+            fclose($fh);
+            return false;
+        }
+    }
+    flock($fh, LOCK_UN);
+    fclose($fh);
+    return true;
+}
+
+/**
+ * Clear all failed login attempts for the given IP (on successful login).
+ */
+function clearLoginAttempts($ip) {
+    $lockFile = __DIR__ . '/sessions/login_attempts_' . md5($ip) . '.json';
+    if (file_exists($lockFile) && !unlink($lockFile)) {
+        error_log("Rate limiter cleanup: unlink fallita per IP hash " . md5($ip));
+        return false;
+    }
+    return true;
+}
+
+// --- End Rate Limiting Functions ---
+
 // Recupera le impostazioni attuali, inclusa la voce 'logo'
 $settings = getSettings(['logo']);
 $logo_path = $settings['logo'] ?? 'uploads/default_logo.png';
@@ -17,38 +110,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         $error = 'Token CSRF non valido.';
     } else {
-        $email = sanitizeInput($_POST['email']);
-        $password = $_POST['password'];
-        $remember_me = isset($_POST['remember_me']) ? true : false;
+        $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 
-        $stmt = executeQuery("SELECT id, username, password, role FROM users WHERE email = ?", [$email], 's');
-        if ($stmt) {
-            $result = $stmt->get_result();
-            if ($result->num_rows === 1) {
-                $user = $result->fetch_assoc();
-                if (password_verify($password, $user['password'])) {
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['username'] = $user['username'];
-                    $_SESSION['user_role'] = $user['role'];
+        // Check rate limit before processing login
+        $rateLimitResult = checkLoginRateLimit($clientIp);
+        if ($rateLimitResult === false) {
+            $error = 'Troppi tentativi di accesso. Riprova tra 15 minuti.';
+        } elseif ($rateLimitResult === null) {
+            $error = 'Servizio temporaneamente non disponibile. Riprova.';
+        } else {
+            $attemptId = $rateLimitResult;
+            $email = sanitizeInput($_POST['email']);
+            $password = $_POST['password'];
+            $remember_me = isset($_POST['remember_me']) ? true : false;
 
-                    if ($remember_me) {
-                        setcookie('remember_me', '1', time() + (30 * 24 * 60 * 60), '/', '', isset($_SERVER['HTTPS']), true);
-                    } else {
-                        if (isset($_COOKIE['remember_me'])) {
-                            setcookie('remember_me', '', time() - 3600, '/', '', isset($_SERVER['HTTPS']), true);
+            $stmt = executeQuery("SELECT id, username, password, role FROM users WHERE email = ?", [$email], 's');
+            if ($stmt) {
+                $result = $stmt->get_result();
+                if ($result->num_rows === 1) {
+                    $user = $result->fetch_assoc();
+                    if (password_verify($password, $user['password'])) {
+                        // Regenerate session ID to prevent session fixation attacks
+                        session_regenerate_id(true);
+
+                        // Clear failed login attempts on success
+                        if (!clearLoginAttempts($clientIp)) {
+                            error_log("clearLoginAttempts fallito per IP hash: " . md5($clientIp));
                         }
-                    }
 
-                    header('Location: ' . $base_url . 'dashboard.php');
-                    exit;
+                        $_SESSION['user_id'] = $user['id'];
+                        $_SESSION['username'] = $user['username'];
+                        $_SESSION['user_role'] = $user['role'];
+
+                        if ($remember_me) {
+                            setcookie('remember_me', '1', time() + (30 * 24 * 60 * 60), '/', '', isset($_SERVER['HTTPS']), true);
+                        } else {
+                            if (isset($_COOKIE['remember_me'])) {
+                                setcookie('remember_me', '', time() - 3600, '/', '', isset($_SERVER['HTTPS']), true);
+                            }
+                        }
+
+                        header('Location: ' . $base_url . 'dashboard.php');
+                        exit;
+                    } else {
+                        $error = 'Email o password errati.';
+                    }
                 } else {
                     $error = 'Email o password errati.';
                 }
             } else {
-                $error = 'Email o password errati.';
+                if (!rollbackReservedLoginAttempt($clientIp, $attemptId)) {
+                    error_log("Rollback rate limiter fallito per IP hash: " . md5($clientIp));
+                }
+                $error = 'Errore nella connessione al database.';
             }
-        } else {
-            $error = 'Errore nella connessione al database.';
         }
     }
 }
@@ -62,8 +177,8 @@ generateCsrfToken();
     <title>Login - ADL Cobas</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
 </head>
 <body class="bg-gradient-primary">
 
@@ -124,8 +239,8 @@ generateCsrfToken();
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/js/sb-admin-2.min.js"></script>
     <script src="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/gsap/gsap.min.js"></script>
     <script>
-    gsap.fromTo('.card', { opacity: 0, y: 30, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.4)', delay: 0.1 });
-    gsap.fromTo('.text-center.mb-4 img', { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5, delay: 0 });
+    gsap.fromTo('.text-center.mb-4 img', { opacity: 0 }, { opacity: 1, duration: 0.3, delay: 0 });
+    gsap.fromTo('.card', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out', delay: 0.05 });
     </script>
 </body>
 </html>

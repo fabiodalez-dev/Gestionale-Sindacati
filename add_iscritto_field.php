@@ -1,22 +1,21 @@
 <?php
 require 'config.php';
+checkLogin();
+checkUserRole('admin');
 
-// Usa la variabile di connessione corretta
-// Supponiamo che la connessione sia memorizzata in $conn oppure $mysqli
-
-// Se la connessione è in $mysqli, sostituisci $conn con $mysqli
-// Se la connessione è in $db, sostituisci $conn con $db
-
-// Controlliamo quale variabile contiene la connessione
-if (isset($conn)) {
-    $dbConnection = $conn;
-} elseif (isset($mysqli)) {
-    $dbConnection = $mysqli;
-} elseif (isset($db)) {
-    $dbConnection = $db;
-} else {
-    die("Connessione al database non trovata.");
+// Richiede metodo POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    die("Metodo non consentito. Usa POST.");
 }
+
+// Verifica token CSRF
+if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+    http_response_code(403);
+    die("Token CSRF non valido.");
+}
+
+$dbConnection = $mysqli;
 
 // Controlla se il campo 'iscritto' esiste già
 $query = "SHOW COLUMNS FROM lavoratori LIKE 'iscritto'";
@@ -28,7 +27,8 @@ if ($result->num_rows == 0) {
     if ($dbConnection->query($alterQuery)) {
         echo "Campo 'iscritto' aggiunto con successo alla tabella 'lavoratori'.";
     } else {
-        echo "Errore durante l'aggiunta del campo 'iscritto': " . $dbConnection->error;
+        error_log("Errore durante l'aggiunta del campo 'iscritto': " . $dbConnection->error);
+        echo "Errore durante l'aggiunta del campo 'iscritto'. Controlla i log per i dettagli.";
     }
 } else {
     echo "Il campo 'iscritto' esiste già nella tabella 'lavoratori'.";

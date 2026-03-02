@@ -3,6 +3,7 @@
 
 require_once 'config.php';
 checkLogin();
+checkUserRole('admin');
 
 // Verifica che la richiesta sia POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -16,23 +17,97 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $lavoratore_id = isset($_POST['id']) ? intval($_POST['id']) : 0;
 
     if ($lavoratore_id > 0) {
-        // Prima elimina eventuali dati correlati (es. documenti, iscrizioni, etc.)
-        // Esempio: eliminazione dei documenti associati
-        $deleteDocumentsQuery = "DELETE FROM documenti_lavoratori WHERE lavoratore_id = ?";
-        $stmtDocs = executeQuery($deleteDocumentsQuery, [$lavoratore_id], 'i');
+        global $mysqli;
+        if (!$mysqli->begin_transaction()) {
+            echo json_encode(['success' => false, 'message' => 'Impossibile avviare la transazione.']);
+            exit;
+        }
+        try {
+            // Raccogli i percorsi dei file da eliminare dopo il commit
+            $filesToDelete = [];
+            $stmtFiles = executeQuery("SELECT percorso_documento FROM documenti_lavoratori WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+            if ($stmtFiles === false) {
+                throw new Exception("Errore recupero documenti lavoratore");
+            }
+            $filesResult = $stmtFiles->get_result();
+            while ($fileRow = $filesResult->fetch_assoc()) {
+                $relativePath = ltrim((string)($fileRow['percorso_documento'] ?? ''), '/\\');
+                if ($relativePath !== '') {
+                    $filesToDelete[] = $relativePath;
+                }
+            }
 
-        // Eliminazione delle iscrizioni
-        $deleteIscrizioniQuery = "DELETE FROM iscrizioni WHERE lavoratore_id = ?";
-        $stmtIscrizioni = executeQuery($deleteIscrizioniQuery, [$lavoratore_id], 'i');
+            // Eliminazione dei record documenti dal DB
+            $deleteDocumentsQuery = "DELETE FROM documenti_lavoratori WHERE lavoratore_id = ?";
+            $stmtDocs = executeQuery($deleteDocumentsQuery, [$lavoratore_id], 'i');
+            if ($stmtDocs === false) {
+                throw new Exception("Errore eliminazione documenti lavoratore");
+            }
 
-        // Eliminazione del lavoratore
-        $deleteLavoratoreQuery = "DELETE FROM lavoratori WHERE id = ?";
-        $stmt = executeQuery($deleteLavoratoreQuery, [$lavoratore_id], 'i');
+            // Eliminazione pagamenti_quote via iscrizioni
+            $stmtPagamenti = executeQuery("DELETE FROM pagamenti_quote WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+            if ($stmtPagamenti === false) {
+                throw new Exception("Errore eliminazione pagamenti_quote");
+            }
 
-        if ($stmt !== false) {
+            // Eliminazione delle iscrizioni
+            $deleteIscrizioniQuery = "DELETE FROM iscrizioni WHERE lavoratore_id = ?";
+            $stmtIscrizioni = executeQuery($deleteIscrizioniQuery, [$lavoratore_id], 'i');
+            if ($stmtIscrizioni === false) {
+                throw new Exception("Errore eliminazione iscrizioni lavoratore");
+            }
+
+            // Eliminazione storico aziende
+            $stmtStorico = executeQuery("DELETE FROM storico_aziende_lavoratori WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+            if ($stmtStorico === false) {
+                throw new Exception("Errore eliminazione storico_aziende_lavoratori");
+            }
+
+            // Eliminazione eccezioni eventi
+            $stmtExceptions = executeQuery("DELETE FROM event_exceptions WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+            if ($stmtExceptions === false) {
+                throw new Exception("Errore eliminazione event_exceptions");
+            }
+
+            // Eliminazione eventi calendario
+            $stmtCalendario = executeQuery("DELETE FROM calendario_lavoratori WHERE lavoratore_id = ?", [$lavoratore_id], 'i');
+            if ($stmtCalendario === false) {
+                throw new Exception("Errore eliminazione calendario_lavoratori");
+            }
+
+            // Eliminazione del lavoratore
+            $deleteLavoratoreQuery = "DELETE FROM lavoratori WHERE id = ?";
+            $stmt = executeQuery($deleteLavoratoreQuery, [$lavoratore_id], 'i');
+            if ($stmt === false) {
+                throw new Exception("Errore eliminazione lavoratore");
+            }
+            if ($stmt->affected_rows !== 1) {
+                throw new Exception("Lavoratore non trovato o già eliminato");
+            }
+
+            if (!$mysqli->commit()) {
+                throw new Exception("Commit transazione fallito");
+            }
+
+            // Elimina i file fisici solo dopo il commit DB riuscito
+            $uploadsDir = realpath(__DIR__ . '/uploads');
+            if ($uploadsDir !== false) {
+                $uploadsDir .= DIRECTORY_SEPARATOR;
+                foreach ($filesToDelete as $relativePath) {
+                    $candidate = realpath($uploadsDir . $relativePath);
+                    if ($candidate !== false && strpos($candidate, $uploadsDir) === 0 && is_file($candidate)) {
+                        if (!unlink($candidate)) {
+                            error_log("Impossibile eliminare file: $candidate (lavoratore ID: $lavoratore_id)");
+                        }
+                    }
+                }
+            }
+
             header("Location: archived_lavoratori.php?delete_success=1");
             exit;
-        } else {
+        } catch (Exception $e) {
+            $mysqli->rollback();
+            error_log("Errore eliminazione definitiva lavoratore: " . $e->getMessage());
             header("Location: archived_lavoratori.php?delete_error=Errore durante l'eliminazione definitiva.");
             exit;
         }

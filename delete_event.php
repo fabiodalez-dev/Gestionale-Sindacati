@@ -18,9 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Verifica del token CSRF
 if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
-    $sent_token = $_POST['csrf_token'] ?? 'null';
-    $expected_token = $_SESSION['csrf_token'] ?? 'null';
-    error_log("Token CSRF mancante o non valido. Inviato: $sent_token | Atteso: $expected_token");
+    error_log("Token CSRF non valido in delete_event.php");
+    http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Token CSRF mancante o non valido.']);
     exit;
 }
@@ -30,9 +29,8 @@ $id = isset($_POST['id']) ? intval($_POST['id']) : null;
 $lavoratore_id = isset($_POST['lavoratore_id']) ? intval($_POST['lavoratore_id']) : null;
 $delete_for_all = isset($_POST['delete_for_all']) ? intval($_POST['delete_for_all']) : 0;
 
-// Log dei dati ricevuti
-error_log("Dati ricevuti in delete_event.php: " . print_r($_POST, true));
-error_log("Parametri sanitizzati: id='$id', lavoratore_id='$lavoratore_id', delete_for_all='$delete_for_all'");
+// Log dei parametri ricevuti (senza dati sensibili)
+error_log("delete_event.php: id='$id', lavoratore_id='$lavoratore_id', delete_for_all='$delete_for_all'");
 
 // Verifica che l'ID dell'evento sia presente
 if ($id === null) {
@@ -68,6 +66,12 @@ $stmt->close();
 
 // Gestione della cancellazione per tutti gli eventi aziendali
 if ($delete_for_all === 1 && intval($evento['is_company_event']) === 1) {
+    // Solo admin può eliminare tutti gli eventi aziendali
+    if (($_SESSION['user_role'] ?? '') !== 'admin') {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Solo gli amministratori possono eliminare tutti gli eventi aziendali.']);
+        exit;
+    }
     // Elimina tutti gli eventi aziendali per questa azienda
     $delete_query = "DELETE FROM calendario_lavoratori WHERE azienda_id = ? AND is_company_event = 1";
     $params = [intval($evento['azienda_id'])];
@@ -116,13 +120,15 @@ if ($delete_stmt === false) {
     exit;
 }
 
-if ($delete_stmt->execute()) {
-    error_log("Evento singolo eliminato con successo. ID evento: $id");
-    echo json_encode(['success' => true, 'message' => 'Evento eliminato con successo.']);
-} else {
-    error_log("Errore nell'eliminazione dell'evento singolo: " . $delete_stmt->error);
-    echo json_encode(['success' => false, 'error' => 'Errore nell\'eliminazione dell\'evento.']);
+if ($delete_stmt->affected_rows === 0) {
+    error_log("Nessun evento eliminato (affected_rows=0). ID evento: $id, Lavoratore ID: $lavoratore_id");
+    echo json_encode(['success' => false, 'error' => 'Evento non trovato o già eliminato.']);
+    $delete_stmt->close();
+    exit;
 }
+
+error_log("Evento singolo eliminato con successo. ID evento: $id");
+echo json_encode(['success' => true, 'message' => 'Evento eliminato con successo.']);
 
 // Chiudi lo statement di eliminazione
 $delete_stmt->close();

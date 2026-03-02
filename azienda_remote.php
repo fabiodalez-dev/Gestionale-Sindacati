@@ -22,6 +22,12 @@ $conn_name = $conn['name'];
 $endpoint_url = rtrim($conn['endpoint_url'], '/');
 $api_key_value = $conn['api_key'];
 
+// Verifica che l'endpoint usi HTTPS
+$scheme = strtolower((string) parse_url($endpoint_url, PHP_URL_SCHEME));
+if ($scheme !== 'https') {
+    die("Endpoint API non sicuro: è richiesto HTTPS.");
+}
+
 // Chiama API remota
 $url = $endpoint_url . '?' . http_build_query(['action' => 'azienda', 'id' => $azienda_id]);
 $ch = curl_init($url);
@@ -32,7 +38,8 @@ curl_setopt_array($ch, [
         'X-API-Key: ' . $api_key_value,
         'Accept: application/json'
     ],
-    CURLOPT_SSL_VERIFYPEER => false
+    CURLOPT_SSL_VERIFYPEER => true,
+    CURLOPT_SSL_VERIFYHOST => 2
 ]);
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -60,9 +67,9 @@ generateCsrfToken();
     <meta charset="UTF-8">
     <title>Dettaglio Azienda - <?php echo sanitizeForHTML($conn_name); ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>theme/css/sb-admin-2.min.css?v=2.10" rel="stylesheet">
     <link href="<?php echo sanitizeForHTML($base_url); ?>theme/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.0" rel="stylesheet">
+    <link href="<?php echo sanitizeForHTML($base_url); ?>styles.css?v=2.10" rel="stylesheet">
 </head>
 <body id="page-top">
     <div id="wrapper">
@@ -156,27 +163,6 @@ generateCsrfToken();
                         </div>
                     </div>
 
-                    <?php if (!empty($lavoratori)): ?>
-                    <div class="card mt-4">
-                        <div class="card-header">Lavoratori (<?php echo count($lavoratori); ?>)</div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead><tr><th>#</th><th>Cognome</th><th>Nome</th></tr></thead>
-                                    <tbody>
-                                        <?php foreach ($lavoratori as $i => $lav): ?>
-                                        <tr>
-                                            <td><?php echo $i + 1; ?></td>
-                                            <td><?php echo sanitizeForHTML($lav['cognome'] ?? ''); ?></td>
-                                            <td><?php echo sanitizeForHTML($lav['nome'] ?? ''); ?></td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endif; ?>
 
                     <?php if (!empty($unita_operative)): ?>
                     <div class="card mt-4 mb-4">

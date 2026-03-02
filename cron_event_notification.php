@@ -7,6 +7,14 @@ date_default_timezone_set('Europe/Rome');
 // Include la configurazione e le funzioni di utilità (connessione al DB, executeQuery(), sanitizeForHTML(), ecc.)
 require_once 'config.php';
 
+// Autenticazione tramite chiave cron definita in .env
+$cron_key = $_ENV['CRON_KEY'] ?? getenv('CRON_KEY') ?: '';
+$provided_key = $_SERVER['HTTP_X_CRON_KEY'] ?? '';
+if (!is_string($provided_key) || $provided_key === '' || empty($cron_key) || !hash_equals($cron_key, $provided_key)) {
+    http_response_code(403);
+    die('Accesso negato.');
+}
+
 // Data odierna nel formato dd-mm-YYYY per l'oggetto e il corpo della mail
 $todayFormatted = date('d-m-Y');
 $todayForQuery = date('Y-m-d'); // Formato YYYY-MM-DD per la query SQL
